@@ -31,6 +31,9 @@
         .toggle-switch.active::after{transform:translateX(22px)}
         .header-gradient{background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 50%,#cbd5e1 100%)}
         .header-pattern{background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231e3a5f' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+        .category-card{transition:all 0.2s ease;border:2px solid transparent}
+        .category-card:hover{transform:translateY(-2px)}
+        .category-card.active{border-color:#1e3a5f;background:linear-gradient(135deg,#e8eef5,#f1f5f9)}
     </style>
 </head>
 <body><div id="root"></div>
@@ -62,7 +65,15 @@ const MEMBERSHIP_PLANS={free:{name:'Miễn phí',price:0,features:['Xem lịch p
 const USER_TYPES=[{id:'business',name:'Doanh nghiệp'},{id:'individual',name:'Cá nhân'}];
 const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'realestate',name:'Bất động sản'},{id:'other',name:'Khác'}];
 const categoryConfig={tax:{label:'Thuế',color:'bg-red-600',lightColor:'bg-red-50',textColor:'text-red-700',borderColor:'border-red-200'},insurance:{label:'BHXH',color:'bg-blue-600',lightColor:'bg-blue-50',textColor:'text-blue-700',borderColor:'border-blue-200'},report:{label:'Báo cáo',color:'bg-emerald-600',lightColor:'bg-emerald-50',textColor:'text-emerald-700',borderColor:'border-emerald-200'},license:{label:'Giấy phép',color:'bg-amber-600',lightColor:'bg-amber-50',textColor:'text-amber-700',borderColor:'border-amber-200'},news:{label:'Tin tức',color:'bg-purple-600',lightColor:'bg-purple-50',textColor:'text-purple-700',borderColor:'border-purple-200'},personal:{label:'Cá nhân',color:'bg-pink-600',lightColor:'bg-pink-50',textColor:'text-pink-700',borderColor:'border-pink-200'}};
-const agencyCategories=[{id:'all',name:'Tất cả cơ quan',icon:'🏛️'},{id:'tax',name:'Cơ quan Thuế',icon:'💰'},{id:'court',name:'Tòa án',icon:'⚖️'},{id:'police',name:'Công an',icon:'👮'},{id:'insurance',name:'Bảo hiểm xã hội',icon:'🏥'},{id:'labor',name:'Sở LĐTBXH',icon:'👷'},{id:'business',name:'Đăng ký kinh doanh',icon:'📋'},{id:'customs',name:'Hải quan',icon:'🚢'}];
+
+// 4 Danh mục cơ quan mới
+const agencyCategories=[
+    {id:'government',name:'Cơ quan Nhà nước',icon:'🏛️',color:'bg-blue-500',lightColor:'bg-blue-50',desc:'Thuế, BHXH, Sở KH&ĐT...'},
+    {id:'lawfirm',name:'VP Luật sư / Công ty Luật',icon:'⚖️',color:'bg-navy-600',lightColor:'bg-navy-50',desc:'Tư vấn pháp lý, tranh tụng'},
+    {id:'notary',name:'Văn phòng Công chứng',icon:'📜',color:'bg-emerald-500',lightColor:'bg-emerald-50',desc:'Công chứng hợp đồng, giấy tờ'},
+    {id:'bailiff',name:'VP Thừa phát lại',icon:'📋',color:'bg-amber-500',lightColor:'bg-amber-50',desc:'Thi hành án, lập vi bằng'}
+];
+
 const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const dayNames=['CN','T2','T3','T4','T5','T6','T7'];
 
@@ -74,26 +85,21 @@ const Icons={
     Settings:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
     Headphones:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>,
     Check:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><polyline points="20 6 9 17 4 12"/></svg>,
-    CheckCircle:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
     ChevronLeft:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m15 18-6-6 6-6"/></svg>,
     ChevronRight:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m9 18 6-6-6-6"/></svg>,
     ChevronDown:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m6 9 6 6 6-6"/></svg>,
-    ChevronUp:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m18 15-6-6-6 6"/></svg>,
     Clock:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
     X:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M18 6 6 18M6 6l12 12"/></svg>,
     Mail:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>,
     Phone:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
-    Building:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></svg>,
     FileText:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>,
     MapPin:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>,
     Search:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
-    Landmark:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>,
     TrendingUp:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
     Info:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>,
     Shield:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
     HelpCircle:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>,
     Trash:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
-    ExternalLink:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>,
     AlertTriangle:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
     User:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
     Crown:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
@@ -102,7 +108,7 @@ const Icons={
     Bell:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
     Plus:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>,
     Star:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-full h-full"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-    Edit:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+    Globe:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
 };
 
 const getDeadlineFromEvent=(ev)=>{const now=new Date();const y=now.getFullYear();const m=now.getMonth();let day=ev.dayOfMonth||20;if(ev.frequency==='monthly')return new Date(y,m,day);if(ev.frequency==='quarterly'){const qMonth=Math.floor(m/3)*3+2;return new Date(y,qMonth,day);}if(ev.frequency==='yearly'){const eventMonth=(ev.month||1)-1;return new Date(y,eventMonth,day);}return new Date(y,m,day);};
@@ -246,24 +252,19 @@ const NewsDetailModal=({news,onClose,onAddToCalendar})=>{
     );
 };
 
-// ============ DASHBOARD SCREEN - View news directly ============
+// ============ DASHBOARD SCREEN ============
 const DashboardScreen=({events,news,onEventClick,membership,savedEvents,personalEvents,userProfile,onAddToCalendar})=>{
     const today=new Date();
     const[selectedNews,setSelectedNews]=useState(null);
     
     const allEvents=[...events.map(e=>({...e,deadline:getDeadlineFromEvent(e),daysUntil:getDaysUntil(getDeadlineFromEvent(e))})),...(savedEvents||[]).map(e=>({...e,deadline:new Date(e.date),daysUntil:getDaysUntil(new Date(e.date))})),...(personalEvents||[]).map(e=>({...e,deadline:new Date(e.date),daysUntil:getDaysUntil(new Date(e.date)),isPersonal:true}))];
     const upcomingEvents=allEvents.filter(e=>e.daysUntil>=0).sort((a,b)=>a.daysUntil-b.daysUntil).slice(0,6);
-    
-    // Sort news by ID descending (newest first)
     const latestNews=[...news].sort((a,b)=>b.id-a.id).slice(0,5);
     const nearestDeadline=upcomingEvents[0];
-    
-    // Get user display name
     const userName=userProfile?.name||(userProfile?.userType==='business'?'Doanh nghiệp':'Người dùng');
     
     return(
         <div className="h-full bg-slate-100 overflow-auto hide-scrollbar pb-24">
-            {/* New Header with customer info - Light gradient background */}
             <div className="header-gradient header-pattern pt-14 pb-6 px-5 safe-top border-b border-gray-200">
                 <div className="flex items-center gap-4">
                     {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-lg"/>:<div className="bg-white p-3 rounded-2xl shadow-lg border border-gray-200"><Logo size={40}/></div>}
@@ -301,8 +302,6 @@ const DashboardScreen=({events,news,onEventClick,membership,savedEvents,personal
                 <h2 className="text-lg font-bold mb-3 text-gray-900 flex items-center gap-2"><div className="w-6 h-6 text-amber-500"><Icons.Newspaper/></div>Tin pháp lý mới</h2>
                 <div className="space-y-2.5">{latestNews.length===0?<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>:latestNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSelectedNews(n)}/>)}</div>
             </div>
-            
-            {/* News Detail Modal - View directly from Dashboard */}
             {selectedNews&&<NewsDetailModal news={selectedNews} onClose={()=>setSelectedNews(null)} onAddToCalendar={onAddToCalendar}/>}
         </div>
     );
@@ -459,11 +458,9 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
     );
 };
 
-// ============ NEWS SCREEN - Newest first ============
+// ============ NEWS SCREEN ============
 const NewsScreen=({newsData,onAddToCalendar})=>{
     const[sel,setSel]=useState(null);
-    
-    // Sort news by ID descending (newest first)
     const sortedNews=[...newsData].sort((a,b)=>b.id-a.id);
     const featuredNews=sortedNews.slice(0,3);
     const otherNews=sortedNews.slice(3);
@@ -481,66 +478,87 @@ const NewsScreen=({newsData,onAddToCalendar})=>{
     );
 };
 
-// ============ SUPPORT SCREEN - With Dropdown Category ============
+// ============ SUPPORT SCREEN - 4 Categories with Beautiful Cards ============
 const SupportScreen=({provinces,agencies})=>{
     const[province,setProvince]=useState(provinces[0]?.id||'');
     const[searchQuery,setSearchQuery]=useState('');
-    const[selectedCategory,setSelectedCategory]=useState('all');
+    const[selectedCategory,setSelectedCategory]=useState('government');
     
     const filteredAgencies=agencies.filter(a=>{
         const matchProvince=a.provinceId===province;
         const matchSearch=a.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchCategory=selectedCategory==='all'||a.category===selectedCategory;
+        const matchCategory=a.category===selectedCategory;
         return matchProvince&&matchSearch&&matchCategory;
     });
     
+    const currentCat=agencyCategories.find(c=>c.id===selectedCategory);
+    
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Headphones/></div></div><h1 className="text-2xl font-bold text-gray-900">Hỗ trợ</h1></div></div>
+            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                    <div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Headphones/></div></div>
+                    <h1 className="text-2xl font-bold text-gray-900">Hỗ trợ</h1>
+                </div>
+            </div>
             <div className="flex-1 overflow-auto hide-scrollbar">
                 <div className="px-5 py-4">
+                    {/* 4 Category Cards - Grid 2x2 */}
+                    <div className="mb-5">
+                        <p className="text-sm font-bold text-gray-800 mb-3">Chọn loại hình dịch vụ</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            {agencyCategories.map(cat=>(
+                                <button key={cat.id} onClick={()=>setSelectedCategory(cat.id)} className={`category-card p-4 rounded-2xl bg-white shadow-sm text-left ${selectedCategory===cat.id?'active':''}`}>
+                                    <div className={`w-12 h-12 ${cat.lightColor} rounded-xl flex items-center justify-center text-2xl mb-3`}>{cat.icon}</div>
+                                    <p className="font-bold text-gray-900 text-sm mb-1">{cat.name}</p>
+                                    <p className="text-xs text-gray-500 line-clamp-2">{cat.desc}</p>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
                     {/* Province Select */}
                     <div className="mb-4">
                         <label className="text-sm font-bold text-gray-800 mb-2 block">Chọn tỉnh/thành phố</label>
                         <div className="relative"><select value={province} onChange={e=>setProvince(e.target.value)} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none appearance-none pr-10 text-gray-900 font-semibold">{provinces.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><div className="w-5 h-5 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown/></div></div>
                     </div>
                     
-                    {/* Category Dropdown */}
-                    <div className="mb-4">
-                        <label className="text-sm font-bold text-gray-800 mb-2 block">Danh mục cơ quan</label>
-                        <div className="relative">
-                            <select value={selectedCategory} onChange={e=>setSelectedCategory(e.target.value)} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none appearance-none pr-10 text-gray-900 font-semibold">
-                                {agencyCategories.map(cat=><option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>)}
-                            </select>
-                            <div className="w-5 h-5 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown/></div>
-                        </div>
-                    </div>
-                    
                     {/* Search */}
                     <div className="mb-4 relative">
                         <div className="w-5 h-5 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Search/></div>
-                        <input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Tìm cơ quan..." className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/>
+                        <input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder={`Tìm ${currentCat?.name?.toLowerCase() || 'cơ quan'}...`} className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/>
+                    </div>
+                    
+                    {/* Results Header */}
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="text-2xl">{currentCat?.icon}</span>
+                        <h2 className="font-bold text-gray-900">{currentCat?.name}</h2>
+                        <span className="text-sm text-gray-500 font-medium">({filteredAgencies.length})</span>
                     </div>
                     
                     {/* Results */}
                     <div className="space-y-3">
-                        {filteredAgencies.length===0?<div className="bg-white rounded-xl p-8 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không tìm thấy cơ quan phù hợp</p></div>:filteredAgencies.map(agency=>{
-                            const catInfo=agencyCategories.find(c=>c.id===agency.category)||{icon:'🏛️',name:agency.category};
-                            return(
-                                <div key={agency.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-12 h-12 bg-navy-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">{catInfo.icon}</div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-gray-900 mb-2">{agency.name}</h3>
-                                            <div className="space-y-1.5">
-                                                <div className="flex items-start gap-2 text-gray-600 text-sm"><div className="w-4 h-4 flex-shrink-0 mt-0.5"><Icons.MapPin/></div><span className="font-medium">{agency.address}</span></div>
-                                                {agency.phone&&<div className="flex items-center gap-2 text-gray-700 text-sm"><div className="w-4 h-4 flex-shrink-0"><Icons.Phone/></div><a href={`tel:${agency.phone}`} className="font-bold text-navy-600">{agency.phone}</a></div>}
-                                            </div>
+                        {filteredAgencies.length===0?(
+                            <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
+                                <div className="text-4xl mb-3">{currentCat?.icon}</div>
+                                <p className="text-gray-500 font-medium">Chưa có dữ liệu {currentCat?.name?.toLowerCase()}</p>
+                                <p className="text-gray-400 text-sm mt-1">Vui lòng liên hệ Admin để cập nhật</p>
+                            </div>
+                        ):filteredAgencies.map(agency=>(
+                            <div key={agency.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
+                                <div className="flex items-start gap-3">
+                                    <div className={`w-12 h-12 ${currentCat?.lightColor||'bg-gray-100'} rounded-xl flex items-center justify-center text-2xl flex-shrink-0`}>{currentCat?.icon}</div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-gray-900 mb-2">{agency.name}</h3>
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-start gap-2 text-gray-600 text-sm"><div className="w-4 h-4 flex-shrink-0 mt-0.5"><Icons.MapPin/></div><span className="font-medium">{agency.address}</span></div>
+                                            {agency.phone&&<div className="flex items-center gap-2 text-sm"><div className="w-4 h-4 flex-shrink-0 text-gray-500"><Icons.Phone/></div><a href={`tel:${agency.phone}`} className="font-bold text-navy-600">{agency.phone}</a></div>}
+                                            {agency.website&&<div className="flex items-center gap-2 text-sm"><div className="w-4 h-4 flex-shrink-0 text-gray-500"><Icons.Globe/></div><a href={agency.website} target="_blank" className="font-semibold text-blue-600 hover:underline">{agency.website}</a></div>}
                                         </div>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
@@ -657,7 +675,7 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
                 
                 <div className="bg-white rounded-2xl px-5 shadow-sm mb-5 border border-gray-200">
                     <h3 className="font-bold pt-5 pb-3 text-gray-900">Về ứng dụng</h3>
-                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.5.0</span></div>
+                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.6.0</span></div>
                     <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Shield/></div><span className="flex-1 text-gray-800 font-semibold">Chính sách bảo mật</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                     <div className="py-4 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.HelpCircle/></div><span className="flex-1 text-gray-800 font-semibold">Liên hệ hỗ trợ</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                 </div>
@@ -676,7 +694,7 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
     );
 };
 
-// ============ TAB BAR - Changed "Cơ quan" to "Hỗ trợ" ============
+// ============ TAB BAR ============
 const TabBar=({activeTab,onTabChange})=>{
     const tabs=[{id:'home',I:Icons.Home,l:'Trang chủ'},{id:'calendar',I:Icons.Calendar,l:'Lịch'},{id:'news',I:Icons.Newspaper,l:'Tin tức'},{id:'support',I:Icons.Headphones,l:'Hỗ trợ'},{id:'settings',I:Icons.Settings,l:'Cài đặt'}];
     return<div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 flex safe-bottom z-40 max-w-lg mx-auto shadow-2xl">{tabs.map(t=><button key={t.id} onClick={()=>onTabChange(t.id)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all ${activeTab===t.id?'text-navy-600':'text-gray-400'}`}><div className="w-6 h-6"><t.I/></div><span className={`text-xs ${activeTab===t.id?'font-bold':'font-semibold'}`}>{t.l}</span></button>)}</div>;
