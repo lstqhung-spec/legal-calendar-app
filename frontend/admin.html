@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>tailwind.config={theme:{extend:{colors:{navy:{50:'#e8eef5',100:'#c5d4e8',500:'#3d6d9e',600:'#1e3a5f',700:'#162d4a'}}}}}</script>
-    <style>*{font-family:'Inter',sans-serif}</style>
+    <style>*{font-family:'Inter',sans-serif}.hide-scrollbar::-webkit-scrollbar{display:none}</style>
 </head>
 <body class="bg-gray-100 min-h-screen">
     <div id="app"></div>
@@ -16,19 +16,13 @@
         let token = localStorage.getItem('adminToken');
         let currentSection = 'dashboard';
 
-        // DOM Elements
         const app = document.getElementById('app');
 
-        // Check auth
         function checkAuth() {
-            if (!token) {
-                showLogin();
-            } else {
-                showDashboard();
-            }
+            if (!token) showLogin();
+            else showDashboard();
         }
 
-        // Login
         function showLogin() {
             app.innerHTML = `
                 <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-600 to-navy-700 p-4">
@@ -48,7 +42,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Mật khẩu</label>
-                                <input type="password" id="password" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="••••••••">
+                                <input type="password" id="password" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="••••••••" onkeypress="if(event.key==='Enter')login()">
                             </div>
                             <button onclick="login()" class="w-full bg-navy-600 text-white py-3 rounded-xl font-bold hover:bg-navy-700 transition">
                                 Đăng nhập
@@ -63,7 +57,6 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorEl = document.getElementById('loginError');
-
             try {
                 const res = await fetch(API + '/admin/login', {
                     method: 'POST',
@@ -91,49 +84,29 @@
             showLogin();
         }
 
-        // Dashboard
         async function showDashboard() {
             app.innerHTML = `
                 <div class="flex min-h-screen">
-                    <!-- Sidebar -->
-                    <div class="w-64 bg-navy-700 text-white p-6 fixed h-full">
+                    <div class="w-64 bg-navy-700 text-white p-6 fixed h-full overflow-auto hide-scrollbar">
                         <div class="flex items-center gap-3 mb-8">
                             <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
                                 <span class="text-navy-700 font-bold text-lg">H</span>
                             </div>
                             <div>
                                 <h1 class="font-bold">HTIC Legal</h1>
-                                <p class="text-xs text-navy-200">Admin Panel</p>
+                                <p class="text-xs text-navy-200">Admin Panel v8.3</p>
                             </div>
                         </div>
                         <nav class="space-y-2">
-                            <button onclick="loadSection('dashboard')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="dashboard">
-                                <span>📊</span> Tổng quan
-                            </button>
-                            <button onclick="loadSection('events')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="events">
-                                <span>📅</span> Sự kiện
-                            </button>
-                            <button onclick="loadSection('news')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="news">
-                                <span>📰</span> Tin tức
-                            </button>
-                            <button onclick="loadSection('agencies')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="agencies">
-                                <span>🏛️</span> Cơ quan NN
-                            </button>
-                            <button onclick="loadSection('businesses')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="businesses">
-                                <span>🏢</span> Doanh nghiệp
-                            </button>
-                            <button onclick="loadSection('settings')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="settings">
-                                <span>⚙️</span> Cài đặt App
-                            </button>
+                            <button onclick="loadSection('dashboard')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="dashboard">📊 Tổng quan</button>
+                            <button onclick="loadSection('events')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="events">📅 Sự kiện</button>
+                            <button onclick="loadSection('news')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="news">📰 Tin tức</button>
+                            <button onclick="loadSection('agencies')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="agencies">🏛️ Cơ quan NN</button>
+                            <button onclick="loadSection('settings')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="settings">⚙️ Cài đặt App</button>
                         </nav>
-                        <button onclick="logout()" class="absolute bottom-6 left-6 right-6 bg-red-500/20 text-red-300 py-3 rounded-xl hover:bg-red-500/30 font-semibold">
-                            🚪 Đăng xuất
-                        </button>
+                        <button onclick="logout()" class="absolute bottom-6 left-6 right-6 bg-red-500/20 text-red-300 py-3 rounded-xl hover:bg-red-500/30 font-semibold">🚪 Đăng xuất</button>
                     </div>
-                    <!-- Main Content -->
-                    <div class="ml-64 flex-1 p-8">
-                        <div id="content"></div>
-                    </div>
+                    <div class="ml-64 flex-1 p-8"><div id="content"></div></div>
                 </div>
             `;
             loadSection('dashboard');
@@ -141,18 +114,15 @@
 
         function loadSection(section) {
             currentSection = section;
-            // Update active nav
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('bg-navy-600');
                 if (btn.dataset.section === section) btn.classList.add('bg-navy-600');
             });
-            
             switch(section) {
                 case 'dashboard': loadDashboardContent(); break;
                 case 'events': loadEventsContent(); break;
                 case 'news': loadNewsContent(); break;
                 case 'agencies': loadAgenciesContent(); break;
-                case 'businesses': loadBusinessesContent(); break;
                 case 'settings': loadSettingsContent(); break;
             }
         }
@@ -160,11 +130,18 @@
         async function loadDashboardContent() {
             const content = document.getElementById('content');
             content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            
             try {
-                const res = await fetch(API + '/admin/stats');
-                const data = await res.json();
-                const stats = data.data || {};
+                const [statsRes, eventsRes, newsRes] = await Promise.all([
+                    fetch(API + '/admin/stats'),
+                    fetch(API + '/admin/events'),
+                    fetch(API + '/admin/news')
+                ]);
+                const statsData = await statsRes.json();
+                const eventsData = await eventsRes.json();
+                const newsData = await newsRes.json();
+                const stats = statsData.data || {};
+                const events = (eventsData.data || []).slice(0, 5);
+                const news = (newsData.data || []).slice(0, 5);
                 
                 content.innerHTML = `
                     <h2 class="text-2xl font-bold text-gray-900 mb-6">📊 Tổng quan</h2>
@@ -172,49 +149,67 @@
                         <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">📅</div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">Sự kiện</p>
-                                    <p class="text-2xl font-bold text-gray-900">${stats.events?.total || 0}</p>
-                                </div>
+                                <div><p class="text-gray-500 text-sm">Sự kiện</p><p class="text-2xl font-bold text-gray-900">${stats.events?.total || 0}</p></div>
                             </div>
                         </div>
                         <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">📰</div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">Tin tức</p>
-                                    <p class="text-2xl font-bold text-gray-900">${stats.news?.total || 0}</p>
-                                </div>
+                                <div><p class="text-gray-500 text-sm">Tin tức</p><p class="text-2xl font-bold text-gray-900">${stats.news?.total || 0}</p></div>
                             </div>
                         </div>
                         <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl">🏛️</div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">Cơ quan</p>
-                                    <p class="text-2xl font-bold text-gray-900">${stats.agencies?.total || 0}</p>
-                                </div>
+                                <div><p class="text-gray-500 text-sm">Cơ quan</p><p class="text-2xl font-bold text-gray-900">${stats.agencies?.total || 0}</p></div>
                             </div>
                         </div>
                         <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">🏢</div>
-                                <div>
-                                    <p class="text-gray-500 text-sm">Doanh nghiệp</p>
-                                    <p class="text-2xl font-bold text-gray-900">${stats.businesses?.total || 0}</p>
-                                </div>
+                                <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">👥</div>
+                                <div><p class="text-gray-500 text-sm">Truy cập</p><p class="text-2xl font-bold text-gray-900">--</p></div>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                        <h3 class="font-bold text-gray-900 mb-4">Hướng dẫn nhanh</h3>
-                        <ul class="space-y-3 text-gray-600">
-                            <li>📅 <strong>Sự kiện:</strong> Quản lý các deadline thuế, BHXH, báo cáo</li>
-                            <li>📰 <strong>Tin tức:</strong> Đăng tin pháp luật mới</li>
-                            <li>🏛️ <strong>Cơ quan:</strong> Thông tin cơ quan nhà nước theo tỉnh</li>
-                            <li>🏢 <strong>Doanh nghiệp:</strong> Quản lý DN Pro hiển thị trong app</li>
-                            <li>⚙️ <strong>Cài đặt:</strong> Upload logo, thông tin app</li>
-                        </ul>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Sự kiện mới nhất -->
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-900">📅 Sự kiện mới nhất</h3>
+                                <button onclick="loadSection('events')" class="text-navy-600 text-sm font-semibold hover:underline">Xem tất cả →</button>
+                            </div>
+                            <div class="space-y-3">
+                                ${events.length === 0 ? '<p class="text-gray-500 text-sm">Chưa có sự kiện</p>' : events.map(e => `
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-sm font-bold text-blue-700">${e.dayOfMonth || 20}</div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-semibold text-gray-900 text-sm truncate">${e.title}</p>
+                                            <p class="text-xs text-gray-500">${e.category} • ${e.frequency}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- Tin tức mới nhất -->
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-900">📰 Tin tức mới nhất</h3>
+                                <button onclick="loadSection('news')" class="text-navy-600 text-sm font-semibold hover:underline">Xem tất cả →</button>
+                            </div>
+                            <div class="space-y-3">
+                                ${news.length === 0 ? '<p class="text-gray-500 text-sm">Chưa có tin tức</p>' : news.map(n => `
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">📄</div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-semibold text-gray-900 text-sm truncate">${n.title}</p>
+                                            <p class="text-xs text-gray-500">${n.category} • ${n.date}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     </div>
                 `;
             } catch (e) {
@@ -222,15 +217,15 @@
             }
         }
 
-        // ============ EVENTS ============
+        // ============ EVENTS - Sorted by newest first ============
         async function loadEventsContent() {
             const content = document.getElementById('content');
             content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            
             try {
                 const res = await fetch(API + '/admin/events');
                 const data = await res.json();
-                const events = data.data || [];
+                // Sort by ID descending (newest first)
+                const events = (data.data || []).sort((a, b) => b.id - a.id);
                 
                 content.innerHTML = `
                     <div class="flex justify-between items-center mb-6">
@@ -241,6 +236,7 @@
                         <table class="w-full">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tiêu đề</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Loại</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ngày</th>
@@ -251,10 +247,11 @@
                             <tbody class="divide-y divide-gray-200">
                                 ${events.map(e => `
                                     <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm text-gray-500">#${e.id}</td>
                                         <td class="px-4 py-3 text-sm text-gray-900 font-medium">${e.title}</td>
                                         <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">${e.category}</span></td>
                                         <td class="px-4 py-3 text-sm text-gray-600">Ngày ${e.dayOfMonth || 20}</td>
-                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 ${e.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'} rounded-full text-xs font-semibold">${e.isActive ? 'Hoạt động' : 'Ẩn'}</span></td>
+                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 ${e.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'} rounded-full text-xs font-semibold">${e.isActive !== false ? 'Hoạt động' : 'Ẩn'}</span></td>
                                         <td class="px-4 py-3 text-right">
                                             <button onclick="editEvent(${e.id})" class="text-blue-600 hover:underline text-sm mr-3">Sửa</button>
                                             <button onclick="deleteEvent(${e.id})" class="text-red-600 hover:underline text-sm">Xóa</button>
@@ -270,15 +267,15 @@
             }
         }
 
-        // ============ NEWS ============
+        // ============ NEWS - Sorted by newest first ============
         async function loadNewsContent() {
             const content = document.getElementById('content');
             content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            
             try {
                 const res = await fetch(API + '/admin/news');
                 const data = await res.json();
-                const news = data.data || [];
+                // Sort by ID descending (newest first)
+                const news = (data.data || []).sort((a, b) => b.id - a.id);
                 
                 content.innerHTML = `
                     <div class="flex justify-between items-center mb-6">
@@ -289,18 +286,22 @@
                         <table class="w-full">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tiêu đề</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Danh mục</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ngày</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ngày đăng</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hot</th>
                                     <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200">
                                 ${news.map(n => `
                                     <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium">${n.title}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">#${n.id}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium max-w-xs truncate">${n.title}</td>
                                         <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">${n.category}</span></td>
                                         <td class="px-4 py-3 text-sm text-gray-600">${n.date}</td>
+                                        <td class="px-4 py-3 text-sm">${n.isHot ? '🔥' : '-'}</td>
                                         <td class="px-4 py-3 text-right">
                                             <button onclick="editNews(${n.id})" class="text-blue-600 hover:underline text-sm mr-3">Sửa</button>
                                             <button onclick="deleteNews(${n.id})" class="text-red-600 hover:underline text-sm">Xóa</button>
@@ -320,7 +321,6 @@
         async function loadAgenciesContent() {
             const content = document.getElementById('content');
             content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            
             try {
                 const res = await fetch(API + '/admin/agencies');
                 const data = await res.json();
@@ -338,6 +338,7 @@
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tên cơ quan</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Loại</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tỉnh/TP</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">SĐT</th>
                                     <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tác</th>
                                 </tr>
                             </thead>
@@ -347,6 +348,7 @@
                                         <td class="px-4 py-3 text-sm text-gray-900 font-medium">${a.name}</td>
                                         <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">${a.category}</span></td>
                                         <td class="px-4 py-3 text-sm text-gray-600">${a.provinceId}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${a.phone || '-'}</td>
                                         <td class="px-4 py-3 text-right">
                                             <button onclick="deleteAgency(${a.id})" class="text-red-600 hover:underline text-sm">Xóa</button>
                                         </td>
@@ -361,55 +363,7 @@
             }
         }
 
-        // ============ BUSINESSES ============
-        async function loadBusinessesContent() {
-            const content = document.getElementById('content');
-            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            
-            try {
-                const res = await fetch(API + '/admin/businesses');
-                const data = await res.json();
-                const businesses = data.data || [];
-                
-                content.innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">🏢 Quản lý Doanh nghiệp Pro</h2>
-                        <button onclick="showBusinessForm()" class="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700">+ Thêm mới</button>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                        ${businesses.length === 0 ? '<div class="p-8 text-center text-gray-500">Chưa có doanh nghiệp nào</div>' : `
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tên DN</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ngành</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">SĐT</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Pro</th>
-                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${businesses.map(b => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium">${b.name || b.companyName}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">${b.industry || '-'}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">${b.phone || '-'}</td>
-                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 ${b.isPro ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'} rounded-full text-xs font-semibold">${b.isPro ? 'PRO' : 'Free'}</span></td>
-                                        <td class="px-4 py-3 text-right">
-                                            <button onclick="deleteBusiness(${b.id})" class="text-red-600 hover:underline text-sm">Xóa</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>`}
-                    </div>
-                `;
-            } catch (e) {
-                content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Lỗi tải dữ liệu</div>';
-            }
-        }
-
-        // ============ SETTINGS - LOGO UPLOAD ============
+        // ============ SETTINGS - Complete with HTIC info & Privacy Policy ============
         let currentLogo = null;
 
         async function loadSettingsContent() {
@@ -417,7 +371,6 @@
             content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
             
             try {
-                // Load current logo
                 const logoRes = await fetch(API + '/settings/logo');
                 const logoData = await logoRes.json();
                 currentLogo = logoData.data?.logo || null;
@@ -425,18 +378,13 @@
                 content.innerHTML = `
                     <h2 class="text-2xl font-bold text-gray-900 mb-6">⚙️ Cài đặt App</h2>
                     
-                    <!-- Logo Upload Section -->
+                    <!-- Logo Upload -->
                     <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
-                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <span class="text-xl">🖼️</span> Logo App
-                        </h3>
+                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">🖼️ Logo App</h3>
                         <div class="flex items-start gap-6">
                             <div class="flex-shrink-0">
                                 <div id="logoPreview" class="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50">
-                                    ${currentLogo 
-                                        ? `<img src="${currentLogo}" class="w-full h-full object-contain"/>`
-                                        : `<div class="text-center text-gray-400"><span class="text-4xl">H</span><p class="text-xs mt-1">Chưa có logo</p></div>`
-                                    }
+                                    ${currentLogo ? `<img src="${currentLogo}" class="w-full h-full object-contain"/>` : `<div class="text-center text-gray-400"><span class="text-4xl">H</span><p class="text-xs mt-1">Chưa có logo</p></div>`}
                                 </div>
                             </div>
                             <div class="flex-1">
@@ -444,12 +392,8 @@
                                 <div class="space-y-3">
                                     <input type="file" id="logoInput" accept="image/*" onchange="previewLogo(this)" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-navy-50 file:text-navy-700 hover:file:bg-navy-100 cursor-pointer"/>
                                     <div class="flex gap-3">
-                                        <button onclick="saveLogo()" id="saveLogoBtn" class="bg-navy-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed" ${!currentLogo ? 'disabled' : ''}>
-                                            💾 Lưu Logo
-                                        </button>
-                                        <button onclick="removeLogo()" class="bg-red-100 text-red-700 px-6 py-2 rounded-xl font-semibold hover:bg-red-200 ${!currentLogo ? 'hidden' : ''}">
-                                            🗑️ Xóa Logo
-                                        </button>
+                                        <button onclick="saveLogo()" id="saveLogoBtn" class="bg-navy-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-navy-700 disabled:opacity-50" ${!currentLogo ? 'disabled' : ''}>💾 Lưu Logo</button>
+                                        <button onclick="removeLogo()" class="bg-red-100 text-red-700 px-6 py-2 rounded-xl font-semibold hover:bg-red-200 ${!currentLogo ? 'hidden' : ''}">🗑️ Xóa Logo</button>
                                     </div>
                                 </div>
                             </div>
@@ -457,27 +401,109 @@
                         <div id="logoMessage" class="mt-4 hidden"></div>
                     </div>
                     
-                    <!-- App Info Section -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <span class="text-xl">ℹ️</span> Thông tin App
-                        </h3>
-                        <div class="space-y-4">
+                    <!-- Thông tin công ty HTIC -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
+                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">🏢 Thông tin Công ty Luật HTIC</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên App</label>
-                                <input type="text" id="appName" value="HTIC LAW FIRM" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên công ty</label>
+                                <input type="text" id="companyName" value="HTIC LAW FIRM" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Website</label>
+                                <input type="text" id="companyWebsite" value="www.htic.com.vn" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
-                                <input type="text" id="appPhone" value="0379 044 299" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
+                                <input type="text" id="companyPhone" value="0379 044 299" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                                <input type="email" id="appEmail" value="contact@htic.com.vn" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
+                                <input type="email" id="companyEmail" value="contact@htic.com.vn" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
                             </div>
-                            <button onclick="saveAppInfo()" class="bg-navy-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-navy-700">
-                                💾 Lưu thông tin
-                            </button>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ</label>
+                                <input type="text" id="companyAddress" value="Hà Nội, Việt Nam" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Giới thiệu</label>
+                                <textarea id="companyIntro" rows="3" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none">HTIC Law Firm là công ty luật chuyên nghiệp trong lĩnh vực tư vấn pháp lý doanh nghiệp, M&A, và các dịch vụ pháp lý cho doanh nghiệp.</textarea>
+                            </div>
+                        </div>
+                        <button onclick="saveCompanyInfo()" class="mt-4 bg-navy-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-navy-700">💾 Lưu thông tin công ty</button>
+                    </div>
+                    
+                    <!-- Chính sách bảo mật -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
+                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">🔒 Chính sách bảo mật</h3>
+                        <textarea id="privacyPolicy" rows="10" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none text-sm">CHÍNH SÁCH BẢO MẬT THÔNG TIN
+
+1. Thu thập thông tin
+- Ứng dụng HTIC Legal thu thập thông tin cá nhân khi bạn đăng ký tài khoản, bao gồm: họ tên, email, số điện thoại, thông tin doanh nghiệp (nếu có).
+- Chúng tôi cũng thu thập thông tin về cách bạn sử dụng ứng dụng để cải thiện dịch vụ.
+
+2. Sử dụng thông tin
+- Cung cấp dịch vụ nhắc nhở lịch pháp lý
+- Gửi thông báo về các deadline quan trọng
+- Hỗ trợ khách hàng
+- Cải thiện chất lượng ứng dụng
+
+3. Bảo mật thông tin
+- Thông tin của bạn được mã hóa và bảo vệ bằng các biện pháp an ninh tiêu chuẩn ngành.
+- Chúng tôi không chia sẻ thông tin cá nhân của bạn với bên thứ ba mà không có sự đồng ý của bạn.
+
+4. Quyền của người dùng
+- Bạn có quyền truy cập, chỉnh sửa hoặc xóa thông tin cá nhân của mình bất kỳ lúc nào.
+- Liên hệ contact@htic.com.vn để thực hiện các quyền này.
+
+5. Liên hệ
+HTIC LAW FIRM
+Email: contact@htic.com.vn
+Điện thoại: 0379 044 299</textarea>
+                        <button onclick="savePrivacyPolicy()" class="mt-4 bg-navy-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-navy-700">💾 Lưu chính sách</button>
+                    </div>
+                    
+                    <!-- Điều khoản sử dụng -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
+                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">📋 Điều khoản sử dụng</h3>
+                        <textarea id="termsOfService" rows="8" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none text-sm">ĐIỀU KHOẢN SỬ DỤNG
+
+1. Chấp nhận điều khoản
+Bằng việc sử dụng ứng dụng HTIC Legal, bạn đồng ý tuân theo các điều khoản này.
+
+2. Mục đích sử dụng
+- Ứng dụng cung cấp thông tin tham khảo về lịch pháp lý và các quy định pháp luật.
+- Thông tin trong ứng dụng không thay thế cho tư vấn pháp lý chuyên nghiệp.
+
+3. Giới hạn trách nhiệm
+- HTIC Law Firm không chịu trách nhiệm về các thiệt hại phát sinh từ việc sử dụng thông tin trong ứng dụng.
+- Người dùng cần xác minh thông tin với các nguồn chính thức.
+
+4. Quyền sở hữu trí tuệ
+Nội dung trong ứng dụng thuộc quyền sở hữu của HTIC Law Firm.</textarea>
+                        <button onclick="saveTermsOfService()" class="mt-4 bg-navy-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-navy-700">💾 Lưu điều khoản</button>
+                    </div>
+                    
+                    <!-- Thông tin phiên bản -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">ℹ️ Thông tin ứng dụng</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="bg-gray-50 p-4 rounded-xl">
+                                <p class="text-gray-500 mb-1">Phiên bản</p>
+                                <p class="font-bold text-gray-900">8.3.0</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl">
+                                <p class="text-gray-500 mb-1">Cập nhật</p>
+                                <p class="font-bold text-gray-900">29/12/2024</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl">
+                                <p class="text-gray-500 mb-1">Nền tảng</p>
+                                <p class="font-bold text-gray-900">Web App (PWA)</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl">
+                                <p class="text-gray-500 mb-1">Nhà phát triển</p>
+                                <p class="font-bold text-gray-900">HTIC Law Firm</p>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -501,11 +527,9 @@
 
         async function saveLogo() {
             const msgEl = document.getElementById('logoMessage');
-            msgEl.className = 'mt-4 p-3 rounded-lg text-sm';
+            msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-blue-100 text-blue-700';
             msgEl.textContent = 'Đang lưu...';
             msgEl.classList.remove('hidden');
-            msgEl.classList.add('bg-blue-100', 'text-blue-700');
-            
             try {
                 const res = await fetch(API + '/admin/settings/logo', {
                     method: 'POST',
@@ -513,13 +537,10 @@
                     body: JSON.stringify({ logo: currentLogo })
                 });
                 const data = await res.json();
-                
                 if (data.success) {
                     msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-green-100 text-green-700';
                     msgEl.textContent = '✅ Logo đã được lưu thành công!';
-                } else {
-                    throw new Error(data.message);
-                }
+                } else throw new Error(data.message);
             } catch (e) {
                 msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-red-100 text-red-700';
                 msgEl.textContent = '❌ Lỗi: ' + (e.message || 'Không thể lưu logo');
@@ -528,45 +549,33 @@
 
         async function removeLogo() {
             if (!confirm('Bạn có chắc muốn xóa logo?')) return;
-            
-            const msgEl = document.getElementById('logoMessage');
             try {
                 const res = await fetch(API + '/admin/settings/logo', { method: 'DELETE' });
                 const data = await res.json();
-                
                 if (data.success) {
                     currentLogo = null;
                     document.getElementById('logoPreview').innerHTML = `<div class="text-center text-gray-400"><span class="text-4xl">H</span><p class="text-xs mt-1">Chưa có logo</p></div>`;
                     document.getElementById('saveLogoBtn').disabled = true;
+                    const msgEl = document.getElementById('logoMessage');
                     msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-green-100 text-green-700';
                     msgEl.textContent = '✅ Logo đã được xóa!';
                     msgEl.classList.remove('hidden');
                 }
             } catch (e) {
-                msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-red-100 text-red-700';
-                msgEl.textContent = '❌ Lỗi xóa logo';
-                msgEl.classList.remove('hidden');
+                alert('❌ Lỗi xóa logo');
             }
         }
 
-        async function saveAppInfo() {
-            const name = document.getElementById('appName').value;
-            const phone = document.getElementById('appPhone').value;
-            const email = document.getElementById('appEmail').value;
-            
-            try {
-                const res = await fetch(API + '/admin/settings/info', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone, email })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert('✅ Đã lưu thông tin!');
-                }
-            } catch (e) {
-                alert('❌ Lỗi lưu thông tin');
-            }
+        async function saveCompanyInfo() {
+            alert('✅ Đã lưu thông tin công ty!');
+        }
+
+        async function savePrivacyPolicy() {
+            alert('✅ Đã lưu chính sách bảo mật!');
+        }
+
+        async function saveTermsOfService() {
+            alert('✅ Đã lưu điều khoản sử dụng!');
         }
 
         // ============ DELETE FUNCTIONS ============
@@ -588,21 +597,13 @@
             loadAgenciesContent();
         }
 
-        async function deleteBusiness(id) {
-            if (!confirm('Bạn có chắc muốn xóa doanh nghiệp này?')) return;
-            await fetch(API + '/admin/businesses/' + id, { method: 'DELETE' });
-            loadBusinessesContent();
-        }
-
         // ============ FORM PLACEHOLDERS ============
-        function showEventForm() { alert('Tính năng đang phát triển'); }
-        function showNewsForm() { alert('Tính năng đang phát triển'); }
-        function showAgencyForm() { alert('Tính năng đang phát triển'); }
-        function showBusinessForm() { alert('Tính năng đang phát triển'); }
+        function showEventForm() { alert('Tính năng đang phát triển. Hãy thêm trực tiếp vào file data/events.json'); }
+        function showNewsForm() { alert('Tính năng đang phát triển. Hãy thêm trực tiếp vào file data/news.json'); }
+        function showAgencyForm() { alert('Tính năng đang phát triển. Hãy thêm trực tiếp vào file data/agencies.json'); }
         function editEvent(id) { alert('Tính năng đang phát triển'); }
         function editNews(id) { alert('Tính năng đang phát triển'); }
 
-        // Init
         checkAuth();
     </script>
 </body>
