@@ -3,430 +3,976 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTIC Legal - Admin Panel</title>
+    <title>Admin - HTIC Legal App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script>tailwind.config={theme:{extend:{colors:{navy:{50:'#e8eef5',100:'#c5d4e8',200:'#9db5d6',600:'#1e3a5f',700:'#162d4a'}}}}}</script>
-    <style>*{font-family:'Inter',sans-serif}.hide-scrollbar::-webkit-scrollbar{display:none}</style>
+    <script>tailwind.config={theme:{extend:{colors:{navy:{50:'#e8eef5',100:'#c5d4e8',500:'#3d6d9e',600:'#1e3a5f',700:'#162d4a'}}}}}</script>
+    <style>*{font-family:'Inter',sans-serif}.hide-scrollbar::-webkit-scrollbar{display:none}.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:50}</style>
 </head>
-<body class="bg-gray-100">
-<div id="root"></div>
-<script type="text/babel">
-const{useState,useEffect}=React;
-const API='/api';
+<body class="bg-gray-100 min-h-screen">
+    <div id="app"></div>
+    <div id="modal-root"></div>
+    <script>
+        const API = '/api';
+        let token = localStorage.getItem('adminToken');
+        let currentSection = 'dashboard';
 
-// 4 Danh mục tổ chức pháp lý - khớp với index.html
-const AGENCY_CATEGORIES=[
-    {id:'government',name:'Cơ quan Nhà nước'},
-    {id:'lawfirm',name:'VP Luật sư / Công ty Luật'},
-    {id:'notary',name:'Văn phòng Công chứng'},
-    {id:'bailiff',name:'VP Thừa phát lại'}
-];
+        const app = document.getElementById('app');
+        const modalRoot = document.getElementById('modal-root');
 
-const EVENT_CATEGORIES=[
-    {id:'tax',name:'Thuế'},
-    {id:'insurance',name:'BHXH'},
-    {id:'report',name:'Báo cáo'},
-    {id:'license',name:'Giấy phép'}
-];
+        // Extended categories for 2026 legal calendar
+        const CATEGORIES = [
+            { id: 'tax', name: 'Thue', icon: '💰', color: 'blue' },
+            { id: 'insurance', name: 'Bao hiem', icon: '🏥', color: 'green' },
+            { id: 'labor', name: 'Lao dong', icon: '👷', color: 'orange' },
+            { id: 'safety', name: 'An toan', icon: '🛡️', color: 'red' },
+            { id: 'environment', name: 'Moi truong', icon: '🌿', color: 'emerald' },
+            { id: 'investment', name: 'Dau tu', icon: '📈', color: 'purple' },
+            { id: 'report', name: 'Bao cao', icon: '📊', color: 'indigo' },
+            { id: 'license', name: 'Giay phep', icon: '📋', color: 'gray' }
+        ];
 
-const FREQUENCIES=[
-    {id:'monthly',name:'Hàng tháng'},
-    {id:'quarterly',name:'Hàng quý'},
-    {id:'yearly',name:'Hàng năm'}
-];
+        const FREQUENCIES = [
+            { id: 'once', name: 'Mot lan (co ngay cu the)' },
+            { id: 'monthly', name: 'Hang thang' },
+            { id: 'quarterly', name: 'Hang quy' },
+            { id: 'yearly', name: 'Hang nam' }
+        ];
 
-// Login Screen
-const LoginScreen=({onLogin})=>{
-    const[username,setUsername]=useState('');
-    const[password,setPassword]=useState('');
-    const[error,setError]=useState('');
-    const[loading,setLoading]=useState(false);
+        const NEWS_CATEGORIES = ['Thue', 'BHXH', 'Doanh nghiep', 'Lao dong', 'Phap luat'];
 
-    const handleSubmit=async(e)=>{
-        e.preventDefault();
-        setLoading(true);setError('');
-        try{
-            const res=await fetch(API+'/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
-            const data=await res.json();
-            if(data.success){localStorage.setItem('adminToken',data.token);onLogin();}
-            else setError(data.message||'Sai thông tin đăng nhập');
-        }catch(err){setError('Không thể kết nối server');}
-        setLoading(false);
-    };
+        const AGENCY_CATEGORIES = [
+            {id: 'government', name: 'Co quan Nha nuoc'},
+            {id: 'lawfirm', name: 'VP Luat su / Cong ty Luat'},
+            {id: 'notary', name: 'Van phong Cong chung'},
+            {id: 'bailiff', name: 'VP Thua phat lai'}
+        ];
 
-    return(
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-600 to-navy-700 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-                <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-navy-600 rounded-2xl flex items-center justify-center mx-auto mb-4"><span className="text-white text-3xl font-bold">H</span></div>
-                    <h1 className="text-2xl font-bold text-gray-900">HTIC Legal Admin</h1>
-                    <p className="text-gray-500 mt-2">Đăng nhập để quản lý</p>
-                </div>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div><label className="block text-sm font-semibold text-gray-700 mb-2">Tên đăng nhập</label><input type="text" value={username} onChange={e=>setUsername(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-600 focus:outline-none" placeholder="admin" required/></div>
-                    <div><label className="block text-sm font-semibold text-gray-700 mb-2">Mật khẩu</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-600 focus:outline-none" placeholder="••••••••" required/></div>
-                    {error&&<p className="text-red-500 text-sm font-medium">{error}</p>}
-                    <button type="submit" disabled={loading} className="w-full py-3 bg-navy-600 text-white font-bold rounded-xl hover:bg-navy-700 disabled:opacity-50">{loading?'Đang đăng nhập...':'Đăng nhập'}</button>
-                </form>
-            </div>
-        </div>
-    );
-};
+        const PROVINCES = [
+            {id: 'hanoi', name: 'Ha Noi'},
+            {id: 'hcm', name: 'TP. Ho Chi Minh'},
+            {id: 'danang', name: 'Da Nang'},
+            {id: 'haiphong', name: 'Hai Phong'},
+            {id: 'cantho', name: 'Can Tho'},
+            {id: 'binhduong', name: 'Binh Duong'},
+            {id: 'dongnai', name: 'Dong Nai'},
+            {id: 'nghean', name: 'Nghe An'},
+            {id: 'thanhhoa', name: 'Thanh Hoa'},
+            {id: 'haiduong', name: 'Hai Duong'}
+        ];
 
-// Modal Component
-const Modal=({title,onClose,children})=>(
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-        <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto" onClick={e=>e.stopPropagation()}>
-            <div className="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600">✕</button>
-            </div>
-            <div className="p-6">{children}</div>
-        </div>
-    </div>
-);
+        function checkAuth() {
+            if (!token) showLogin();
+            else showDashboard();
+        }
 
-// Dashboard Component
-const Dashboard=({onLogout})=>{
-    const[activeTab,setActiveTab]=useState('events');
-    const[stats,setStats]=useState({events:{total:0},news:{total:0},agencies:{total:0}});
-    const[events,setEvents]=useState([]);
-    const[news,setNews]=useState([]);
-    const[agencies,setAgencies]=useState([]);
-    const[provinces,setProvinces]=useState([]);
-    const[showModal,setShowModal]=useState(null);
-    const[editItem,setEditItem]=useState(null);
-    const[loading,setLoading]=useState(true);
-
-    // Fetch data
-    useEffect(()=>{
-        const fetchAll=async()=>{
-            try{
-                const[statsRes,eventsRes,newsRes,agenciesRes,provincesRes]=await Promise.all([
-                    fetch(API+'/admin/stats'),
-                    fetch(API+'/admin/events'),
-                    fetch(API+'/admin/news'),
-                    fetch(API+'/admin/agencies'),
-                    fetch(API+'/provinces')
-                ]);
-                const[statsData,eventsData,newsData,agenciesData,provincesData]=await Promise.all([
-                    statsRes.json(),eventsRes.json(),newsRes.json(),agenciesRes.json(),provincesRes.json()
-                ]);
-                if(statsData.success)setStats(statsData.data);
-                if(eventsData.success)setEvents(eventsData.data);
-                if(newsData.success)setNews(newsData.data);
-                if(agenciesData.success)setAgencies(agenciesData.data);
-                if(provincesData.success)setProvinces(provincesData.data);
-            }catch(err){console.error(err);}
-            setLoading(false);
-        };
-        fetchAll();
-    },[]);
-
-    // CRUD Functions
-    const saveEvent=async(data)=>{
-        const method=editItem?'PUT':'POST';
-        const url=editItem?`${API}/admin/events/${editItem.id}`:`${API}/admin/events`;
-        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-        const result=await res.json();
-        if(result.success){
-            if(editItem)setEvents(events.map(e=>e.id===editItem.id?result.data:e));
-            else setEvents([...events,result.data]);
-            setShowModal(null);setEditItem(null);
-        }else alert(result.message);
-    };
-
-    const deleteEvent=async(id)=>{
-        if(!confirm('Xác nhận xóa?'))return;
-        const res=await fetch(`${API}/admin/events/${id}`,{method:'DELETE'});
-        const result=await res.json();
-        if(result.success)setEvents(events.filter(e=>e.id!==id));
-    };
-
-    const saveNews=async(data)=>{
-        const method=editItem?'PUT':'POST';
-        const url=editItem?`${API}/admin/news/${editItem.id}`:`${API}/admin/news`;
-        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-        const result=await res.json();
-        if(result.success){
-            if(editItem)setNews(news.map(n=>n.id===editItem.id?result.data:n));
-            else setNews([...news,result.data]);
-            setShowModal(null);setEditItem(null);
-        }else alert(result.message);
-    };
-
-    const deleteNews=async(id)=>{
-        if(!confirm('Xác nhận xóa?'))return;
-        const res=await fetch(`${API}/admin/news/${id}`,{method:'DELETE'});
-        const result=await res.json();
-        if(result.success)setNews(news.filter(n=>n.id!==id));
-    };
-
-    const saveAgency=async(data)=>{
-        const method=editItem?'PUT':'POST';
-        const url=editItem?`${API}/admin/agencies/${editItem.id}`:`${API}/admin/agencies`;
-        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-        const result=await res.json();
-        if(result.success){
-            if(editItem)setAgencies(agencies.map(a=>a.id===editItem.id?result.data:a));
-            else setAgencies([...agencies,result.data]);
-            setShowModal(null);setEditItem(null);
-        }else alert(result.message);
-    };
-
-    const deleteAgency=async(id)=>{
-        if(!confirm('Xác nhận xóa?'))return;
-        const res=await fetch(`${API}/admin/agencies/${id}`,{method:'DELETE'});
-        const result=await res.json();
-        if(result.success)setAgencies(agencies.filter(a=>a.id!==id));
-    };
-
-    // Event Form
-    const EventForm=()=>{
-        const[form,setForm]=useState(editItem||{title:'',category:'tax',frequency:'monthly',dayOfMonth:20,month:1,description:'',legalReference:'',penalty:''});
-        return(
-            <form onSubmit={e=>{e.preventDefault();saveEvent(form);}} className="space-y-4">
-                <div><label className="block text-sm font-semibold mb-2">Tiêu đề *</label><input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} className="w-full p-3 border-2 rounded-xl" required/></div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-semibold mb-2">Danh mục</label><select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full p-3 border-2 rounded-xl">{EVENT_CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-                    <div><label className="block text-sm font-semibold mb-2">Tần suất</label><select value={form.frequency} onChange={e=>setForm({...form,frequency:e.target.value})} className="w-full p-3 border-2 rounded-xl">{FREQUENCIES.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-semibold mb-2">Ngày trong tháng</label><input type="number" min="1" max="31" value={form.dayOfMonth} onChange={e=>setForm({...form,dayOfMonth:parseInt(e.target.value)})} className="w-full p-3 border-2 rounded-xl"/></div>
-                    {form.frequency==='yearly'&&<div><label className="block text-sm font-semibold mb-2">Tháng</label><input type="number" min="1" max="12" value={form.month} onChange={e=>setForm({...form,month:parseInt(e.target.value)})} className="w-full p-3 border-2 rounded-xl"/></div>}
-                </div>
-                <div><label className="block text-sm font-semibold mb-2">Mô tả</label><textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={3} className="w-full p-3 border-2 rounded-xl"/></div>
-                <div><label className="block text-sm font-semibold mb-2">Căn cứ pháp lý</label><input value={form.legalReference} onChange={e=>setForm({...form,legalReference:e.target.value})} className="w-full p-3 border-2 rounded-xl"/></div>
-                <div><label className="block text-sm font-semibold mb-2">Mức phạt</label><input value={form.penalty} onChange={e=>setForm({...form,penalty:e.target.value})} className="w-full p-3 border-2 rounded-xl"/></div>
-                <button type="submit" className="w-full py-3 bg-navy-600 text-white font-bold rounded-xl hover:bg-navy-700">{editItem?'Cập nhật':'Thêm mới'}</button>
-            </form>
-        );
-    };
-
-    // News Form
-    const NewsForm=()=>{
-        const[form,setForm]=useState(editItem||{title:'',category:'Thuế',date:new Date().toLocaleDateString('vi-VN'),summary:'',content:'',image:'',isHot:false});
-        return(
-            <form onSubmit={e=>{e.preventDefault();saveNews(form);}} className="space-y-4">
-                <div><label className="block text-sm font-semibold mb-2">Tiêu đề *</label><input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} className="w-full p-3 border-2 rounded-xl" required/></div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-semibold mb-2">Danh mục</label><input value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="Thuế, BHXH, Lao dong..."/></div>
-                    <div><label className="block text-sm font-semibold mb-2">Ngày</label><input value={form.date} onChange={e=>setForm({...form,date:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="25/12/2024"/></div>
-                </div>
-                <div><label className="block text-sm font-semibold mb-2">Tóm tắt *</label><textarea value={form.summary} onChange={e=>setForm({...form,summary:e.target.value})} rows={2} className="w-full p-3 border-2 rounded-xl" required/></div>
-                <div><label className="block text-sm font-semibold mb-2">Nội dung</label><textarea value={form.content} onChange={e=>setForm({...form,content:e.target.value})} rows={4} className="w-full p-3 border-2 rounded-xl"/></div>
-                <div><label className="block text-sm font-semibold mb-2">URL hình ảnh</label><input value={form.image} onChange={e=>setForm({...form,image:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="https://..."/></div>
-                <label className="flex items-center gap-2"><input type="checkbox" checked={form.isHot} onChange={e=>setForm({...form,isHot:e.target.checked})} className="w-5 h-5"/><span className="font-semibold">🔥 Tin nổi bật</span></label>
-                <button type="submit" className="w-full py-3 bg-navy-600 text-white font-bold rounded-xl hover:bg-navy-700">{editItem?'Cập nhật':'Thêm mới'}</button>
-            </form>
-        );
-    };
-
-    // Agency Form - Updated with 4 new categories
-    const AgencyForm=()=>{
-        const[form,setForm]=useState(editItem||{name:'',category:'government',provinceId:provinces[0]?.id||'',address:'',phone:'',website:''});
-        return(
-            <form onSubmit={e=>{e.preventDefault();saveAgency(form);}} className="space-y-4">
-                <div><label className="block text-sm font-semibold mb-2">Tên tổ chức *</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full p-3 border-2 rounded-xl" required placeholder="VD: Cục Thuế TP. Hà Nội"/></div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-semibold mb-2">Loại hình *</label>
-                        <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full p-3 border-2 rounded-xl">
-                            {AGENCY_CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold mb-2">Tỉnh/TP *</label>
-                        <select value={form.provinceId} onChange={e=>setForm({...form,provinceId:e.target.value})} className="w-full p-3 border-2 rounded-xl">
-                            {provinces.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
-                    </div>
-                </div>
-                <div><label className="block text-sm font-semibold mb-2">Địa chỉ *</label><input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} className="w-full p-3 border-2 rounded-xl" required placeholder="Số nhà, đường, quận/huyện"/></div>
-                <div><label className="block text-sm font-semibold mb-2">Số điện thoại</label><input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="024 1234 5678"/></div>
-                <div><label className="block text-sm font-semibold mb-2">Website</label><input value={form.website} onChange={e=>setForm({...form,website:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="www.example.com"/></div>
-                <button type="submit" className="w-full py-3 bg-navy-600 text-white font-bold rounded-xl hover:bg-navy-700">{editItem?'Cập nhật':'Thêm mới'}</button>
-            </form>
-        );
-    };
-
-    if(loading)return<div className="min-h-screen flex items-center justify-center"><p className="text-xl font-bold text-gray-600">Đang tải...</p></div>;
-
-    const tabs=[
-        {id:'events',name:'Sự kiện pháp lý',icon:'📅',count:stats.events?.total||0},
-        {id:'news',name:'Tin tức',icon:'📰',count:stats.news?.total||0},
-        {id:'agencies',name:'Tổ chức pháp lý',icon:'🏛️',count:stats.agencies?.total||0},
-        {id:'settings',name:'Cài đặt',icon:'⚙️'}
-    ];
-
-    return(
-        <div className="min-h-screen bg-gray-100">
-            {/* Header */}
-            <header className="bg-navy-600 text-white px-6 py-4 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center"><span className="text-navy-600 font-bold text-xl">H</span></div>
-                    <div><h1 className="font-bold text-lg">HTIC Legal Admin</h1><p className="text-sm text-white/70">Quản lý hệ thống</p></div>
-                </div>
-                <button onClick={onLogout} className="bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/30">Đăng xuất</button>
-            </header>
-
-            <div className="flex">
-                {/* Sidebar */}
-                <aside className="w-64 bg-white min-h-[calc(100vh-72px)] border-r p-4">
-                    <nav className="space-y-2">
-                        {tabs.map(t=>(
-                            <button key={t.id} onClick={()=>setActiveTab(t.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold transition-all ${activeTab===t.id?'bg-navy-600 text-white':'text-gray-700 hover:bg-gray-100'}`}>
-                                <span className="text-xl">{t.icon}</span>
-                                <span className="flex-1">{t.name}</span>
-                                {t.count!==undefined&&<span className={`text-sm px-2 py-0.5 rounded-full ${activeTab===t.id?'bg-white/20':'bg-gray-200'}`}>{t.count}</span>}
+        function showLogin() {
+            app.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-600 to-navy-700 p-4">
+                    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+                        <div class="text-center mb-8">
+                            <div class="w-20 h-20 bg-gradient-to-br from-navy-600 to-navy-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <span class="text-white text-3xl font-bold">H</span>
+                            </div>
+                            <h1 class="text-2xl font-bold text-gray-900">HTIC Legal Admin</h1>
+                            <p class="text-gray-500 mt-2">Dang nhap de quan ly</p>
+                        </div>
+                        <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm"></div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Ten dang nhap</label>
+                                <input type="text" id="username" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="admin">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mat khau</label>
+                                <input type="password" id="password" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="********" onkeypress="if(event.key==='Enter')login()">
+                            </div>
+                            <button onclick="login()" class="w-full bg-navy-600 text-white py-3 rounded-xl font-bold hover:bg-navy-700 transition">
+                                Dang nhap
                             </button>
-                        ))}
-                    </nav>
-                </aside>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-                {/* Main Content */}
-                <main className="flex-1 p-6">
-                    {/* Events Tab */}
-                    {activeTab==='events'&&(
-                        <div>
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900">Quản lý Sự kiện pháp lý</h2>
-                                <button onClick={()=>{setEditItem(null);setShowModal('event');}} className="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700">+ Thêm sự kiện</button>
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('loginError');
+            try {
+                const res = await fetch(API + '/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    token = data.token;
+                    localStorage.setItem('adminToken', token);
+                    showDashboard();
+                } else {
+                    errorEl.textContent = data.message || 'Dang nhap that bai';
+                    errorEl.classList.remove('hidden');
+                }
+            } catch (e) {
+                errorEl.textContent = 'Loi ket noi server';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            token = null;
+            localStorage.removeItem('adminToken');
+            showLogin();
+        }
+
+        async function showDashboard() {
+            app.innerHTML = `
+                <div class="flex min-h-screen">
+                    <div class="w-64 bg-navy-700 text-white p-6 fixed h-full overflow-auto hide-scrollbar">
+                        <div class="flex items-center gap-3 mb-8">
+                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+                                <span class="text-navy-700 font-bold text-lg">H</span>
                             </div>
-                            <div className="bg-white rounded-2xl shadow overflow-hidden">
-                                <table className="w-full">
-                                    <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left font-semibold text-gray-700">Tiêu đề</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Danh mục</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Tần suất</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Ngày</th><th className="px-4 py-3"></th></tr></thead>
-                                    <tbody className="divide-y">
-                                        {events.map(e=>(
-                                            <tr key={e.id} className="hover:bg-gray-50">
-                                                <td className="px-4 py-3 font-medium">{e.title}</td>
-                                                <td className="px-4 py-3"><span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm font-semibold">{EVENT_CATEGORIES.find(c=>c.id===e.category)?.name||e.category}</span></td>
-                                                <td className="px-4 py-3 text-gray-600">{FREQUENCIES.find(f=>f.id===e.frequency)?.name||e.frequency}</td>
-                                                <td className="px-4 py-3 text-gray-600">Ngày {e.dayOfMonth}{e.month?`/${e.month}`:''}</td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <button onClick={()=>{setEditItem(e);setShowModal('event');}} className="text-blue-600 hover:underline mr-3">Sửa</button>
-                                                    <button onClick={()=>deleteEvent(e.id)} className="text-red-600 hover:underline">Xóa</button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div>
+                                <h1 class="font-bold">HTIC Legal</h1>
+                                <p class="text-xs text-navy-200">Admin Panel v8.8</p>
                             </div>
                         </div>
-                    )}
+                        <nav class="space-y-2">
+                            <button onclick="loadSection('dashboard')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="dashboard">📊 Tong quan</button>
+                            <button onclick="loadSection('events')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="events">📅 Lich phap ly</button>
+                            <button onclick="loadSection('news')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="news">📰 Tin tuc</button>
+                            <button onclick="loadSection('agencies')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="agencies">🏛️ Ho tro</button>
+                            <button onclick="loadSection('settings')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="settings">⚙️ Cai dat</button>
+                        </nav>
+                        <button onclick="logout()" class="absolute bottom-6 left-6 right-6 bg-red-500/20 text-red-300 py-3 rounded-xl hover:bg-red-500/30 font-semibold">🚪 Dang xuat</button>
+                    </div>
+                    <div class="ml-64 flex-1 p-8"><div id="content"></div></div>
+                </div>
+            `;
+            loadSection('dashboard');
+        }
 
-                    {/* News Tab */}
-                    {activeTab==='news'&&(
-                        <div>
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold text-gray-900">Quản lý Tin tức</h2>
-                                <button onClick={()=>{setEditItem(null);setShowModal('news');}} className="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700">+ Thêm tin</button>
-                            </div>
-                            <div className="bg-white rounded-2xl shadow overflow-hidden">
-                                <table className="w-full">
-                                    <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left font-semibold text-gray-700">Tiêu đề</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Danh mục</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Ngày</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Hot</th><th className="px-4 py-3"></th></tr></thead>
-                                    <tbody className="divide-y">
-                                        {news.sort((a,b)=>b.id-a.id).map(n=>(
-                                            <tr key={n.id} className="hover:bg-gray-50">
-                                                <td className="px-4 py-3 font-medium">{n.title}</td>
-                                                <td className="px-4 py-3"><span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm font-semibold">{n.category}</span></td>
-                                                <td className="px-4 py-3 text-gray-600">{n.date}</td>
-                                                <td className="px-4 py-3">{n.isHot&&<span className="text-orange-500">🔥</span>}</td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <button onClick={()=>{setEditItem(n);setShowModal('news');}} className="text-blue-600 hover:underline mr-3">Sửa</button>
-                                                    <button onClick={()=>deleteNews(n.id)} className="text-red-600 hover:underline">Xóa</button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
+        function loadSection(section) {
+            currentSection = section;
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-navy-600');
+                if (btn.dataset.section === section) btn.classList.add('bg-navy-600');
+            });
+            switch(section) {
+                case 'dashboard': loadDashboardContent(); break;
+                case 'events': loadEventsContent(); break;
+                case 'news': loadNewsContent(); break;
+                case 'agencies': loadAgenciesContent(); break;
+                case 'settings': loadSettingsContent(); break;
+            }
+        }
 
-                    {/* Agencies Tab - Updated */}
-                    {activeTab==='agencies'&&(
-                        <div>
-                            <div className="flex justify-between items-center mb-6">
+        // ============ DASHBOARD ============
+        async function loadDashboardContent() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
+            try {
+                const [eventsRes, newsRes, agenciesRes] = await Promise.all([
+                    fetch(API + '/admin/events'),
+                    fetch(API + '/admin/news'),
+                    fetch(API + '/admin/agencies')
+                ]);
+                const events = (await eventsRes.json()).data || [];
+                const news = (await newsRes.json()).data || [];
+                const agencies = (await agenciesRes.json()).data || [];
+
+                const catCounts = {};
+                CATEGORIES.forEach(c => catCounts[c.id] = 0);
+                events.forEach(e => { if (catCounts[e.category] !== undefined) catCounts[e.category]++; });
+
+                const monthCounts = {};
+                events.forEach(e => {
+                    if (e.date && e.date.startsWith('2026-')) {
+                        const m = e.date.substring(5, 7);
+                        monthCounts[m] = (monthCounts[m] || 0) + 1;
+                    }
+                });
+
+                content.innerHTML = `
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">📊 Tong quan he thong</h2>
+                    
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-2xl">📅</div>
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">Quản lý Tổ chức pháp lý</h2>
-                                    <p className="text-gray-500 mt-1">4 loại hình: Cơ quan Nhà nước, VP Luật sư, VP Công chứng, VP Thừa phát lại</p>
+                                    <p class="text-3xl font-bold text-gray-900">${events.length}</p>
+                                    <p class="text-sm text-gray-500">Su kien 2026</p>
                                 </div>
-                                <button onClick={()=>{setEditItem(null);setShowModal('agency');}} className="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700">+ Thêm tổ chức</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center text-2xl">📰</div>
+                                <div>
+                                    <p class="text-3xl font-bold text-gray-900">${news.length}</p>
+                                    <p class="text-sm text-gray-500">Tin tuc</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center text-2xl">🏛️</div>
+                                <div>
+                                    <p class="text-3xl font-bold text-gray-900">${agencies.length}</p>
+                                    <p class="text-sm text-gray-500">Co quan</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <div class="flex items-center gap-4">
+                                <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-2xl">📋</div>
+                                <div>
+                                    <p class="text-3xl font-bold text-gray-900">${CATEGORIES.length}</p>
+                                    <p class="text-sm text-gray-500">Danh muc</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <h3 class="font-bold text-gray-900 mb-4">📊 Su kien theo danh muc</h3>
+                            <div class="space-y-3">
+                                ${CATEGORIES.map(c => `
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">${c.icon}</span>
+                                            <span class="text-sm text-gray-700">${c.name}</span>
+                                        </div>
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-bold">${catCounts[c.id] || 0}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <h3 class="font-bold text-gray-900 mb-4">📅 Su kien theo thang 2026</h3>
+                            <div class="grid grid-cols-4 gap-2">
+                                ${['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => `
+                                    <div class="text-center p-3 bg-gray-50 rounded-xl">
+                                        <p class="text-xs text-gray-500">T${parseInt(m)}</p>
+                                        <p class="text-lg font-bold text-gray-900">${monthCounts[m] || 0}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-900">📅 Su kien sap toi</h3>
+                                <button onclick="loadSection('events')" class="text-navy-600 text-sm font-semibold hover:underline">Xem tat ca</button>
+                            </div>
+                            <div class="space-y-3">
+                                ${events.filter(e => e.date).sort((a,b) => a.date.localeCompare(b.date)).slice(0, 5).map(e => `
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-sm font-bold text-blue-700">${e.date ? e.date.substring(8,10) : e.dayOfMonth || 20}</div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-semibold text-gray-900 text-sm truncate">${e.title}</p>
+                                            <p class="text-xs text-gray-500">${e.category} - ${e.date ? e.date.substring(5,7) + '/2026' : e.frequency}</p>
+                                        </div>
+                                    </div>
+                                `).join('') || '<p class="text-gray-500 text-sm">Chua co su kien</p>'}
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-900">📰 Tin tuc moi nhat</h3>
+                                <button onclick="loadSection('news')" class="text-navy-600 text-sm font-semibold hover:underline">Xem tat ca</button>
+                            </div>
+                            <div class="space-y-3">
+                                ${news.slice(0, 5).map(n => `
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">📄</div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-semibold text-gray-900 text-sm truncate">${n.title}</p>
+                                            <p class="text-xs text-gray-500">${n.category} - ${n.date}</p>
+                                        </div>
+                                    </div>
+                                `).join('') || '<p class="text-gray-500 text-sm">Chua co tin tuc</p>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Loi tai du lieu</div>';
+            }
+        }
+
+        // ============ EVENTS (LICH PHAP LY 2026) ============
+        let eventsFilter = { month: '', category: '', search: '' };
+        
+        async function loadEventsContent() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
+            try {
+                const res = await fetch(API + '/admin/events');
+                const data = await res.json();
+                let events = (data.data || []);
+                
+                if (eventsFilter.month) {
+                    events = events.filter(e => e.date && e.date.substring(5,7) === eventsFilter.month);
+                }
+                if (eventsFilter.category) {
+                    events = events.filter(e => e.category === eventsFilter.category);
+                }
+                if (eventsFilter.search) {
+                    const s = eventsFilter.search.toLowerCase();
+                    events = events.filter(e => e.title.toLowerCase().includes(s));
+                }
+                
+                events.sort((a, b) => {
+                    if (a.date && b.date) return a.date.localeCompare(b.date);
+                    return 0;
+                });
+                
+                const totalCount = (data.data || []).length;
+                
+                content.innerHTML = `
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">📅 Lich phap ly 2026</h2>
+                            <p class="text-sm text-gray-500 mt-1">Tong cong ${totalCount} su kien - Hien thi ${events.length} su kien</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="showImportModal()" class="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-green-700 flex items-center gap-2">
+                                📥 Import JSON
+                            </button>
+                            <button onclick="showEventForm()" class="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700 flex items-center gap-2">
+                                ➕ Them moi
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 mb-6">
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <div class="flex-1 min-w-[200px]">
+                                <input type="text" id="filterSearch" value="${eventsFilter.search}" 
+                                    placeholder="Tim kiem theo ten su kien..." 
+                                    class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"
+                                    onkeyup="eventsFilter.search=this.value; loadEventsContent()">
+                            </div>
+                            <div>
+                                <select id="filterMonth" onchange="eventsFilter.month=this.value; loadEventsContent()" 
+                                    class="p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
+                                    <option value="">-- Tat ca thang --</option>
+                                    ${['01','02','03','04','05','06','07','08','09','10','11','12'].map(m => 
+                                        `<option value="${m}" ${eventsFilter.month === m ? 'selected' : ''}>Thang ${parseInt(m)}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <select id="filterCategory" onchange="eventsFilter.category=this.value; loadEventsContent()" 
+                                    class="p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
+                                    <option value="">-- Tat ca danh muc --</option>
+                                    ${CATEGORIES.map(c => 
+                                        `<option value="${c.id}" ${eventsFilter.category === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            <button onclick="eventsFilter={month:'',category:'',search:''}; loadEventsContent()" 
+                                class="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-semibold">
+                                Xoa bo loc
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tieu de</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Loai</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ngay</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tac</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${events.map(e => {
+                                    const cat = CATEGORIES.find(c => c.id === e.category) || {icon:'📌', name: e.category};
+                                    return `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm text-gray-500">#${e.id}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium max-w-xs truncate" title="${e.title}">${e.title}</td>
+                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">${cat.icon} ${cat.name}</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${e.date ? formatDate(e.date) : 'Ngay ' + (e.dayOfMonth || 20)}</td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button onclick="editEvent(${e.id})" class="text-blue-600 hover:underline text-sm mr-3">Sua</button>
+                                            <button onclick="deleteEvent(${e.id})" class="text-red-600 hover:underline text-sm">Xoa</button>
+                                        </td>
+                                    </tr>
+                                `}).join('')}
+                            </tbody>
+                        </table>
+                        ${events.length === 0 ? '<div class="p-8 text-center text-gray-500">Khong tim thay su kien nao</div>' : ''}
+                    </div>
+                `;
+            } catch (e) {
+                content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Loi tai du lieu</div>';
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        function showEventForm(eventData = null) {
+            const isEdit = eventData !== null;
+            const isOnce = !eventData || eventData.frequency === 'once' || eventData.date;
+            
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal(event)">
+                    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-auto m-4" onclick="event.stopPropagation()">
+                        <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-gray-900">${isEdit ? 'Sua su kien' : 'Them su kien moi'}</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">X</button>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tieu de *</label>
+                                <input type="text" id="eventTitle" value="${eventData?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="VD: Nop to khai thue GTGT thang">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Danh muc *</label>
+                                    <select id="eventCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
+                                        ${CATEGORIES.map(c => `<option value="${c.id}" ${eventData?.category === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Chu ky *</label>
+                                    <select id="eventFrequency" onchange="toggleDateFields(this.value)" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
+                                        ${FREQUENCIES.map(f => `<option value="${f.id}" ${(eventData?.frequency === f.id || (isOnce && f.id === 'once')) ? 'selected' : ''}>${f.name}</option>`).join('')}
+                                    </select>
+                                </div>
                             </div>
                             
-                            {/* Stats by category */}
-                            <div className="grid grid-cols-4 gap-4 mb-6">
-                                {AGENCY_CATEGORIES.map(cat=>{
-                                    const count=agencies.filter(a=>a.category===cat.id).length;
-                                    return(
-                                        <div key={cat.id} className="bg-white rounded-xl p-4 shadow">
-                                            <p className="text-sm text-gray-500 font-medium">{cat.name}</p>
-                                            <p className="text-2xl font-bold text-gray-900">{count}</p>
-                                        </div>
-                                    );
-                                })}
+                            <div id="onceDateField" class="${isOnce ? '' : 'hidden'}">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Ngay cu the *</label>
+                                <input type="date" id="eventDate" value="${eventData?.date || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none">
                             </div>
-
-                            <div className="bg-white rounded-2xl shadow overflow-hidden">
-                                <table className="w-full">
-                                    <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left font-semibold text-gray-700">Tên tổ chức</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Loại hình</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Tỉnh/TP</th><th className="px-4 py-3 text-left font-semibold text-gray-700">SĐT</th><th className="px-4 py-3"></th></tr></thead>
-                                    <tbody className="divide-y">
-                                        {agencies.map(a=>(
-                                            <tr key={a.id} className="hover:bg-gray-50">
-                                                <td className="px-4 py-3"><p className="font-medium">{a.name}</p><p className="text-sm text-gray-500">{a.address}</p></td>
-                                                <td className="px-4 py-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-sm font-semibold">{AGENCY_CATEGORIES.find(c=>c.id===a.category)?.name||a.category}</span></td>
-                                                <td className="px-4 py-3 text-gray-600">{provinces.find(p=>p.id===a.provinceId)?.name||a.provinceId}</td>
-                                                <td className="px-4 py-3 text-gray-600">{a.phone}</td>
-                                                <td className="px-4 py-3 text-right">
-                                                    <button onClick={()=>{setEditItem(a);setShowModal('agency');}} className="text-blue-600 hover:underline mr-3">Sửa</button>
-                                                    <button onClick={()=>deleteAgency(a.id)} className="text-red-600 hover:underline">Xóa</button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            
+                            <div id="recurringFields" class="${isOnce ? 'hidden' : ''} grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ngay trong thang *</label>
+                                    <input type="number" id="eventDay" value="${eventData?.dayOfMonth || 20}" min="1" max="31" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="20">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Thang (cho chu ky nam)</label>
+                                    <input type="number" id="eventMonth" value="${eventData?.month || ''}" min="1" max="12" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="3">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mo ta</label>
+                                <textarea id="eventDesc" rows="3" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none" placeholder="Mo ta chi tiet ve su kien...">${eventData?.description || ''}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Can cu phap ly</label>
+                                <textarea id="eventLegal" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none" placeholder="VD: Theo Dieu 44 Luat Quan ly thue 2019...">${eventData?.legalReference || ''}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Muc phat</label>
+                                <textarea id="eventPenalty" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none" placeholder="VD: Phat 2-5 trieu dong neu nop cham...">${eventData?.penalty || ''}</textarea>
                             </div>
                         </div>
-                    )}
+                        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300">Huy</button>
+                            <button onclick="saveEvent(${eventData?.id || 'null'})" class="px-6 py-2 bg-navy-600 text-white rounded-xl font-semibold hover:bg-navy-700">${isEdit ? 'Cap nhat' : 'Them moi'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-                    {/* Settings Tab */}
-                    {activeTab==='settings'&&(
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Cài đặt hệ thống</h2>
-                            <div className="bg-white rounded-2xl p-6 shadow">
-                                <h3 className="font-bold text-lg mb-4">Logo ứng dụng</h3>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 bg-navy-600 rounded-xl flex items-center justify-center"><span className="text-white text-3xl font-bold">H</span></div>
-                                    <div><input type="file" accept="image/*" className="text-sm"/><p className="text-gray-500 text-sm mt-1">Tải lên logo mới (PNG, JPG)</p></div>
+        function toggleDateFields(frequency) {
+            const onceField = document.getElementById('onceDateField');
+            const recurringFields = document.getElementById('recurringFields');
+            if (frequency === 'once') {
+                onceField.classList.remove('hidden');
+                recurringFields.classList.add('hidden');
+            } else {
+                onceField.classList.add('hidden');
+                recurringFields.classList.remove('hidden');
+            }
+        }
+
+        async function saveEvent(eventId) {
+            const frequency = document.getElementById('eventFrequency').value;
+            const data = {
+                title: document.getElementById('eventTitle').value,
+                category: document.getElementById('eventCategory').value,
+                frequency: frequency,
+                description: document.getElementById('eventDesc').value,
+                legalReference: document.getElementById('eventLegal').value,
+                penalty: document.getElementById('eventPenalty').value,
+                isActive: true
+            };
+            
+            if (frequency === 'once') {
+                data.date = document.getElementById('eventDate').value;
+                if (!data.date) { alert('Vui long chon ngay cu the'); return; }
+            } else {
+                data.dayOfMonth = parseInt(document.getElementById('eventDay').value) || 20;
+                data.month = parseInt(document.getElementById('eventMonth').value) || null;
+            }
+
+            if (!data.title) { alert('Vui long nhap tieu de'); return; }
+
+            try {
+                const url = eventId ? API + '/admin/events/' + eventId : API + '/admin/events';
+                const method = eventId ? 'PUT' : 'POST';
+                const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const result = await res.json();
+                if (result.success) { closeModal(); loadEventsContent(); alert(eventId ? 'Da cap nhat su kien!' : 'Da them su kien moi!'); }
+                else alert('Loi: ' + (result.message || 'Khong the luu'));
+            } catch (e) { alert('Loi ket noi server'); }
+        }
+
+        async function editEvent(id) {
+            try {
+                const res = await fetch(API + '/admin/events/' + id);
+                const data = await res.json();
+                if (data.success) showEventForm(data.data);
+            } catch (e) { alert('Loi tai du lieu'); }
+        }
+
+        async function deleteEvent(id) {
+            if (!confirm('Ban co chac chan muon xoa su kien nay?')) return;
+            try {
+                const res = await fetch(API + '/admin/events/' + id, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) { loadEventsContent(); alert('Da xoa su kien!'); }
+            } catch (e) { alert('Loi xoa su kien'); }
+        }
+
+        // ============ IMPORT EVENTS ============
+        function showImportModal() {
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal(event)">
+                    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-auto m-4" onclick="event.stopPropagation()">
+                        <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-gray-900">📥 Import du lieu tu JSON</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">X</button>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm">
+                                <p class="font-semibold mb-2">Huong dan:</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Dan du lieu JSON vao o phia duoi</li>
+                                    <li>Dinh dang: Mang cac object co cac truong: title, category, date, description, legalReference, penalty</li>
+                                    <li>Du lieu moi se duoc them vao, khong xoa du lieu cu</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Noi dung JSON</label>
+                                <textarea id="importData" rows="15" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none font-mono text-sm" placeholder='[
+  {
+    "title": "Nop to khai thue GTGT",
+    "category": "tax",
+    "frequency": "once",
+    "date": "2026-01-20",
+    "description": "Mo ta...",
+    "legalReference": "Luat Quan ly thue 2019",
+    "penalty": "Phat 2-5 trieu"
+  }
+]'></textarea>
+                            </div>
+                            <div id="importResult" class="hidden"></div>
+                        </div>
+                        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+                            <button onclick="validateImport()" class="px-6 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">Kiem tra du lieu</button>
+                            <div class="flex gap-3">
+                                <button onclick="closeModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300">Huy</button>
+                                <button onclick="executeImport()" id="importBtn" disabled class="px-6 py-2 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">📥 Import</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        let importData = [];
+
+        function validateImport() {
+            const resultEl = document.getElementById('importResult');
+            const importBtn = document.getElementById('importBtn');
+            const rawData = document.getElementById('importData').value;
+            
+            try {
+                importData = JSON.parse(rawData);
+                if (!Array.isArray(importData)) throw new Error('Du lieu phai la mang');
+                
+                const valid = importData.filter(e => e.title);
+                const catCounts = {};
+                valid.forEach(e => { catCounts[e.category] = (catCounts[e.category] || 0) + 1; });
+                
+                resultEl.innerHTML = `
+                    <div class="bg-green-50 text-green-800 p-4 rounded-xl">
+                        <p class="font-semibold mb-2">Du lieu hop le!</p>
+                        <p>Tong: ${valid.length} su kien</p>
+                        <p class="text-sm mt-2">Phan loai: ${Object.entries(catCounts).map(([k,v]) => `${k}: ${v}`).join(', ')}</p>
+                    </div>
+                `;
+                resultEl.classList.remove('hidden');
+                importBtn.disabled = false;
+            } catch (e) {
+                resultEl.innerHTML = `<div class="bg-red-50 text-red-800 p-4 rounded-xl"><p class="font-semibold">Loi: ${e.message}</p></div>`;
+                resultEl.classList.remove('hidden');
+                importBtn.disabled = true;
+            }
+        }
+
+        async function executeImport() {
+            if (importData.length === 0) { alert('Khong co du lieu de import'); return; }
+            if (!confirm(`Ban co chac chan muon import ${importData.length} su kien?`)) return;
+            
+            const resultEl = document.getElementById('importResult');
+            resultEl.innerHTML = '<div class="bg-blue-50 text-blue-800 p-4 rounded-xl">Dang import...</div>';
+            
+            let success = 0, failed = 0;
+            
+            for (const event of importData) {
+                try {
+                    const res = await fetch(API + '/admin/events', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title: event.title,
+                            category: event.category || 'tax',
+                            frequency: event.frequency || 'once',
+                            date: event.date,
+                            dayOfMonth: event.dayOfMonth,
+                            month: event.month,
+                            description: event.description || '',
+                            legalReference: event.legalReference || '',
+                            penalty: event.penalty || '',
+                            isActive: true
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.success) success++; else failed++;
+                } catch (e) { failed++; }
+            }
+            
+            resultEl.innerHTML = `<div class="bg-green-50 text-green-800 p-4 rounded-xl"><p class="font-semibold">Hoan thanh import!</p><p>Thanh cong: ${success} | That bai: ${failed}</p></div>`;
+            
+            setTimeout(() => { closeModal(); loadEventsContent(); }, 2000);
+        }
+
+        // ============ NEWS ============
+        async function loadNewsContent() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
+            try {
+                const res = await fetch(API + '/admin/news');
+                const data = await res.json();
+                const news = (data.data || []).sort((a, b) => b.id - a.id);
+                
+                content.innerHTML = `
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">📰 Quan ly Tin tuc</h2>
+                        <button onclick="showNewsForm()" class="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700 flex items-center gap-2">➕ Them moi</button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tieu de</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Danh muc</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ngay</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hot</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tac</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${news.map(n => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm text-gray-500">#${n.id}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium max-w-xs truncate">${n.title}</td>
+                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">${n.category}</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${n.date}</td>
+                                        <td class="px-4 py-3 text-sm">${n.isHot ? '🔥' : ''}</td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button onclick="editNews(${n.id})" class="text-blue-600 hover:underline text-sm mr-3">Sua</button>
+                                            <button onclick="deleteNews(${n.id})" class="text-red-600 hover:underline text-sm">Xoa</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        ${news.length === 0 ? '<div class="p-8 text-center text-gray-500">Chua co tin tuc nao</div>' : ''}
+                    </div>
+                `;
+            } catch (e) { content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Loi tai du lieu</div>'; }
+        }
+
+        function showNewsForm(newsData = null) {
+            const isEdit = newsData !== null;
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal(event)">
+                    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-auto m-4" onclick="event.stopPropagation()">
+                        <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-gray-900">${isEdit ? 'Sua tin tuc' : 'Them tin tuc moi'}</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">X</button>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tieu de *</label>
+                                <input type="text" id="newsTitle" value="${newsData?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Danh muc</label>
+                                    <select id="newsCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
+                                        ${NEWS_CATEGORIES.map(c => `<option value="${c}" ${newsData?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ngay dang</label>
+                                    <input type="text" id="newsDate" value="${newsData?.date || new Date().toLocaleDateString('vi-VN')}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="dd/mm/yyyy">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tom tat</label>
+                                <textarea id="newsSummary" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none">${newsData?.summary || ''}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Noi dung</label>
+                                <textarea id="newsContent" rows="5" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none">${newsData?.content || ''}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">URL hinh anh</label>
+                                <input type="text" id="newsImage" value="${newsData?.image || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="https://...">
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="newsHot" ${newsData?.isHot ? 'checked' : ''} class="w-5 h-5 rounded">
+                                <label for="newsHot" class="text-sm font-semibold text-gray-700">🔥 Tin noi bat</label>
+                            </div>
+                        </div>
+                        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300">Huy</button>
+                            <button onclick="saveNews(${newsData?.id || 'null'})" class="px-6 py-2 bg-navy-600 text-white rounded-xl font-semibold hover:bg-navy-700">${isEdit ? 'Cap nhat' : 'Them moi'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveNews(newsId) {
+            const data = { title: document.getElementById('newsTitle').value, category: document.getElementById('newsCategory').value, date: document.getElementById('newsDate').value, summary: document.getElementById('newsSummary').value, content: document.getElementById('newsContent').value, image: document.getElementById('newsImage').value, isHot: document.getElementById('newsHot').checked };
+            if (!data.title) { alert('Vui long nhap tieu de'); return; }
+            try {
+                const url = newsId ? API + '/admin/news/' + newsId : API + '/admin/news';
+                const res = await fetch(url, { method: newsId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const result = await res.json();
+                if (result.success) { closeModal(); loadNewsContent(); alert(newsId ? 'Da cap nhat!' : 'Da them tin!'); }
+                else alert('Loi: ' + (result.message || 'Khong the luu'));
+            } catch (e) { alert('Loi ket noi server'); }
+        }
+
+        async function editNews(id) { try { const res = await fetch(API + '/admin/news/' + id); const data = await res.json(); if (data.success) showNewsForm(data.data); } catch (e) { alert('Loi tai du lieu'); } }
+        async function deleteNews(id) { if (!confirm('Ban co chac chan muon xoa tin nay?')) return; try { const res = await fetch(API + '/admin/news/' + id, { method: 'DELETE' }); const data = await res.json(); if (data.success) { loadNewsContent(); alert('Da xoa!'); } } catch (e) { alert('Loi xoa tin'); } }
+
+        // ============ AGENCIES ============
+        async function loadAgenciesContent() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
+            try {
+                const res = await fetch(API + '/admin/agencies');
+                const data = await res.json();
+                const agencies = (data.data || []).sort((a, b) => b.id - a.id);
+                
+                const catCounts = {};
+                AGENCY_CATEGORIES.forEach(c => catCounts[c.id] = 0);
+                agencies.forEach(a => { if (catCounts[a.category] !== undefined) catCounts[a.category]++; });
+                
+                content.innerHTML = `
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-900">🏛️ Quan ly Co quan ho tro</h2>
+                        <button onclick="showAgencyForm()" class="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700 flex items-center gap-2">➕ Them moi</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-4 mb-6">
+                        ${AGENCY_CATEGORIES.map(c => `
+                            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 text-center">
+                                <p class="text-2xl font-bold text-gray-900">${catCounts[c.id]}</p>
+                                <p class="text-sm text-gray-500 mt-1">${c.name}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ten</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Loai</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tinh</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tac</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${agencies.map(a => {
+                                    const cat = AGENCY_CATEGORIES.find(c => c.id === a.category) || {name: a.category};
+                                    const prov = PROVINCES.find(p => p.id === a.province) || {name: a.province};
+                                    return `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm text-gray-500">#${a.id}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium max-w-xs truncate">${a.name}</td>
+                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">${cat.name}</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${prov.name}</td>
+                                        <td class="px-4 py-3 text-right">
+                                            <button onclick="editAgency(${a.id})" class="text-blue-600 hover:underline text-sm mr-3">Sua</button>
+                                            <button onclick="deleteAgency(${a.id})" class="text-red-600 hover:underline text-sm">Xoa</button>
+                                        </td>
+                                    </tr>
+                                `}).join('')}
+                            </tbody>
+                        </table>
+                        ${agencies.length === 0 ? '<div class="p-8 text-center text-gray-500">Chua co co quan nao</div>' : ''}
+                    </div>
+                `;
+            } catch (e) { content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Loi tai du lieu</div>'; }
+        }
+
+        function showAgencyForm(agencyData = null) {
+            const isEdit = agencyData !== null;
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal(event)">
+                    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-auto m-4" onclick="event.stopPropagation()">
+                        <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-gray-900">${isEdit ? 'Sua co quan' : 'Them co quan moi'}</h3>
+                            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">X</button>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Ten co quan *</label>
+                                <input type="text" id="agencyName" value="${agencyData?.name || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Loai *</label>
+                                    <select id="agencyCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
+                                        ${AGENCY_CATEGORIES.map(c => `<option value="${c.id}" ${agencyData?.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tinh/Thanh pho *</label>
+                                    <select id="agencyProvince" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
+                                        ${PROVINCES.map(p => `<option value="${p.id}" ${agencyData?.province === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Dia chi *</label>
+                                <input type="text" id="agencyAddress" value="${agencyData?.address || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">So dien thoai</label>
+                                    <input type="text" id="agencyPhone" value="${agencyData?.phone || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Website</label>
+                                    <input type="text" id="agencyWebsite" value="${agencyData?.website || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none">
                                 </div>
                             </div>
                         </div>
-                    )}
-                </main>
-            </div>
+                        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300">Huy</button>
+                            <button onclick="saveAgency(${agencyData?.id || 'null'})" class="px-6 py-2 bg-navy-600 text-white rounded-xl font-semibold hover:bg-navy-700">${isEdit ? 'Cap nhat' : 'Them moi'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-            {/* Modals */}
-            {showModal==='event'&&<Modal title={editItem?'Sửa sự kiện':'Thêm sự kiện'} onClose={()=>{setShowModal(null);setEditItem(null);}}><EventForm/></Modal>}
-            {showModal==='news'&&<Modal title={editItem?'Sửa tin tức':'Thêm tin tức'} onClose={()=>{setShowModal(null);setEditItem(null);}}><NewsForm/></Modal>}
-            {showModal==='agency'&&<Modal title={editItem?'Sửa tổ chức':'Thêm tổ chức pháp lý'} onClose={()=>{setShowModal(null);setEditItem(null);}}><AgencyForm/></Modal>}
-        </div>
-    );
-};
+        async function saveAgency(agencyId) {
+            const data = { name: document.getElementById('agencyName').value, category: document.getElementById('agencyCategory').value, province: document.getElementById('agencyProvince').value, address: document.getElementById('agencyAddress').value, phone: document.getElementById('agencyPhone').value, website: document.getElementById('agencyWebsite').value };
+            if (!data.name || !data.address) { alert('Vui long nhap day du thong tin'); return; }
+            try {
+                const url = agencyId ? API + '/admin/agencies/' + agencyId : API + '/admin/agencies';
+                const res = await fetch(url, { method: agencyId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const result = await res.json();
+                if (result.success) { closeModal(); loadAgenciesContent(); alert(agencyId ? 'Da cap nhat!' : 'Da them co quan!'); }
+                else alert('Loi: ' + (result.message || 'Khong the luu'));
+            } catch (e) { alert('Loi ket noi server'); }
+        }
 
-// Main App
-function App(){
-    const[isLoggedIn,setIsLoggedIn]=useState(!!localStorage.getItem('adminToken'));
-    const handleLogout=()=>{localStorage.removeItem('adminToken');setIsLoggedIn(false);};
-    if(!isLoggedIn)return<LoginScreen onLogin={()=>setIsLoggedIn(true)}/>;
-    return<Dashboard onLogout={handleLogout}/>;
-}
+        async function editAgency(id) { try { const res = await fetch(API + '/admin/agencies/' + id); const data = await res.json(); if (data.success) showAgencyForm(data.data); } catch (e) { alert('Loi tai du lieu'); } }
+        async function deleteAgency(id) { if (!confirm('Ban co chac chan muon xoa co quan nay?')) return; try { const res = await fetch(API + '/admin/agencies/' + id, { method: 'DELETE' }); const data = await res.json(); if (data.success) { loadAgenciesContent(); alert('Da xoa!'); } } catch (e) { alert('Loi xoa co quan'); } }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-</script>
+        // ============ SETTINGS ============
+        async function loadSettingsContent() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">⚙️ Cai dat ung dung</h2>
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 space-y-6">
+                    <div>
+                        <h3 class="font-bold text-gray-900 mb-4">📅 Du lieu lich phap ly</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="clearAllEvents()" class="bg-red-100 text-red-700 px-4 py-3 rounded-xl font-semibold hover:bg-red-200">
+                                🗑️ Xoa tat ca su kien
+                            </button>
+                            <button onclick="showImportModal()" class="bg-green-100 text-green-700 px-4 py-3 rounded-xl font-semibold hover:bg-green-200">
+                                📥 Import du lieu 2026
+                            </button>
+                        </div>
+                    </div>
+                    <hr>
+                    <div>
+                        <h3 class="font-bold text-gray-900 mb-4">📊 Thong tin he thong</h3>
+                        <div class="bg-gray-50 p-4 rounded-xl">
+                            <p class="text-sm text-gray-600">Phien ban: <span class="font-semibold">8.8</span></p>
+                            <p class="text-sm text-gray-600 mt-1">Nguon du lieu: <span class="font-semibold">thuvienphapluat.vn</span></p>
+                            <p class="text-sm text-gray-600 mt-1">Nam lich: <span class="font-semibold">2026</span></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function clearAllEvents() {
+            if (!confirm('Ban co chac chan muon xoa TAT CA su kien? Thao tac nay khong the hoan tac!')) return;
+            if (!confirm('XAC NHAN LAN CUOI: Xoa tat ca su kien?')) return;
+            
+            try {
+                const res = await fetch(API + '/admin/events');
+                const data = await res.json();
+                const events = data.data || [];
+                
+                for (const e of events) {
+                    await fetch(API + '/admin/events/' + e.id, { method: 'DELETE' });
+                }
+                
+                alert('Da xoa tat ca ' + events.length + ' su kien!');
+                loadSettingsContent();
+            } catch (e) { alert('Loi xoa du lieu'); }
+        }
+
+        function closeModal(event) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
+                modalRoot.innerHTML = '';
+            }
+        }
+
+        checkAuth();
+    </script>
 </body>
 </html>
