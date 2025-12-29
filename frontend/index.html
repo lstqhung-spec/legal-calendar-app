@@ -24,11 +24,12 @@
         .touch-active:active{transform:scale(.98);opacity:.9}
         .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+        .calendar-transition{transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
     </style>
 </head>
 <body><div id="root"></div>
 <script type="text/babel">
-const{useState,useEffect,useMemo,useRef}=React;
+const{useState,useEffect,useMemo,useRef,useCallback}=React;
 const API='/api';
 
 // ============ LOGO COMPONENT ============
@@ -53,7 +54,6 @@ const COMPANY_INFO={name:'Công ty Luật HTIC',website:'www.htic.com.vn',phone:
 const MEMBERSHIP_PLANS={free:{name:'Miễn phí',price:0,features:['Xem lịch pháp lý','Đọc tin tức','Có quảng cáo']},pro_monthly:{name:'Pro Tháng',price:61000,period:'tháng',features:['Không quảng cáo','Hiển thị DN trong Hỗ trợ','Ưu tiên hỗ trợ']},pro_yearly:{name:'Pro Năm',price:599000,period:'năm',features:['Không quảng cáo','Hiển thị DN trong Hỗ trợ','Ưu tiên hỗ trợ','Tiết kiệm 133k']}};
 const BUSINESS_TYPES=[{id:'tnhh',name:'Công ty TNHH'},{id:'joint_stock',name:'Công ty Cổ phần'},{id:'private',name:'DN tư nhân'},{id:'household',name:'Hộ kinh doanh'}];
 const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'other',name:'Khác'}];
-const TAX_PERIODS=[{id:'monthly',name:'Kê khai theo tháng'},{id:'quarterly',name:'Kê khai theo quý'}];
 const categoryConfig={tax:{label:'Thuế',color:'bg-red-600',lightColor:'bg-red-50',textColor:'text-red-700',borderColor:'border-red-200'},insurance:{label:'BHXH',color:'bg-blue-600',lightColor:'bg-blue-50',textColor:'text-blue-700',borderColor:'border-blue-200'},report:{label:'Báo cáo',color:'bg-emerald-600',lightColor:'bg-emerald-50',textColor:'text-emerald-700',borderColor:'border-emerald-200'},license:{label:'Giấy phép',color:'bg-amber-600',lightColor:'bg-amber-50',textColor:'text-amber-700',borderColor:'border-amber-200'},news:{label:'Tin tức',color:'bg-purple-600',lightColor:'bg-purple-50',textColor:'text-purple-700',borderColor:'border-purple-200'}};
 const agencyCategories={tax:{label:'Thuế',color:'bg-red-50 text-red-700 border border-red-200'},court:{label:'Tòa án',color:'bg-purple-50 text-purple-700 border border-purple-200'},insurance:{label:'BHXH',color:'bg-emerald-50 text-emerald-700 border border-emerald-200'},labor:{label:'Sở LĐTBXH',color:'bg-teal-50 text-teal-700 border border-teal-200'},business:{label:'Đăng ký KD',color:'bg-indigo-50 text-indigo-700 border border-indigo-200'}};
 const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
@@ -93,7 +93,6 @@ const Icons={
     Crown:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
     CreditCard:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>,
     Upload:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>,
-    Image:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>,
 };
 
 const getDeadlineFromEvent=(ev)=>{const now=new Date();const y=now.getFullYear();const m=now.getMonth();let day=ev.dayOfMonth||20;if(ev.frequency==='monthly')return new Date(y,m,day);if(ev.frequency==='quarterly'){const qMonth=Math.floor(m/3)*3+2;return new Date(y,qMonth,day);}if(ev.frequency==='yearly'){const eventMonth=(ev.month||1)-1;return new Date(y,eventMonth,day);}return new Date(y,m,day);};
@@ -149,7 +148,7 @@ const EventCard=({event,onClick,compact=false})=>{
     );
 };
 
-// ============ NEWS CARD (thumbnail nhỏ) ============
+// ============ NEWS CARD ============
 const NewsCard=({news,onClick})=>(
     <button onClick={onClick} className="w-full bg-white rounded-xl p-3.5 shadow-sm border border-gray-200 flex items-center gap-3 text-left touch-active">
         {news.image?<img src={news.image} alt="" className="w-20 h-16 object-cover rounded-lg flex-shrink-0 border border-gray-100"/>:<div className="w-20 h-16 bg-navy-50 rounded-lg flex items-center justify-center flex-shrink-0 border border-navy-100"><div className="w-8 h-8 text-navy-400"><Icons.Newspaper/></div></div>}
@@ -227,24 +226,17 @@ const DashboardScreen=({events,news,onEventClick,onNewsClick,membership,business
     );
 };
 
-// ============ CALENDAR SCREEN (thu gọn khi scroll) ============
+// ============ CALENDAR SCREEN - ĐÃ SỬA LỖI ============
 const CalendarScreen=({events,onEventClick,savedEvents})=>{
     const today=new Date();
     const[month,setMonth]=useState(today.getMonth());
     const[year,setYear]=useState(today.getFullYear());
     const[sel,setSel]=useState(null);
     const[isCollapsed,setIsCollapsed]=useState(false);
-    const scrollRef=useRef(null);
+    const lastScrollTop=useRef(0);
     
     const days=new Date(year,month+1,0).getDate();
-    const first=new Date(year,month,1).getDay();
-    
-    // Tính tuần hiện tại
-    const currentWeekStart=useMemo(()=>{
-        const d=new Date(year,month,today.getDate());
-        const dayOfWeek=d.getDay();
-        return today.getDate()-dayOfWeek;
-    },[year,month,today]);
+    const firstDayOfWeek=new Date(year,month,1).getDay();
     
     // Combine events
     const allEvents=useMemo(()=>{
@@ -253,107 +245,165 @@ const CalendarScreen=({events,onEventClick,savedEvents})=>{
         return [...systemEv,...savedEv];
     },[events,savedEvents]);
     
-    const getEv=(d)=>allEvents.filter(e=>{const dd=new Date(e.deadline);return dd.getDate()===d&&dd.getMonth()===month&&dd.getFullYear()===year;});
-    const selEv=sel?getEv(sel):[];
+    const getEventsForDay=(d)=>allEvents.filter(e=>{
+        const dd=new Date(e.deadline);
+        return dd.getDate()===d&&dd.getMonth()===month&&dd.getFullYear()===year;
+    });
     
-    // Scroll handler
-    const handleScroll=(e)=>{
-        const scrollTop=e.target.scrollTop;
-        setIsCollapsed(scrollTop>50);
-    };
+    const selectedDayEvents=sel?getEventsForDay(sel):[];
     
-    // Week days for collapsed view
-    const weekDays=useMemo(()=>{
+    // Tính tuần chứa ngày được chọn hoặc ngày hiện tại
+    const getWeekDays=useCallback(()=>{
+        const targetDay=sel||(month===today.getMonth()&&year===today.getFullYear()?today.getDate():1);
+        const targetDate=new Date(year,month,targetDay);
+        const dayOfWeek=targetDate.getDay();
+        const weekStart=targetDay-dayOfWeek;
+        
         const result=[];
         for(let i=0;i<7;i++){
-            const d=currentWeekStart+i;
-            if(d>=1&&d<=days)result.push(d);
+            const d=weekStart+i;
+            if(d>=1&&d<=days){
+                result.push(d);
+            }else if(d<1){
+                result.push(null); // Ngày của tháng trước
+            }else{
+                result.push(null); // Ngày của tháng sau
+            }
         }
         return result;
-    },[currentWeekStart,days]);
+    },[sel,month,year,days,today]);
+    
+    // Scroll handler với debounce
+    const handleScroll=useCallback((e)=>{
+        const scrollTop=e.target.scrollTop;
+        const scrollDiff=scrollTop-lastScrollTop.current;
+        
+        // Kéo xuống > 30px thì thu gọn
+        if(scrollDiff>30&&scrollTop>50){
+            setIsCollapsed(true);
+        }
+        // Kéo lên và gần top thì mở rộng
+        else if(scrollTop<20){
+            setIsCollapsed(false);
+        }
+        
+        lastScrollTop.current=scrollTop;
+    },[]);
+    
+    // Danh sách sự kiện trong tháng
+    const monthEvents=useMemo(()=>
+        allEvents.filter(e=>{
+            const dd=new Date(e.deadline);
+            return dd.getMonth()===month&&dd.getFullYear()===year;
+        }).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))
+    ,[allEvents,month,year]);
+
+    const weekDays=getWeekDays();
 
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
+            {/* Header */}
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                    <div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div></div>
+                    <div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200">
+                        <div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div>
+                    </div>
                     <h1 className="text-2xl font-bold text-gray-900">Lịch pháp lý</h1>
                 </div>
             </div>
             
             {/* Month navigation */}
             <div className="bg-white px-5 py-3 flex justify-between items-center border-b border-gray-200">
-                <button onClick={()=>{if(month===0){setMonth(11);setYear(year-1);}else{setMonth(month-1);}setIsCollapsed(false);}} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200"><div className="w-6 h-6 text-gray-700"><Icons.ChevronLeft/></div></button>
-                <div className="flex items-center gap-2">
+                <button onClick={()=>{setMonth(m=>m===0?(setYear(y=>y-1),11):m-1);setIsCollapsed(false);setSel(null);}} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200">
+                    <div className="w-6 h-6 text-gray-700"><Icons.ChevronLeft/></div>
+                </button>
+                <div className="flex items-center gap-3">
                     <h2 className="text-lg font-bold text-gray-900">{monthNames[month]} {year}</h2>
-                    {isCollapsed&&<button onClick={()=>setIsCollapsed(false)} className="text-navy-600 text-sm font-semibold flex items-center gap-1"><div className="w-4 h-4"><Icons.ChevronDown/></div>Mở rộng</button>}
+                    {isCollapsed&&(
+                        <button onClick={()=>setIsCollapsed(false)} className="bg-navy-100 text-navy-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-navy-200">
+                            <div className="w-3 h-3"><Icons.ChevronDown/></div>
+                            Mở rộng
+                        </button>
+                    )}
                 </div>
-                <button onClick={()=>{if(month===11){setMonth(0);setYear(year+1);}else{setMonth(month+1);}setIsCollapsed(false);}} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200"><div className="w-6 h-6 text-gray-700"><Icons.ChevronRight/></div></button>
+                <button onClick={()=>{setMonth(m=>m===11?(setYear(y=>y+1),0):m+1);setIsCollapsed(false);setSel(null);}} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200">
+                    <div className="w-6 h-6 text-gray-700"><Icons.ChevronRight/></div>
+                </button>
             </div>
             
             {/* Calendar grid */}
-            <div className={`bg-white px-3 transition-all duration-300 ${isCollapsed?'py-2':'py-3'}`}>
-                <div className="grid grid-cols-7 mb-2">
+            <div className="bg-white border-b border-gray-200 calendar-transition" style={{overflow:'hidden'}}>
+                {/* Day names */}
+                <div className="grid grid-cols-7 px-3 pt-2">
                     {dayNames.map(d=><div key={d} className="text-center text-xs font-bold text-gray-500 py-1">{d}</div>)}
                 </div>
                 
-                {isCollapsed?(
-                    // Collapsed: chỉ hiện 1 tuần
-                    <div className="grid grid-cols-7 gap-1">
-                        {Array.from({length:7}).map((_,i)=>{
-                            const dayNum=weekDays[i];
-                            if(!dayNum)return <div key={i}/>;
-                            const ev=getEv(dayNum);
-                            const isT=dayNum===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
-                            const isS=dayNum===sel;
-                            return(
-                                <button key={i} onClick={()=>setSel(dayNum)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all ${isS?'bg-navy-600 shadow-lg':isT?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
-                                    <span className={`text-sm font-bold ${isS?'text-white':isT?'text-navy-700':'text-gray-800'}`}>{dayNum}</span>
-                                    {ev.length>0&&<div className="flex gap-0.5 mt-0.5">{ev.slice(0,3).map((e,idx)=><div key={idx} className={`w-1.5 h-1.5 rounded-full ${isS?'bg-white':(categoryConfig[e.category]?.color||'bg-purple-500')}`}/>)}</div>}
-                                </button>
-                            );
-                        })}
-                    </div>
-                ):(
-                    // Full month view
-                    <div className="grid grid-cols-7 gap-1">
-                        {Array.from({length:first}).map((_,i)=><div key={`e-${i}`}/>)}
-                        {Array.from({length:days}).map((_,i)=>{
-                            const day=i+1;
-                            const ev=getEv(day);
-                            const isT=day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
-                            const isS=day===sel;
-                            return(
-                                <button key={day} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all ${isS?'bg-navy-600 shadow-lg':isT?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
-                                    <span className={`text-sm font-bold ${isS?'text-white':isT?'text-navy-700':'text-gray-800'}`}>{day}</span>
-                                    {ev.length>0&&<div className="flex gap-0.5 mt-1">{ev.slice(0,3).map((e,idx)=><div key={idx} className={`w-1.5 h-1.5 rounded-full ${isS?'bg-white':(categoryConfig[e.category]?.color||'bg-purple-500')}`}/>)}</div>}
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
+                {/* Calendar days */}
+                <div className="px-3 pb-3 calendar-transition" style={{maxHeight:isCollapsed?'52px':'280px',overflow:'hidden'}}>
+                    {isCollapsed?(
+                        // Thu gọn: 1 tuần
+                        <div className="grid grid-cols-7 gap-1">
+                            {weekDays.map((day,i)=>{
+                                if(day===null)return <div key={i} className="aspect-square"/>;
+                                const ev=getEventsForDay(day);
+                                const isToday=day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
+                                const isSelected=day===sel;
+                                return(
+                                    <button key={i} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all ${isSelected?'bg-navy-600 shadow-lg':isToday?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
+                                        <span className={`text-sm font-bold ${isSelected?'text-white':isToday?'text-navy-700':'text-gray-800'}`}>{day}</span>
+                                        {ev.length>0&&<div className="flex gap-0.5 mt-0.5">{ev.slice(0,3).map((e,idx)=><div key={idx} className={`w-1.5 h-1.5 rounded-full ${isSelected?'bg-white':(categoryConfig[e.category]?.color||'bg-purple-500')}`}/>)}</div>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ):(
+                        // Mở rộng: cả tháng
+                        <div className="grid grid-cols-7 gap-1">
+                            {Array.from({length:firstDayOfWeek}).map((_,i)=><div key={`empty-${i}`} className="aspect-square"/>)}
+                            {Array.from({length:days}).map((_,i)=>{
+                                const day=i+1;
+                                const ev=getEventsForDay(day);
+                                const isToday=day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
+                                const isSelected=day===sel;
+                                return(
+                                    <button key={day} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all ${isSelected?'bg-navy-600 shadow-lg':isToday?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
+                                        <span className={`text-sm font-bold ${isSelected?'text-white':isToday?'text-navy-700':'text-gray-800'}`}>{day}</span>
+                                        {ev.length>0&&<div className="flex gap-0.5 mt-1">{ev.slice(0,3).map((e,idx)=><div key={idx} className={`w-1.5 h-1.5 rounded-full ${isSelected?'bg-white':(categoryConfig[e.category]?.color||'bg-purple-500')}`}/>)}</div>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
             
             {/* Legend */}
-            <div className="bg-white px-5 py-2.5 flex flex-wrap gap-3 border-t border-b border-gray-200 text-xs">
-                {Object.entries(categoryConfig).map(([k,c])=><div key={k} className="flex items-center gap-1.5"><div className={`w-2.5 h-2.5 rounded-full ${c.color}`}/><span className="text-gray-700 font-semibold">{c.label}</span></div>)}
+            <div className="bg-white px-5 py-2.5 flex flex-wrap gap-3 border-b border-gray-200 text-xs">
+                {Object.entries(categoryConfig).slice(0,5).map(([k,c])=><div key={k} className="flex items-center gap-1.5"><div className={`w-2.5 h-2.5 rounded-full ${c.color}`}/><span className="text-gray-700 font-semibold">{c.label}</span></div>)}
             </div>
             
             {/* Events list */}
-            <div ref={scrollRef} onScroll={handleScroll} className="flex-1 bg-slate-100 px-5 py-4 overflow-auto hide-scrollbar">
+            <div onScroll={handleScroll} className="flex-1 bg-slate-100 px-5 py-4 overflow-auto hide-scrollbar">
                 {sel?(
                     <>
-                        <h3 className="font-bold mb-3 text-gray-900">Ngày {sel}/{month+1}/{year}</h3>
-                        {selEv.length>0?<div className="space-y-2">{selEv.map((e,idx)=><EventCard key={e.id||idx} event={e} onClick={()=>onEventClick(e)} compact/>)}</div>:<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện</p></div>}
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-bold text-gray-900">Ngày {sel}/{month+1}/{year}</h3>
+                            <button onClick={()=>setSel(null)} className="text-navy-600 text-sm font-semibold">Xem tất cả</button>
+                        </div>
+                        {selectedDayEvents.length>0?(
+                            <div className="space-y-2">{selectedDayEvents.map((e,idx)=><EventCard key={e.id||idx} event={e} onClick={()=>onEventClick(e)} compact/>)}</div>
+                        ):(
+                            <div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện</p></div>
+                        )}
                     </>
                 ):(
                     <>
                         <h3 className="font-bold mb-3 text-gray-900">Tất cả sự kiện tháng {month+1}</h3>
-                        {allEvents.filter(e=>{const dd=new Date(e.deadline);return dd.getMonth()===month&&dd.getFullYear()===year;}).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline)).length>0?(
-                            <div className="space-y-2">
-                                {allEvents.filter(e=>{const dd=new Date(e.deadline);return dd.getMonth()===month&&dd.getFullYear()===year;}).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline)).map((e,idx)=><EventCard key={e.id||idx} event={e} onClick={()=>onEventClick(e)} compact/>)}
-                            </div>
-                        ):<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện trong tháng</p></div>}
+                        {monthEvents.length>0?(
+                            <div className="space-y-2">{monthEvents.map((e,idx)=><EventCard key={e.id||idx} event={e} onClick={()=>onEventClick(e)} compact/>)}</div>
+                        ):(
+                            <div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện trong tháng</p></div>
+                        )}
                     </>
                 )}
             </div>
@@ -387,7 +437,6 @@ const NewsDetailModal=({news,onClose,onAddToCalendar})=>{
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"><div className="w-5 h-5 text-gray-700"><Icons.X/></div></button>
                 </div>
                 
-                {/* Ảnh to */}
                 {news.image&&<img src={news.image} alt="" className="w-full h-56 object-cover"/>}
                 
                 <div className="p-5 space-y-4">
@@ -400,7 +449,6 @@ const NewsDetailModal=({news,onClose,onAddToCalendar})=>{
                     <p className="text-gray-700 leading-relaxed font-medium">{news.summary}</p>
                     {news.content&&<p className="text-gray-700 leading-relaxed whitespace-pre-line">{news.content}</p>}
                     
-                    {/* Add to calendar section */}
                     <div className="bg-purple-50 rounded-2xl p-4 border-2 border-purple-200">
                         <p className="text-purple-800 font-bold mb-3 flex items-center gap-2"><div className="w-5 h-5"><Icons.CalendarPlus/></div>Thêm vào lịch để nhắc nhở</p>
                         
@@ -584,7 +632,7 @@ const SettingsScreen=({onReset,businessProfile,onUpdateProfile,membership,onUpgr
                 </div>
                 <div className="bg-white rounded-2xl px-5 shadow-sm mb-5 border border-gray-200">
                     <h3 className="font-bold pt-5 pb-3 text-gray-900">Về ứng dụng</h3>
-                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.0.0</span></div>
+                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.1.0</span></div>
                     <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Shield/></div><span className="flex-1 text-gray-800 font-semibold">Chính sách bảo mật</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                     <div className="py-4 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.HelpCircle/></div><span className="flex-1 text-gray-800 font-semibold">Liên hệ hỗ trợ</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                 </div>
