@@ -1,0 +1,22 @@
+[
+  {
+    "id": "tax",
+    "name": "Thue",
+    "color": "red"
+  },
+  {
+    "id": "insurance",
+    "name": "BHXH",
+    "color": "blue"
+  },
+  {
+    "id": "report",
+    "name": "Bao cao",
+    "color": "green"
+  },
+  {
+    "id": "license",
+    "name": "Giay phep",
+    "color": "orange"
+  }
+]
