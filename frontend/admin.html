@@ -3,906 +3,430 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - HTIC Legal App</title>
+    <title>HTIC Legal - Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script>tailwind.config={theme:{extend:{colors:{navy:{50:'#e8eef5',100:'#c5d4e8',500:'#3d6d9e',600:'#1e3a5f',700:'#162d4a'}}}}}</script>
-    <style>*{font-family:'Inter',sans-serif}.hide-scrollbar::-webkit-scrollbar{display:none}.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:50}</style>
+    <script>tailwind.config={theme:{extend:{colors:{navy:{50:'#e8eef5',100:'#c5d4e8',200:'#9db5d6',600:'#1e3a5f',700:'#162d4a'}}}}}</script>
+    <style>*{font-family:'Inter',sans-serif}.hide-scrollbar::-webkit-scrollbar{display:none}</style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div id="app"></div>
-    <div id="modal-root"></div>
-    <script>
-        const API = '/api';
-        let token = localStorage.getItem('adminToken');
-        let currentSection = 'dashboard';
+<body class="bg-gray-100">
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect}=React;
+const API='/api';
 
-        const app = document.getElementById('app');
-        const modalRoot = document.getElementById('modal-root');
+// 4 Danh mục tổ chức pháp lý - khớp với index.html
+const AGENCY_CATEGORIES=[
+    {id:'government',name:'Cơ quan Nhà nước'},
+    {id:'lawfirm',name:'VP Luật sư / Công ty Luật'},
+    {id:'notary',name:'Văn phòng Công chứng'},
+    {id:'bailiff',name:'VP Thừa phát lại'}
+];
 
-        const CATEGORIES = [
-            { id: 'tax', name: 'Thuế', icon: '💰' },
-            { id: 'insurance', name: 'BHXH', icon: '🏥' },
-            { id: 'report', name: 'Báo cáo', icon: '📊' },
-            { id: 'license', name: 'Giấy phép', icon: '📋' }
-        ];
+const EVENT_CATEGORIES=[
+    {id:'tax',name:'Thuế'},
+    {id:'insurance',name:'BHXH'},
+    {id:'report',name:'Báo cáo'},
+    {id:'license',name:'Giấy phép'}
+];
 
-        const FREQUENCIES = [
-            { id: 'monthly', name: 'Hàng tháng' },
-            { id: 'quarterly', name: 'Hàng quý' },
-            { id: 'yearly', name: 'Hàng năm' }
-        ];
+const FREQUENCIES=[
+    {id:'monthly',name:'Hàng tháng'},
+    {id:'quarterly',name:'Hàng quý'},
+    {id:'yearly',name:'Hàng năm'}
+];
 
-        const NEWS_CATEGORIES = ['Thuế', 'BHXH', 'Doanh nghiệp', 'Lao động', 'Pháp luật'];
+// Login Screen
+const LoginScreen=({onLogin})=>{
+    const[username,setUsername]=useState('');
+    const[password,setPassword]=useState('');
+    const[error,setError]=useState('');
+    const[loading,setLoading]=useState(false);
 
-        function checkAuth() {
-            if (!token) showLogin();
-            else showDashboard();
-        }
+    const handleSubmit=async(e)=>{
+        e.preventDefault();
+        setLoading(true);setError('');
+        try{
+            const res=await fetch(API+'/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+            const data=await res.json();
+            if(data.success){localStorage.setItem('adminToken',data.token);onLogin();}
+            else setError(data.message||'Sai thông tin đăng nhập');
+        }catch(err){setError('Không thể kết nối server');}
+        setLoading(false);
+    };
 
-        function showLogin() {
-            app.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-600 to-navy-700 p-4">
-                    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-                        <div class="text-center mb-8">
-                            <div class="w-20 h-20 bg-gradient-to-br from-navy-600 to-navy-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <span class="text-white text-3xl font-bold">H</span>
-                            </div>
-                            <h1 class="text-2xl font-bold text-gray-900">HTIC Legal Admin</h1>
-                            <p class="text-gray-500 mt-2">Đăng nhập để quản lý</p>
-                        </div>
-                        <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm"></div>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên đăng nhập</label>
-                                <input type="text" id="username" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="admin">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mật khẩu</label>
-                                <input type="password" id="password" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="••••••••" onkeypress="if(event.key==='Enter')login()">
-                            </div>
-                            <button onclick="login()" class="w-full bg-navy-600 text-white py-3 rounded-xl font-bold hover:bg-navy-700 transition">
-                                Đăng nhập
-                            </button>
-                        </div>
-                    </div>
+    return(
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-600 to-navy-700 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+                <div className="text-center mb-8">
+                    <div className="w-20 h-20 bg-navy-600 rounded-2xl flex items-center justify-center mx-auto mb-4"><span className="text-white text-3xl font-bold">H</span></div>
+                    <h1 className="text-2xl font-bold text-gray-900">HTIC Legal Admin</h1>
+                    <p className="text-gray-500 mt-2">Đăng nhập để quản lý</p>
                 </div>
-            `;
-        }
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div><label className="block text-sm font-semibold text-gray-700 mb-2">Tên đăng nhập</label><input type="text" value={username} onChange={e=>setUsername(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-600 focus:outline-none" placeholder="admin" required/></div>
+                    <div><label className="block text-sm font-semibold text-gray-700 mb-2">Mật khẩu</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-600 focus:outline-none" placeholder="••••••••" required/></div>
+                    {error&&<p className="text-red-500 text-sm font-medium">{error}</p>}
+                    <button type="submit" disabled={loading} className="w-full py-3 bg-navy-600 text-white font-bold rounded-xl hover:bg-navy-700 disabled:opacity-50">{loading?'Đang đăng nhập...':'Đăng nhập'}</button>
+                </form>
+            </div>
+        </div>
+    );
+};
 
-        async function login() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorEl = document.getElementById('loginError');
-            try {
-                const res = await fetch(API + '/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    token = data.token;
-                    localStorage.setItem('adminToken', token);
-                    showDashboard();
-                } else {
-                    errorEl.textContent = data.message || 'Đăng nhập thất bại';
-                    errorEl.classList.remove('hidden');
-                }
-            } catch (e) {
-                errorEl.textContent = 'Lỗi kết nối server';
-                errorEl.classList.remove('hidden');
-            }
-        }
+// Modal Component
+const Modal=({title,onClose,children})=>(
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto" onClick={e=>e.stopPropagation()}>
+            <div className="sticky top-0 bg-white px-6 py-4 border-b flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600">✕</button>
+            </div>
+            <div className="p-6">{children}</div>
+        </div>
+    </div>
+);
 
-        function logout() {
-            token = null;
-            localStorage.removeItem('adminToken');
-            showLogin();
-        }
+// Dashboard Component
+const Dashboard=({onLogout})=>{
+    const[activeTab,setActiveTab]=useState('events');
+    const[stats,setStats]=useState({events:{total:0},news:{total:0},agencies:{total:0}});
+    const[events,setEvents]=useState([]);
+    const[news,setNews]=useState([]);
+    const[agencies,setAgencies]=useState([]);
+    const[provinces,setProvinces]=useState([]);
+    const[showModal,setShowModal]=useState(null);
+    const[editItem,setEditItem]=useState(null);
+    const[loading,setLoading]=useState(true);
 
-        async function showDashboard() {
-            app.innerHTML = `
-                <div class="flex min-h-screen">
-                    <div class="w-64 bg-navy-700 text-white p-6 fixed h-full overflow-auto hide-scrollbar">
-                        <div class="flex items-center gap-3 mb-8">
-                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-                                <span class="text-navy-700 font-bold text-lg">H</span>
-                            </div>
-                            <div>
-                                <h1 class="font-bold">HTIC Legal</h1>
-                                <p class="text-xs text-navy-200">Admin Panel v8.4</p>
-                            </div>
-                        </div>
-                        <nav class="space-y-2">
-                            <button onclick="loadSection('dashboard')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="dashboard">📊 Tổng quan</button>
-                            <button onclick="loadSection('events')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="events">📅 Sự kiện</button>
-                            <button onclick="loadSection('news')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="news">📰 Tin tức</button>
-                            <button onclick="loadSection('agencies')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="agencies">🏛️ Cơ quan NN</button>
-                            <button onclick="loadSection('settings')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="settings">⚙️ Cài đặt App</button>
-                        </nav>
-                        <button onclick="logout()" class="absolute bottom-6 left-6 right-6 bg-red-500/20 text-red-300 py-3 rounded-xl hover:bg-red-500/30 font-semibold">🚪 Đăng xuất</button>
-                    </div>
-                    <div class="ml-64 flex-1 p-8"><div id="content"></div></div>
-                </div>
-            `;
-            loadSection('dashboard');
-        }
-
-        function loadSection(section) {
-            currentSection = section;
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-navy-600');
-                if (btn.dataset.section === section) btn.classList.add('bg-navy-600');
-            });
-            switch(section) {
-                case 'dashboard': loadDashboardContent(); break;
-                case 'events': loadEventsContent(); break;
-                case 'news': loadNewsContent(); break;
-                case 'agencies': loadAgenciesContent(); break;
-                case 'settings': loadSettingsContent(); break;
-            }
-        }
-
-        // ============ DASHBOARD ============
-        async function loadDashboardContent() {
-            const content = document.getElementById('content');
-            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            try {
-                const [statsRes, eventsRes, newsRes] = await Promise.all([
-                    fetch(API + '/admin/stats'),
-                    fetch(API + '/admin/events'),
-                    fetch(API + '/admin/news')
+    // Fetch data
+    useEffect(()=>{
+        const fetchAll=async()=>{
+            try{
+                const[statsRes,eventsRes,newsRes,agenciesRes,provincesRes]=await Promise.all([
+                    fetch(API+'/admin/stats'),
+                    fetch(API+'/admin/events'),
+                    fetch(API+'/admin/news'),
+                    fetch(API+'/admin/agencies'),
+                    fetch(API+'/provinces')
                 ]);
-                const statsData = await statsRes.json();
-                const eventsData = await eventsRes.json();
-                const newsData = await newsRes.json();
-                const stats = statsData.data || {};
-                const events = (eventsData.data || []).sort((a, b) => b.id - a.id).slice(0, 5);
-                const news = (newsData.data || []).sort((a, b) => b.id - a.id).slice(0, 5);
-                
-                content.innerHTML = `
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">📊 Tổng quan</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">📅</div>
-                                <div><p class="text-gray-500 text-sm">Sự kiện</p><p class="text-2xl font-bold text-gray-900">${stats.events?.total || 0}</p></div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">📰</div>
-                                <div><p class="text-gray-500 text-sm">Tin tức</p><p class="text-2xl font-bold text-gray-900">${stats.news?.total || 0}</p></div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl">🏛️</div>
-                                <div><p class="text-gray-500 text-sm">Cơ quan</p><p class="text-2xl font-bold text-gray-900">${stats.agencies?.total || 0}</p></div>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">👥</div>
-                                <div><p class="text-gray-500 text-sm">Truy cập</p><p class="text-2xl font-bold text-gray-900">--</p></div>
-                            </div>
-                        </div>
+                const[statsData,eventsData,newsData,agenciesData,provincesData]=await Promise.all([
+                    statsRes.json(),eventsRes.json(),newsRes.json(),agenciesRes.json(),provincesRes.json()
+                ]);
+                if(statsData.success)setStats(statsData.data);
+                if(eventsData.success)setEvents(eventsData.data);
+                if(newsData.success)setNews(newsData.data);
+                if(agenciesData.success)setAgencies(agenciesData.data);
+                if(provincesData.success)setProvinces(provincesData.data);
+            }catch(err){console.error(err);}
+            setLoading(false);
+        };
+        fetchAll();
+    },[]);
+
+    // CRUD Functions
+    const saveEvent=async(data)=>{
+        const method=editItem?'PUT':'POST';
+        const url=editItem?`${API}/admin/events/${editItem.id}`:`${API}/admin/events`;
+        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+        const result=await res.json();
+        if(result.success){
+            if(editItem)setEvents(events.map(e=>e.id===editItem.id?result.data:e));
+            else setEvents([...events,result.data]);
+            setShowModal(null);setEditItem(null);
+        }else alert(result.message);
+    };
+
+    const deleteEvent=async(id)=>{
+        if(!confirm('Xác nhận xóa?'))return;
+        const res=await fetch(`${API}/admin/events/${id}`,{method:'DELETE'});
+        const result=await res.json();
+        if(result.success)setEvents(events.filter(e=>e.id!==id));
+    };
+
+    const saveNews=async(data)=>{
+        const method=editItem?'PUT':'POST';
+        const url=editItem?`${API}/admin/news/${editItem.id}`:`${API}/admin/news`;
+        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+        const result=await res.json();
+        if(result.success){
+            if(editItem)setNews(news.map(n=>n.id===editItem.id?result.data:n));
+            else setNews([...news,result.data]);
+            setShowModal(null);setEditItem(null);
+        }else alert(result.message);
+    };
+
+    const deleteNews=async(id)=>{
+        if(!confirm('Xác nhận xóa?'))return;
+        const res=await fetch(`${API}/admin/news/${id}`,{method:'DELETE'});
+        const result=await res.json();
+        if(result.success)setNews(news.filter(n=>n.id!==id));
+    };
+
+    const saveAgency=async(data)=>{
+        const method=editItem?'PUT':'POST';
+        const url=editItem?`${API}/admin/agencies/${editItem.id}`:`${API}/admin/agencies`;
+        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+        const result=await res.json();
+        if(result.success){
+            if(editItem)setAgencies(agencies.map(a=>a.id===editItem.id?result.data:a));
+            else setAgencies([...agencies,result.data]);
+            setShowModal(null);setEditItem(null);
+        }else alert(result.message);
+    };
+
+    const deleteAgency=async(id)=>{
+        if(!confirm('Xác nhận xóa?'))return;
+        const res=await fetch(`${API}/admin/agencies/${id}`,{method:'DELETE'});
+        const result=await res.json();
+        if(result.success)setAgencies(agencies.filter(a=>a.id!==id));
+    };
+
+    // Event Form
+    const EventForm=()=>{
+        const[form,setForm]=useState(editItem||{title:'',category:'tax',frequency:'monthly',dayOfMonth:20,month:1,description:'',legalReference:'',penalty:''});
+        return(
+            <form onSubmit={e=>{e.preventDefault();saveEvent(form);}} className="space-y-4">
+                <div><label className="block text-sm font-semibold mb-2">Tiêu đề *</label><input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} className="w-full p-3 border-2 rounded-xl" required/></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-sm font-semibold mb-2">Danh mục</label><select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full p-3 border-2 rounded-xl">{EVENT_CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+                    <div><label className="block text-sm font-semibold mb-2">Tần suất</label><select value={form.frequency} onChange={e=>setForm({...form,frequency:e.target.value})} className="w-full p-3 border-2 rounded-xl">{FREQUENCIES.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-sm font-semibold mb-2">Ngày trong tháng</label><input type="number" min="1" max="31" value={form.dayOfMonth} onChange={e=>setForm({...form,dayOfMonth:parseInt(e.target.value)})} className="w-full p-3 border-2 rounded-xl"/></div>
+                    {form.frequency==='yearly'&&<div><label className="block text-sm font-semibold mb-2">Tháng</label><input type="number" min="1" max="12" value={form.month} onChange={e=>setForm({...form,month:parseInt(e.target.value)})} className="w-full p-3 border-2 rounded-xl"/></div>}
+                </div>
+                <div><label className="block text-sm font-semibold mb-2">Mô tả</label><textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={3} className="w-full p-3 border-2 rounded-xl"/></div>
+                <div><label className="block text-sm font-semibold mb-2">Căn cứ pháp lý</label><input value={form.legalReference} onChange={e=>setForm({...form,legalReference:e.target.value})} className="w-full p-3 border-2 rounded-xl"/></div>
+                <div><label className="block text-sm font-semibold mb-2">Mức phạt</label><input value={form.penalty} onChange={e=>setForm({...form,penalty:e.target.value})} className="w-full p-3 border-2 rounded-xl"/></div>
+                <button type="submit" className="w-full py-3 bg-navy-600 text-white font-bold rounded-xl hover:bg-navy-700">{editItem?'Cập nhật':'Thêm mới'}</button>
+            </form>
+        );
+    };
+
+    // News Form
+    const NewsForm=()=>{
+        const[form,setForm]=useState(editItem||{title:'',category:'Thuế',date:new Date().toLocaleDateString('vi-VN'),summary:'',content:'',image:'',isHot:false});
+        return(
+            <form onSubmit={e=>{e.preventDefault();saveNews(form);}} className="space-y-4">
+                <div><label className="block text-sm font-semibold mb-2">Tiêu đề *</label><input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} className="w-full p-3 border-2 rounded-xl" required/></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-sm font-semibold mb-2">Danh mục</label><input value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="Thuế, BHXH, Lao dong..."/></div>
+                    <div><label className="block text-sm font-semibold mb-2">Ngày</label><input value={form.date} onChange={e=>setForm({...form,date:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="25/12/2024"/></div>
+                </div>
+                <div><label className="block text-sm font-semibold mb-2">Tóm tắt *</label><textarea value={form.summary} onChange={e=>setForm({...form,summary:e.target.value})} rows={2} className="w-full p-3 border-2 rounded-xl" required/></div>
+                <div><label className="block text-sm font-semibold mb-2">Nội dung</label><textarea value={form.content} onChange={e=>setForm({...form,content:e.target.value})} rows={4} className="w-full p-3 border-2 rounded-xl"/></div>
+                <div><label className="block text-sm font-semibold mb-2">URL hình ảnh</label><input value={form.image} onChange={e=>setForm({...form,image:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="https://..."/></div>
+                <label className="flex items-center gap-2"><input type="checkbox" checked={form.isHot} onChange={e=>setForm({...form,isHot:e.target.checked})} className="w-5 h-5"/><span className="font-semibold">🔥 Tin nổi bật</span></label>
+                <button type="submit" className="w-full py-3 bg-navy-600 text-white font-bold rounded-xl hover:bg-navy-700">{editItem?'Cập nhật':'Thêm mới'}</button>
+            </form>
+        );
+    };
+
+    // Agency Form - Updated with 4 new categories
+    const AgencyForm=()=>{
+        const[form,setForm]=useState(editItem||{name:'',category:'government',provinceId:provinces[0]?.id||'',address:'',phone:'',website:''});
+        return(
+            <form onSubmit={e=>{e.preventDefault();saveAgency(form);}} className="space-y-4">
+                <div><label className="block text-sm font-semibold mb-2">Tên tổ chức *</label><input value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full p-3 border-2 rounded-xl" required placeholder="VD: Cục Thuế TP. Hà Nội"/></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-semibold mb-2">Loại hình *</label>
+                        <select value={form.category} onChange={e=>setForm({...form,category:e.target.value})} className="w-full p-3 border-2 rounded-xl">
+                            {AGENCY_CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
                     </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="font-bold text-gray-900">📅 Sự kiện mới nhất</h3>
-                                <button onclick="loadSection('events')" class="text-navy-600 text-sm font-semibold hover:underline">Xem tất cả →</button>
+                    <div>
+                        <label className="block text-sm font-semibold mb-2">Tỉnh/TP *</label>
+                        <select value={form.provinceId} onChange={e=>setForm({...form,provinceId:e.target.value})} className="w-full p-3 border-2 rounded-xl">
+                            {provinces.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                    </div>
+                </div>
+                <div><label className="block text-sm font-semibold mb-2">Địa chỉ *</label><input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} className="w-full p-3 border-2 rounded-xl" required placeholder="Số nhà, đường, quận/huyện"/></div>
+                <div><label className="block text-sm font-semibold mb-2">Số điện thoại</label><input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="024 1234 5678"/></div>
+                <div><label className="block text-sm font-semibold mb-2">Website</label><input value={form.website} onChange={e=>setForm({...form,website:e.target.value})} className="w-full p-3 border-2 rounded-xl" placeholder="www.example.com"/></div>
+                <button type="submit" className="w-full py-3 bg-navy-600 text-white font-bold rounded-xl hover:bg-navy-700">{editItem?'Cập nhật':'Thêm mới'}</button>
+            </form>
+        );
+    };
+
+    if(loading)return<div className="min-h-screen flex items-center justify-center"><p className="text-xl font-bold text-gray-600">Đang tải...</p></div>;
+
+    const tabs=[
+        {id:'events',name:'Sự kiện pháp lý',icon:'📅',count:stats.events?.total||0},
+        {id:'news',name:'Tin tức',icon:'📰',count:stats.news?.total||0},
+        {id:'agencies',name:'Tổ chức pháp lý',icon:'🏛️',count:stats.agencies?.total||0},
+        {id:'settings',name:'Cài đặt',icon:'⚙️'}
+    ];
+
+    return(
+        <div className="min-h-screen bg-gray-100">
+            {/* Header */}
+            <header className="bg-navy-600 text-white px-6 py-4 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center"><span className="text-navy-600 font-bold text-xl">H</span></div>
+                    <div><h1 className="font-bold text-lg">HTIC Legal Admin</h1><p className="text-sm text-white/70">Quản lý hệ thống</p></div>
+                </div>
+                <button onClick={onLogout} className="bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/30">Đăng xuất</button>
+            </header>
+
+            <div className="flex">
+                {/* Sidebar */}
+                <aside className="w-64 bg-white min-h-[calc(100vh-72px)] border-r p-4">
+                    <nav className="space-y-2">
+                        {tabs.map(t=>(
+                            <button key={t.id} onClick={()=>setActiveTab(t.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left font-semibold transition-all ${activeTab===t.id?'bg-navy-600 text-white':'text-gray-700 hover:bg-gray-100'}`}>
+                                <span className="text-xl">{t.icon}</span>
+                                <span className="flex-1">{t.name}</span>
+                                {t.count!==undefined&&<span className={`text-sm px-2 py-0.5 rounded-full ${activeTab===t.id?'bg-white/20':'bg-gray-200'}`}>{t.count}</span>}
+                            </button>
+                        ))}
+                    </nav>
+                </aside>
+
+                {/* Main Content */}
+                <main className="flex-1 p-6">
+                    {/* Events Tab */}
+                    {activeTab==='events'&&(
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-gray-900">Quản lý Sự kiện pháp lý</h2>
+                                <button onClick={()=>{setEditItem(null);setShowModal('event');}} className="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700">+ Thêm sự kiện</button>
                             </div>
-                            <div class="space-y-3">
-                                ${events.length === 0 ? '<p class="text-gray-500 text-sm">Chưa có sự kiện</p>' : events.map(e => `
-                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-sm font-bold text-blue-700">${e.dayOfMonth || 20}</div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="font-semibold text-gray-900 text-sm truncate">${e.title}</p>
-                                            <p class="text-xs text-gray-500">${e.category} • ${e.frequency}</p>
+                            <div className="bg-white rounded-2xl shadow overflow-hidden">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left font-semibold text-gray-700">Tiêu đề</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Danh mục</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Tần suất</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Ngày</th><th className="px-4 py-3"></th></tr></thead>
+                                    <tbody className="divide-y">
+                                        {events.map(e=>(
+                                            <tr key={e.id} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 font-medium">{e.title}</td>
+                                                <td className="px-4 py-3"><span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm font-semibold">{EVENT_CATEGORIES.find(c=>c.id===e.category)?.name||e.category}</span></td>
+                                                <td className="px-4 py-3 text-gray-600">{FREQUENCIES.find(f=>f.id===e.frequency)?.name||e.frequency}</td>
+                                                <td className="px-4 py-3 text-gray-600">Ngày {e.dayOfMonth}{e.month?`/${e.month}`:''}</td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <button onClick={()=>{setEditItem(e);setShowModal('event');}} className="text-blue-600 hover:underline mr-3">Sửa</button>
+                                                    <button onClick={()=>deleteEvent(e.id)} className="text-red-600 hover:underline">Xóa</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* News Tab */}
+                    {activeTab==='news'&&(
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold text-gray-900">Quản lý Tin tức</h2>
+                                <button onClick={()=>{setEditItem(null);setShowModal('news');}} className="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700">+ Thêm tin</button>
+                            </div>
+                            <div className="bg-white rounded-2xl shadow overflow-hidden">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left font-semibold text-gray-700">Tiêu đề</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Danh mục</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Ngày</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Hot</th><th className="px-4 py-3"></th></tr></thead>
+                                    <tbody className="divide-y">
+                                        {news.sort((a,b)=>b.id-a.id).map(n=>(
+                                            <tr key={n.id} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 font-medium">{n.title}</td>
+                                                <td className="px-4 py-3"><span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-sm font-semibold">{n.category}</span></td>
+                                                <td className="px-4 py-3 text-gray-600">{n.date}</td>
+                                                <td className="px-4 py-3">{n.isHot&&<span className="text-orange-500">🔥</span>}</td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <button onClick={()=>{setEditItem(n);setShowModal('news');}} className="text-blue-600 hover:underline mr-3">Sửa</button>
+                                                    <button onClick={()=>deleteNews(n.id)} className="text-red-600 hover:underline">Xóa</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Agencies Tab - Updated */}
+                    {activeTab==='agencies'&&(
+                        <div>
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Quản lý Tổ chức pháp lý</h2>
+                                    <p className="text-gray-500 mt-1">4 loại hình: Cơ quan Nhà nước, VP Luật sư, VP Công chứng, VP Thừa phát lại</p>
+                                </div>
+                                <button onClick={()=>{setEditItem(null);setShowModal('agency');}} className="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700">+ Thêm tổ chức</button>
+                            </div>
+                            
+                            {/* Stats by category */}
+                            <div className="grid grid-cols-4 gap-4 mb-6">
+                                {AGENCY_CATEGORIES.map(cat=>{
+                                    const count=agencies.filter(a=>a.category===cat.id).length;
+                                    return(
+                                        <div key={cat.id} className="bg-white rounded-xl p-4 shadow">
+                                            <p className="text-sm text-gray-500 font-medium">{cat.name}</p>
+                                            <p className="text-2xl font-bold text-gray-900">{count}</p>
                                         </div>
-                                    </div>
-                                `).join('')}
+                                    );
+                                })}
+                            </div>
+
+                            <div className="bg-white rounded-2xl shadow overflow-hidden">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left font-semibold text-gray-700">Tên tổ chức</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Loại hình</th><th className="px-4 py-3 text-left font-semibold text-gray-700">Tỉnh/TP</th><th className="px-4 py-3 text-left font-semibold text-gray-700">SĐT</th><th className="px-4 py-3"></th></tr></thead>
+                                    <tbody className="divide-y">
+                                        {agencies.map(a=>(
+                                            <tr key={a.id} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3"><p className="font-medium">{a.name}</p><p className="text-sm text-gray-500">{a.address}</p></td>
+                                                <td className="px-4 py-3"><span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full text-sm font-semibold">{AGENCY_CATEGORIES.find(c=>c.id===a.category)?.name||a.category}</span></td>
+                                                <td className="px-4 py-3 text-gray-600">{provinces.find(p=>p.id===a.provinceId)?.name||a.provinceId}</td>
+                                                <td className="px-4 py-3 text-gray-600">{a.phone}</td>
+                                                <td className="px-4 py-3 text-right">
+                                                    <button onClick={()=>{setEditItem(a);setShowModal('agency');}} className="text-blue-600 hover:underline mr-3">Sửa</button>
+                                                    <button onClick={()=>deleteAgency(a.id)} className="text-red-600 hover:underline">Xóa</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                        
-                        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="font-bold text-gray-900">📰 Tin tức mới nhất</h3>
-                                <button onclick="loadSection('news')" class="text-navy-600 text-sm font-semibold hover:underline">Xem tất cả →</button>
-                            </div>
-                            <div class="space-y-3">
-                                ${news.length === 0 ? '<p class="text-gray-500 text-sm">Chưa có tin tức</p>' : news.map(n => `
-                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">📄</div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="font-semibold text-gray-900 text-sm truncate">${n.title}</p>
-                                            <p class="text-xs text-gray-500">${n.category} • ${n.date}</p>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } catch (e) {
-                content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Lỗi tải dữ liệu</div>';
-            }
-        }
+                    )}
 
-        // ============ EVENTS ============
-        async function loadEventsContent() {
-            const content = document.getElementById('content');
-            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            try {
-                const res = await fetch(API + '/admin/events');
-                const data = await res.json();
-                const events = (data.data || []).sort((a, b) => b.id - a.id);
-                
-                content.innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">📅 Quản lý Sự kiện</h2>
-                        <button onclick="showEventForm()" class="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Thêm mới
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tiêu đề</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Loại</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ngày</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Chu kỳ</th>
-                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${events.map(e => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-sm text-gray-500">#${e.id}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium max-w-xs truncate">${e.title}</td>
-                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">${e.category}</span></td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">Ngày ${e.dayOfMonth || 20}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">${e.frequency === 'monthly' ? 'Tháng' : e.frequency === 'quarterly' ? 'Quý' : 'Năm'}</td>
-                                        <td class="px-4 py-3 text-right">
-                                            <button onclick="editEvent(${e.id})" class="text-blue-600 hover:underline text-sm mr-3">Sửa</button>
-                                            <button onclick="deleteEvent(${e.id})" class="text-red-600 hover:underline text-sm">Xóa</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        ${events.length === 0 ? '<div class="p-8 text-center text-gray-500">Chưa có sự kiện nào</div>' : ''}
-                    </div>
-                `;
-            } catch (e) {
-                content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Lỗi tải dữ liệu</div>';
-            }
-        }
-
-        function showEventForm(eventData = null) {
-            const isEdit = eventData !== null;
-            modalRoot.innerHTML = `
-                <div class="modal-overlay" onclick="closeModal(event)">
-                    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-auto m-4" onclick="event.stopPropagation()">
-                        <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                            <h3 class="text-xl font-bold text-gray-900">${isEdit ? 'Sửa sự kiện' : 'Thêm sự kiện mới'}</h3>
-                            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề *</label>
-                                <input type="text" id="eventTitle" value="${eventData?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="VD: Nộp tờ khai thuế GTGT tháng">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Danh mục *</label>
-                                    <select id="eventCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
-                                        ${CATEGORIES.map(c => `<option value="${c.id}" ${eventData?.category === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Chu kỳ *</label>
-                                    <select id="eventFrequency" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
-                                        ${FREQUENCIES.map(f => `<option value="${f.id}" ${eventData?.frequency === f.id ? 'selected' : ''}>${f.name}</option>`).join('')}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ngày trong tháng *</label>
-                                    <input type="number" id="eventDay" value="${eventData?.dayOfMonth || 20}" min="1" max="31" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="20">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tháng (cho chu kỳ năm)</label>
-                                    <input type="number" id="eventMonth" value="${eventData?.month || ''}" min="1" max="12" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="3">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mô tả</label>
-                                <textarea id="eventDesc" rows="3" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none" placeholder="Mô tả chi tiết về sự kiện...">${eventData?.description || ''}</textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Căn cứ pháp lý</label>
-                                <textarea id="eventLegal" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none" placeholder="VD: Theo Điều 44 Luật Quản lý thuế 2019...">${eventData?.legalReference || ''}</textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mức phạt</label>
-                                <textarea id="eventPenalty" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none" placeholder="VD: Phạt 2-5 triệu đồng nếu nộp chậm...">${eventData?.penalty || ''}</textarea>
-                            </div>
-                        </div>
-                        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                            <button onclick="closeModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300">Hủy</button>
-                            <button onclick="saveEvent(${eventData?.id || 'null'})" class="px-6 py-2 bg-navy-600 text-white rounded-xl font-semibold hover:bg-navy-700">${isEdit ? 'Cập nhật' : 'Thêm mới'}</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function saveEvent(eventId) {
-            const data = {
-                title: document.getElementById('eventTitle').value,
-                category: document.getElementById('eventCategory').value,
-                frequency: document.getElementById('eventFrequency').value,
-                dayOfMonth: parseInt(document.getElementById('eventDay').value) || 20,
-                month: parseInt(document.getElementById('eventMonth').value) || null,
-                description: document.getElementById('eventDesc').value,
-                legalReference: document.getElementById('eventLegal').value,
-                penalty: document.getElementById('eventPenalty').value,
-                isActive: true
-            };
-
-            if (!data.title) {
-                alert('Vui lòng nhập tiêu đề');
-                return;
-            }
-
-            try {
-                const url = eventId ? API + '/admin/events/' + eventId : API + '/admin/events';
-                const method = eventId ? 'PUT' : 'POST';
-                const res = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (result.success) {
-                    closeModal();
-                    loadEventsContent();
-                    alert(eventId ? '✅ Đã cập nhật sự kiện!' : '✅ Đã thêm sự kiện mới!');
-                } else {
-                    alert('❌ Lỗi: ' + (result.message || 'Không thể lưu'));
-                }
-            } catch (e) {
-                alert('❌ Lỗi kết nối server');
-            }
-        }
-
-        async function editEvent(id) {
-            try {
-                const res = await fetch(API + '/admin/events/' + id);
-                const data = await res.json();
-                if (data.success) {
-                    showEventForm(data.data);
-                }
-            } catch (e) {
-                alert('❌ Lỗi tải dữ liệu');
-            }
-        }
-
-        async function deleteEvent(id) {
-            if (!confirm('Bạn có chắc muốn xóa sự kiện này?')) return;
-            try {
-                await fetch(API + '/admin/events/' + id, { method: 'DELETE' });
-                loadEventsContent();
-            } catch (e) {
-                alert('❌ Lỗi xóa');
-            }
-        }
-
-        // ============ NEWS ============
-        async function loadNewsContent() {
-            const content = document.getElementById('content');
-            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            try {
-                const res = await fetch(API + '/admin/news');
-                const data = await res.json();
-                const news = (data.data || []).sort((a, b) => b.id - a.id);
-                
-                content.innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">📰 Quản lý Tin tức</h2>
-                        <button onclick="showNewsForm()" class="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Thêm mới
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tiêu đề</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Danh mục</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Ngày đăng</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hot</th>
-                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${news.map(n => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-sm text-gray-500">#${n.id}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium max-w-xs truncate">${n.title}</td>
-                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">${n.category}</span></td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">${n.date}</td>
-                                        <td class="px-4 py-3 text-sm">${n.isHot ? '🔥' : '-'}</td>
-                                        <td class="px-4 py-3 text-right">
-                                            <button onclick="editNews(${n.id})" class="text-blue-600 hover:underline text-sm mr-3">Sửa</button>
-                                            <button onclick="deleteNews(${n.id})" class="text-red-600 hover:underline text-sm">Xóa</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        ${news.length === 0 ? '<div class="p-8 text-center text-gray-500">Chưa có tin tức nào</div>' : ''}
-                    </div>
-                `;
-            } catch (e) {
-                content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Lỗi tải dữ liệu</div>';
-            }
-        }
-
-        function showNewsForm(newsData = null) {
-            const isEdit = newsData !== null;
-            const today = new Date().toLocaleDateString('vi-VN');
-            modalRoot.innerHTML = `
-                <div class="modal-overlay" onclick="closeModal(event)">
-                    <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-auto m-4" onclick="event.stopPropagation()">
-                        <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                            <h3 class="text-xl font-bold text-gray-900">${isEdit ? 'Sửa tin tức' : 'Thêm tin tức mới'}</h3>
-                            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề *</label>
-                                <input type="text" id="newsTitle" value="${newsData?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="VD: Nghị định mới về quản lý thuế">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Danh mục *</label>
-                                    <select id="newsCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
-                                        ${NEWS_CATEGORIES.map(c => `<option value="${c}" ${newsData?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ngày đăng</label>
-                                    <input type="text" id="newsDate" value="${newsData?.date || today}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="29/12/2024">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tóm tắt *</label>
-                                <textarea id="newsSummary" rows="3" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none" placeholder="Tóm tắt ngắn gọn nội dung tin...">${newsData?.summary || ''}</textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nội dung chi tiết</label>
-                                <textarea id="newsContent" rows="6" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none" placeholder="Nội dung đầy đủ của tin tức...">${newsData?.content || ''}</textarea>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Link ảnh</label>
-                                <input type="text" id="newsImage" value="${newsData?.image || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="https://example.com/image.jpg">
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <input type="checkbox" id="newsHot" ${newsData?.isHot ? 'checked' : ''} class="w-5 h-5 rounded border-gray-300">
-                                <label for="newsHot" class="text-sm font-semibold text-gray-700">🔥 Đánh dấu là tin nổi bật</label>
-                            </div>
-                        </div>
-                        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                            <button onclick="closeModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300">Hủy</button>
-                            <button onclick="saveNews(${newsData?.id || 'null'})" class="px-6 py-2 bg-navy-600 text-white rounded-xl font-semibold hover:bg-navy-700">${isEdit ? 'Cập nhật' : 'Thêm mới'}</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function saveNews(newsId) {
-            const data = {
-                title: document.getElementById('newsTitle').value,
-                category: document.getElementById('newsCategory').value,
-                date: document.getElementById('newsDate').value,
-                summary: document.getElementById('newsSummary').value,
-                content: document.getElementById('newsContent').value,
-                image: document.getElementById('newsImage').value,
-                isHot: document.getElementById('newsHot').checked
-            };
-
-            if (!data.title || !data.summary) {
-                alert('Vui lòng nhập tiêu đề và tóm tắt');
-                return;
-            }
-
-            try {
-                const url = newsId ? API + '/admin/news/' + newsId : API + '/admin/news';
-                const method = newsId ? 'PUT' : 'POST';
-                const res = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (result.success) {
-                    closeModal();
-                    loadNewsContent();
-                    alert(newsId ? '✅ Đã cập nhật tin tức!' : '✅ Đã thêm tin tức mới!');
-                } else {
-                    alert('❌ Lỗi: ' + (result.message || 'Không thể lưu'));
-                }
-            } catch (e) {
-                alert('❌ Lỗi kết nối server');
-            }
-        }
-
-        async function editNews(id) {
-            try {
-                const res = await fetch(API + '/admin/news/' + id);
-                const data = await res.json();
-                if (data.success) {
-                    showNewsForm(data.data);
-                }
-            } catch (e) {
-                alert('❌ Lỗi tải dữ liệu');
-            }
-        }
-
-        async function deleteNews(id) {
-            if (!confirm('Bạn có chắc muốn xóa tin này?')) return;
-            try {
-                await fetch(API + '/admin/news/' + id, { method: 'DELETE' });
-                loadNewsContent();
-            } catch (e) {
-                alert('❌ Lỗi xóa');
-            }
-        }
-
-        // ============ AGENCIES ============
-        async function loadAgenciesContent() {
-            const content = document.getElementById('content');
-            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            try {
-                const res = await fetch(API + '/admin/agencies');
-                const data = await res.json();
-                const agencies = data.data || [];
-                
-                content.innerHTML = `
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900">🏛️ Quản lý Cơ quan</h2>
-                        <button onclick="showAgencyForm()" class="bg-navy-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-navy-700 flex items-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Thêm mới
-                        </button>
-                    </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tên cơ quan</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Loại</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tỉnh/TP</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">SĐT</th>
-                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                ${agencies.map(a => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-sm text-gray-900 font-medium">${a.name}</td>
-                                        <td class="px-4 py-3 text-sm"><span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">${a.category}</span></td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">${a.provinceId}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">${a.phone || '-'}</td>
-                                        <td class="px-4 py-3 text-right">
-                                            <button onclick="deleteAgency(${a.id})" class="text-red-600 hover:underline text-sm">Xóa</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        ${agencies.length === 0 ? '<div class="p-8 text-center text-gray-500">Chưa có cơ quan nào</div>' : ''}
-                    </div>
-                `;
-            } catch (e) {
-                content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Lỗi tải dữ liệu</div>';
-            }
-        }
-
-        function showAgencyForm() {
-            modalRoot.innerHTML = `
-                <div class="modal-overlay" onclick="closeModal(event)">
-                    <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto m-4" onclick="event.stopPropagation()">
-                        <div class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                            <h3 class="text-xl font-bold text-gray-900">Thêm cơ quan mới</h3>
-                            <button onclick="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button>
-                        </div>
-                        <div class="p-6 space-y-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên cơ quan *</label>
-                                <input type="text" id="agencyName" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="VD: Chi cục Thuế Quận 1">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Loại *</label>
-                                    <select id="agencyCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none bg-white">
-                                        <option value="tax">💰 Thuế</option>
-                                        <option value="court">⚖️ Tòa án</option>
-                                        <option value="police">👮 Công an</option>
-                                        <option value="insurance">🏥 BHXH</option>
-                                        <option value="labor">👷 Sở LĐTBXH</option>
-                                        <option value="business">📋 Đăng ký KD</option>
-                                        <option value="customs">🚢 Hải quan</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tỉnh/TP *</label>
-                                    <input type="text" id="agencyProvince" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="VD: hcm">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ *</label>
-                                <input type="text" id="agencyAddress" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="Số nhà, đường, quận/huyện">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
-                                <input type="text" id="agencyPhone" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none" placeholder="028 xxxx xxxx">
-                            </div>
-                        </div>
-                        <div class="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                            <button onclick="closeModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300">Hủy</button>
-                            <button onclick="saveAgency()" class="px-6 py-2 bg-navy-600 text-white rounded-xl font-semibold hover:bg-navy-700">Thêm mới</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function saveAgency() {
-            const data = {
-                name: document.getElementById('agencyName').value,
-                category: document.getElementById('agencyCategory').value,
-                provinceId: document.getElementById('agencyProvince').value,
-                address: document.getElementById('agencyAddress').value,
-                phone: document.getElementById('agencyPhone').value
-            };
-
-            if (!data.name || !data.address || !data.provinceId) {
-                alert('Vui lòng điền đầy đủ thông tin');
-                return;
-            }
-
-            try {
-                const res = await fetch(API + '/admin/agencies', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (result.success) {
-                    closeModal();
-                    loadAgenciesContent();
-                    alert('✅ Đã thêm cơ quan mới!');
-                } else {
-                    alert('❌ Lỗi: ' + (result.message || 'Không thể lưu'));
-                }
-            } catch (e) {
-                alert('❌ Lỗi kết nối server');
-            }
-        }
-
-        async function deleteAgency(id) {
-            if (!confirm('Bạn có chắc muốn xóa cơ quan này?')) return;
-            try {
-                await fetch(API + '/admin/agencies/' + id, { method: 'DELETE' });
-                loadAgenciesContent();
-            } catch (e) {
-                alert('❌ Lỗi xóa');
-            }
-        }
-
-        // ============ SETTINGS ============
-        let currentLogo = null;
-
-        async function loadSettingsContent() {
-            const content = document.getElementById('content');
-            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
-            
-            try {
-                const logoRes = await fetch(API + '/settings/logo');
-                const logoData = await logoRes.json();
-                currentLogo = logoData.data?.logo || null;
-                
-                content.innerHTML = `
-                    <h2 class="text-2xl font-bold text-gray-900 mb-6">⚙️ Cài đặt App</h2>
-                    
-                    <!-- Logo Upload -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
-                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">🖼️ Logo App</h3>
-                        <div class="flex items-start gap-6">
-                            <div class="flex-shrink-0">
-                                <div id="logoPreview" class="w-32 h-32 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50">
-                                    ${currentLogo ? `<img src="${currentLogo}" class="w-full h-full object-contain"/>` : `<div class="text-center text-gray-400"><span class="text-4xl">H</span><p class="text-xs mt-1">Chưa có logo</p></div>`}
-                                </div>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-gray-600 text-sm mb-4">Upload logo của công ty để hiển thị trong app. Khuyến nghị: PNG hoặc JPG, kích thước 200x200 pixels.</p>
-                                <div class="space-y-3">
-                                    <input type="file" id="logoInput" accept="image/*" onchange="previewLogo(this)" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-navy-50 file:text-navy-700 hover:file:bg-navy-100 cursor-pointer"/>
-                                    <div class="flex gap-3">
-                                        <button onclick="saveLogo()" id="saveLogoBtn" class="bg-navy-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-navy-700 disabled:opacity-50" ${!currentLogo ? 'disabled' : ''}>💾 Lưu Logo</button>
-                                        <button onclick="removeLogo()" id="removeLogoBtn" class="bg-red-100 text-red-700 px-6 py-2 rounded-xl font-semibold hover:bg-red-200 ${!currentLogo ? 'hidden' : ''}">🗑️ Xóa Logo</button>
-                                    </div>
+                    {/* Settings Tab */}
+                    {activeTab==='settings'&&(
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Cài đặt hệ thống</h2>
+                            <div className="bg-white rounded-2xl p-6 shadow">
+                                <h3 className="font-bold text-lg mb-4">Logo ứng dụng</h3>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-20 h-20 bg-navy-600 rounded-xl flex items-center justify-center"><span className="text-white text-3xl font-bold">H</span></div>
+                                    <div><input type="file" accept="image/*" className="text-sm"/><p className="text-gray-500 text-sm mt-1">Tải lên logo mới (PNG, JPG)</p></div>
                                 </div>
                             </div>
                         </div>
-                        <div id="logoMessage" class="mt-4 hidden"></div>
-                    </div>
-                    
-                    <!-- Thông tin công ty HTIC -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
-                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">🏢 Thông tin Công ty Luật HTIC</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên công ty</label>
-                                <input type="text" id="companyName" value="HTIC LAW FIRM" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Website</label>
-                                <input type="text" id="companyWebsite" value="www.htic.com.vn" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
-                                <input type="text" id="companyPhone" value="0379 044 299" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                                <input type="email" id="companyEmail" value="contact@htic.com.vn" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ</label>
-                                <input type="text" id="companyAddress" value="Hà Nội, Việt Nam" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none"/>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Giới thiệu</label>
-                                <textarea id="companyIntro" rows="3" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none">HTIC Law Firm là công ty luật chuyên nghiệp trong lĩnh vực tư vấn pháp lý doanh nghiệp, M&A, và các dịch vụ pháp lý cho doanh nghiệp.</textarea>
-                            </div>
-                        </div>
-                        <button onclick="saveCompanyInfo()" class="mt-4 bg-navy-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-navy-700">💾 Lưu thông tin công ty</button>
-                    </div>
-                    
-                    <!-- Chính sách bảo mật -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
-                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">🔒 Chính sách bảo mật</h3>
-                        <textarea id="privacyPolicy" rows="8" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none resize-none text-sm">CHÍNH SÁCH BẢO MẬT THÔNG TIN
+                    )}
+                </main>
+            </div>
 
-1. Thu thập thông tin
-- Ứng dụng HTIC Legal thu thập thông tin cá nhân khi bạn đăng ký tài khoản.
-- Chúng tôi cũng thu thập thông tin về cách bạn sử dụng ứng dụng.
+            {/* Modals */}
+            {showModal==='event'&&<Modal title={editItem?'Sửa sự kiện':'Thêm sự kiện'} onClose={()=>{setShowModal(null);setEditItem(null);}}><EventForm/></Modal>}
+            {showModal==='news'&&<Modal title={editItem?'Sửa tin tức':'Thêm tin tức'} onClose={()=>{setShowModal(null);setEditItem(null);}}><NewsForm/></Modal>}
+            {showModal==='agency'&&<Modal title={editItem?'Sửa tổ chức':'Thêm tổ chức pháp lý'} onClose={()=>{setShowModal(null);setEditItem(null);}}><AgencyForm/></Modal>}
+        </div>
+    );
+};
 
-2. Sử dụng thông tin
-- Cung cấp dịch vụ nhắc nhở lịch pháp lý
-- Gửi thông báo về các deadline quan trọng
+// Main App
+function App(){
+    const[isLoggedIn,setIsLoggedIn]=useState(!!localStorage.getItem('adminToken'));
+    const handleLogout=()=>{localStorage.removeItem('adminToken');setIsLoggedIn(false);};
+    if(!isLoggedIn)return<LoginScreen onLogin={()=>setIsLoggedIn(true)}/>;
+    return<Dashboard onLogout={handleLogout}/>;
+}
 
-3. Bảo mật thông tin
-- Thông tin được mã hóa và bảo vệ an toàn.
-- Không chia sẻ thông tin với bên thứ ba.
-
-4. Liên hệ: contact@htic.com.vn</textarea>
-                        <button onclick="savePrivacyPolicy()" class="mt-4 bg-navy-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-navy-700">💾 Lưu chính sách</button>
-                    </div>
-                    
-                    <!-- Thông tin phiên bản -->
-                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                        <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2">ℹ️ Thông tin ứng dụng</h3>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div class="bg-gray-50 p-4 rounded-xl">
-                                <p class="text-gray-500 mb-1">Phiên bản</p>
-                                <p class="font-bold text-gray-900">8.4.0</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-xl">
-                                <p class="text-gray-500 mb-1">Cập nhật</p>
-                                <p class="font-bold text-gray-900">29/12/2024</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-xl">
-                                <p class="text-gray-500 mb-1">Nền tảng</p>
-                                <p class="font-bold text-gray-900">Web App</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-xl">
-                                <p class="text-gray-500 mb-1">Nhà phát triển</p>
-                                <p class="font-bold text-gray-900">HTIC Law</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } catch (e) {
-                content.innerHTML = '<div class="bg-red-100 text-red-700 p-4 rounded-lg">Lỗi tải dữ liệu</div>';
-            }
-        }
-
-        function previewLogo(input) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onloadend = function() {
-                    currentLogo = reader.result;
-                    document.getElementById('logoPreview').innerHTML = `<img src="${currentLogo}" class="w-full h-full object-contain"/>`;
-                    document.getElementById('saveLogoBtn').disabled = false;
-                    document.getElementById('removeLogoBtn').classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        async function saveLogo() {
-            const msgEl = document.getElementById('logoMessage');
-            msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-blue-100 text-blue-700';
-            msgEl.textContent = 'Đang lưu...';
-            msgEl.classList.remove('hidden');
-            try {
-                const res = await fetch(API + '/admin/settings/logo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ logo: currentLogo })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-green-100 text-green-700';
-                    msgEl.textContent = '✅ Logo đã được lưu thành công!';
-                } else throw new Error(data.message);
-            } catch (e) {
-                msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-red-100 text-red-700';
-                msgEl.textContent = '❌ Lỗi: ' + (e.message || 'Không thể lưu logo');
-            }
-        }
-
-        async function removeLogo() {
-            if (!confirm('Bạn có chắc muốn xóa logo?')) return;
-            try {
-                const res = await fetch(API + '/admin/settings/logo', { method: 'DELETE' });
-                const data = await res.json();
-                if (data.success) {
-                    currentLogo = null;
-                    document.getElementById('logoPreview').innerHTML = `<div class="text-center text-gray-400"><span class="text-4xl">H</span><p class="text-xs mt-1">Chưa có logo</p></div>`;
-                    document.getElementById('saveLogoBtn').disabled = true;
-                    document.getElementById('removeLogoBtn').classList.add('hidden');
-                    const msgEl = document.getElementById('logoMessage');
-                    msgEl.className = 'mt-4 p-3 rounded-lg text-sm bg-green-100 text-green-700';
-                    msgEl.textContent = '✅ Logo đã được xóa!';
-                    msgEl.classList.remove('hidden');
-                }
-            } catch (e) {
-                alert('❌ Lỗi xóa logo');
-            }
-        }
-
-        async function saveCompanyInfo() {
-            alert('✅ Đã lưu thông tin công ty!');
-        }
-
-        async function savePrivacyPolicy() {
-            alert('✅ Đã lưu chính sách bảo mật!');
-        }
-
-        function closeModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            modalRoot.innerHTML = '';
-        }
-
-        checkAuth();
-    </script>
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
 </body>
 </html>
