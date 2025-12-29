@@ -29,6 +29,8 @@
         .toggle-switch.active{background:#1e3a5f}
         .toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:24px;height:24px;background:white;border-radius:50%;transition:transform .3s}
         .toggle-switch.active::after{transform:translateX(22px)}
+        .header-gradient{background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 50%,#cbd5e1 100%)}
+        .header-pattern{background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231e3a5f' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
     </style>
 </head>
 <body><div id="root"></div>
@@ -36,7 +38,7 @@
 const{useState,useEffect,useMemo,useRef,useCallback}=React;
 const API='/api';
 
-// ============ LOGO COMPONENT - Fixed ============
+// ============ LOGO COMPONENT ============
 const Logo=({size=40})=>{
     const[imgSrc,setImgSrc]=useState('/images/logo.png');
     const[hasError,setHasError]=useState(false);
@@ -60,7 +62,7 @@ const MEMBERSHIP_PLANS={free:{name:'Miễn phí',price:0,features:['Xem lịch p
 const USER_TYPES=[{id:'business',name:'Doanh nghiệp'},{id:'individual',name:'Cá nhân'}];
 const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'realestate',name:'Bất động sản'},{id:'other',name:'Khác'}];
 const categoryConfig={tax:{label:'Thuế',color:'bg-red-600',lightColor:'bg-red-50',textColor:'text-red-700',borderColor:'border-red-200'},insurance:{label:'BHXH',color:'bg-blue-600',lightColor:'bg-blue-50',textColor:'text-blue-700',borderColor:'border-blue-200'},report:{label:'Báo cáo',color:'bg-emerald-600',lightColor:'bg-emerald-50',textColor:'text-emerald-700',borderColor:'border-emerald-200'},license:{label:'Giấy phép',color:'bg-amber-600',lightColor:'bg-amber-50',textColor:'text-amber-700',borderColor:'border-amber-200'},news:{label:'Tin tức',color:'bg-purple-600',lightColor:'bg-purple-50',textColor:'text-purple-700',borderColor:'border-purple-200'},personal:{label:'Cá nhân',color:'bg-pink-600',lightColor:'bg-pink-50',textColor:'text-pink-700',borderColor:'border-pink-200'}};
-const agencyCategories=[{id:'all',name:'Tất cả',icon:'🏛️'},{id:'tax',name:'Thuế',icon:'💰'},{id:'court',name:'Tòa án',icon:'⚖️'},{id:'police',name:'Công an',icon:'👮'},{id:'insurance',name:'BHXH',icon:'🏥'},{id:'labor',name:'Sở LĐTBXH',icon:'👷'},{id:'business',name:'Đăng ký KD',icon:'📋'},{id:'customs',name:'Hải quan',icon:'🚢'}];
+const agencyCategories=[{id:'all',name:'Tất cả cơ quan',icon:'🏛️'},{id:'tax',name:'Cơ quan Thuế',icon:'💰'},{id:'court',name:'Tòa án',icon:'⚖️'},{id:'police',name:'Công an',icon:'👮'},{id:'insurance',name:'Bảo hiểm xã hội',icon:'🏥'},{id:'labor',name:'Sở LĐTBXH',icon:'👷'},{id:'business',name:'Đăng ký kinh doanh',icon:'📋'},{id:'customs',name:'Hải quan',icon:'🚢'}];
 const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const dayNames=['CN','T2','T3','T4','T5','T6','T7'];
 
@@ -218,23 +220,64 @@ const EventDetailModal=({event,onClose})=>{
     );
 };
 
-// ============ DASHBOARD SCREEN ============
-const DashboardScreen=({events,news,onEventClick,onNewsClick,membership,savedEvents,personalEvents})=>{
+// ============ NEWS DETAIL MODAL ============
+const NewsDetailModal=({news,onClose,onAddToCalendar})=>{
+    const[showDatePicker,setShowDatePicker]=useState(false);
+    const[selectedDate,setSelectedDate]=useState(new Date().toISOString().split('T')[0]);
+    const handleAddToCalendar=()=>{onAddToCalendar({id:'news-'+news.id+'-'+Date.now(),title:news.title,category:'news',date:selectedDate,description:news.summary,isFromNews:true});setShowDatePicker(false);alert('✅ Đã thêm vào lịch!');};
+    
+    return(
+        <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50 fade-in" onClick={onClose}>
+            <div className="bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] overflow-auto hide-scrollbar slide-up safe-bottom" onClick={e=>e.stopPropagation()}>
+                <div className="sticky top-0 bg-white px-5 py-4 border-b border-gray-200 flex justify-between items-center z-10"><span className="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full text-sm font-bold border border-purple-200">{news.category}</span><button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"><div className="w-5 h-5 text-gray-700"><Icons.X/></div></button></div>
+                {news.image&&<img src={news.image} alt="" className="w-full h-56 object-cover"/>}
+                <div className="p-5 space-y-4">
+                    <div className="flex items-center gap-2">{news.isHot&&<span className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full font-bold border border-red-200">🔥 Tin nổi bật</span>}<span className="text-gray-500 text-sm font-medium">{news.date}</span></div>
+                    <h2 className="text-xl font-bold text-gray-900">{news.title}</h2>
+                    <p className="text-gray-700 leading-relaxed font-medium">{news.summary}</p>
+                    {news.content&&<p className="text-gray-700 leading-relaxed whitespace-pre-line">{news.content}</p>}
+                    <div className="bg-purple-50 rounded-2xl p-4 border-2 border-purple-200">
+                        <p className="text-purple-800 font-bold mb-3 flex items-center gap-2"><div className="w-5 h-5"><Icons.CalendarPlus/></div>Thêm vào lịch để nhắc nhở</p>
+                        {showDatePicker?(<div className="space-y-3"><div><label className="text-sm font-semibold text-gray-700 mb-2 block">Chọn ngày:</label><input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none text-gray-900 font-medium"/></div><div className="flex gap-2"><button onClick={handleAddToCalendar} className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 flex items-center justify-center gap-2"><div className="w-5 h-5"><Icons.Check/></div>Xác nhận</button><button onClick={()=>setShowDatePicker(false)} className="px-4 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-300">Hủy</button></div></div>):(<button onClick={()=>setShowDatePicker(true)} className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 flex items-center justify-center gap-2"><div className="w-5 h-5"><Icons.CalendarPlus/></div>Thêm vào lịch</button>)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============ DASHBOARD SCREEN - View news directly ============
+const DashboardScreen=({events,news,onEventClick,membership,savedEvents,personalEvents,userProfile,onAddToCalendar})=>{
     const today=new Date();
+    const[selectedNews,setSelectedNews]=useState(null);
+    
     const allEvents=[...events.map(e=>({...e,deadline:getDeadlineFromEvent(e),daysUntil:getDaysUntil(getDeadlineFromEvent(e))})),...(savedEvents||[]).map(e=>({...e,deadline:new Date(e.date),daysUntil:getDaysUntil(new Date(e.date))})),...(personalEvents||[]).map(e=>({...e,deadline:new Date(e.date),daysUntil:getDaysUntil(new Date(e.date)),isPersonal:true}))];
     const upcomingEvents=allEvents.filter(e=>e.daysUntil>=0).sort((a,b)=>a.daysUntil-b.daysUntil).slice(0,6);
-    const latestNews=news.slice(0,5);
+    
+    // Sort news by ID descending (newest first)
+    const latestNews=[...news].sort((a,b)=>b.id-a.id).slice(0,5);
     const nearestDeadline=upcomingEvents[0];
+    
+    // Get user display name
+    const userName=userProfile?.name||(userProfile?.userType==='business'?'Doanh nghiệp':'Người dùng');
     
     return(
         <div className="h-full bg-slate-100 overflow-auto hide-scrollbar pb-24">
-            <div className="bg-gradient-to-br from-navy-600 to-navy-800 pt-14 pb-6 px-5 safe-top">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3"><div className="bg-white p-2 rounded-xl shadow-lg"><Logo size={32}/></div><div><p className="text-white font-bold text-lg">Lịch Pháp Lý</p><p className="text-sky-200 text-xs font-semibold">by {COMPANY_INFO.name}</p></div></div>
-                    {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-amber-500 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
+            {/* New Header with customer info - Light gradient background */}
+            <div className="header-gradient header-pattern pt-14 pb-6 px-5 safe-top border-b border-gray-200">
+                <div className="flex items-center gap-4">
+                    {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-lg"/>:<div className="bg-white p-3 rounded-2xl shadow-lg border border-gray-200"><Logo size={40}/></div>}
+                    <div className="flex-1 min-w-0">
+                        <p className="text-gray-500 text-sm font-medium">Xin chào,</p>
+                        <p className="text-navy-700 font-bold text-xl truncate">{userName}</p>
+                        {userProfile?.userType==='business'&&userProfile?.taxCode&&<p className="text-gray-500 text-sm font-medium">MST: {userProfile.taxCode}</p>}
+                        {userProfile?.userType==='individual'&&userProfile?.job&&<p className="text-gray-500 text-sm font-medium">{userProfile.job}</p>}
+                    </div>
+                    {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
                 </div>
-                <p className="text-sky-100 text-sm font-semibold">{today.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+                <p className="text-gray-600 text-sm font-semibold mt-3">{today.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
             </div>
+            
             {nearestDeadline&&(
                 <div className="px-5 -mt-3 mb-4">
                     <div className={`rounded-2xl p-5 shadow-lg border-2 ${nearestDeadline.daysUntil<=3?'bg-gradient-to-r from-red-500 to-red-600 border-red-400':nearestDeadline.daysUntil<=7?'bg-gradient-to-r from-amber-500 to-orange-500 border-amber-400':'bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-400'}`}>
@@ -256,8 +299,11 @@ const DashboardScreen=({events,news,onEventClick,onNewsClick,membership,savedEve
             </div>
             <div className="px-5 pb-4">
                 <h2 className="text-lg font-bold mb-3 text-gray-900 flex items-center gap-2"><div className="w-6 h-6 text-amber-500"><Icons.Newspaper/></div>Tin pháp lý mới</h2>
-                <div className="space-y-2.5">{latestNews.length===0?<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>:latestNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>onNewsClick(n)}/>)}</div>
+                <div className="space-y-2.5">{latestNews.length===0?<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>:latestNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSelectedNews(n)}/>)}</div>
             </div>
+            
+            {/* News Detail Modal - View directly from Dashboard */}
+            {selectedNews&&<NewsDetailModal news={selectedNews} onClose={()=>setSelectedNews(null)} onAddToCalendar={onAddToCalendar}/>}
         </div>
     );
 };
@@ -289,7 +335,7 @@ const AddPersonalEventModal=({onClose,onAdd})=>{
     );
 };
 
-// ============ CALENDAR SCREEN - With Personal Calendar ============
+// ============ CALENDAR SCREEN ============
 const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPersonalEvent,onDeletePersonalEvent})=>{
     const today=new Date();
     const[month,setMonth]=useState(today.getMonth());
@@ -297,7 +343,7 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
     const[sel,setSel]=useState(null);
     const[isCollapsed,setIsCollapsed]=useState(false);
     const[showAddModal,setShowAddModal]=useState(false);
-    const[viewMode,setViewMode]=useState('all'); // 'all' | 'personal'
+    const[viewMode,setViewMode]=useState('all');
     const scrollRef=useRef(null);
     const lastScrollY=useRef(0);
     
@@ -345,7 +391,6 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
         const ev=getEventsForDay(day);
         const isToday=day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
         const isSelected=day===sel;
-        const hasPersonal=ev.some(e=>e.isPersonal);
         return(
             <button key={day} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all ${isSelected?'bg-navy-600 shadow-lg':isToday?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
                 <span className={`text-sm font-bold ${isSelected?'text-white':isToday?'text-navy-700':'text-gray-800'}`}>{day}</span>
@@ -363,7 +408,6 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
                 </div>
             </div>
             
-            {/* View Mode Toggle */}
             <div className="bg-white px-5 py-2.5 flex gap-2 border-b border-gray-200">
                 <button onClick={()=>setViewMode('all')} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${viewMode==='all'?'bg-navy-600 text-white':'bg-gray-100 text-gray-700'}`}>📅 Tất cả</button>
                 <button onClick={()=>setViewMode('personal')} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${viewMode==='personal'?'bg-pink-500 text-white':'bg-gray-100 text-gray-700'}`}>👤 Lịch của bạn</button>
@@ -415,43 +459,20 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
     );
 };
 
-// ============ NEWS DETAIL MODAL ============
-const NewsDetailModal=({news,onClose,onAddToCalendar})=>{
-    const[showDatePicker,setShowDatePicker]=useState(false);
-    const[selectedDate,setSelectedDate]=useState(new Date().toISOString().split('T')[0]);
-    const handleAddToCalendar=()=>{onAddToCalendar({id:'news-'+news.id+'-'+Date.now(),title:news.title,category:'news',date:selectedDate,description:news.summary,isFromNews:true});setShowDatePicker(false);alert('✅ Đã thêm vào lịch!');};
-    
-    return(
-        <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50 fade-in" onClick={onClose}>
-            <div className="bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] overflow-auto hide-scrollbar slide-up safe-bottom" onClick={e=>e.stopPropagation()}>
-                <div className="sticky top-0 bg-white px-5 py-4 border-b border-gray-200 flex justify-between items-center z-10"><span className="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full text-sm font-bold border border-purple-200">{news.category}</span><button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"><div className="w-5 h-5 text-gray-700"><Icons.X/></div></button></div>
-                {news.image&&<img src={news.image} alt="" className="w-full h-56 object-cover"/>}
-                <div className="p-5 space-y-4">
-                    <div className="flex items-center gap-2">{news.isHot&&<span className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full font-bold border border-red-200">🔥 Tin nổi bật</span>}<span className="text-gray-500 text-sm font-medium">{news.date}</span></div>
-                    <h2 className="text-xl font-bold text-gray-900">{news.title}</h2>
-                    <p className="text-gray-700 leading-relaxed font-medium">{news.summary}</p>
-                    {news.content&&<p className="text-gray-700 leading-relaxed whitespace-pre-line">{news.content}</p>}
-                    <div className="bg-purple-50 rounded-2xl p-4 border-2 border-purple-200">
-                        <p className="text-purple-800 font-bold mb-3 flex items-center gap-2"><div className="w-5 h-5"><Icons.CalendarPlus/></div>Thêm vào lịch để nhắc nhở</p>
-                        {showDatePicker?(<div className="space-y-3"><div><label className="text-sm font-semibold text-gray-700 mb-2 block">Chọn ngày:</label><input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none text-gray-900 font-medium"/></div><div className="flex gap-2"><button onClick={handleAddToCalendar} className="flex-1 bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 flex items-center justify-center gap-2"><div className="w-5 h-5"><Icons.Check/></div>Xác nhận</button><button onClick={()=>setShowDatePicker(false)} className="px-4 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-300">Hủy</button></div></div>):(<button onClick={()=>setShowDatePicker(true)} className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 flex items-center justify-center gap-2"><div className="w-5 h-5"><Icons.CalendarPlus/></div>Thêm vào lịch</button>)}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// ============ NEWS SCREEN ============
+// ============ NEWS SCREEN - Newest first ============
 const NewsScreen=({newsData,onAddToCalendar})=>{
     const[sel,setSel]=useState(null);
-    const featuredNews=newsData.slice(0,3);
-    const otherNews=newsData.slice(3);
+    
+    // Sort news by ID descending (newest first)
+    const sortedNews=[...newsData].sort((a,b)=>b.id-a.id);
+    const featuredNews=sortedNews.slice(0,3);
+    const otherNews=sortedNews.slice(3);
     
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Newspaper/></div></div><h1 className="text-2xl font-bold text-gray-900">Tin tức pháp luật</h1></div></div>
             <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900"><div className="w-6 h-6 text-amber-500"><Icons.TrendingUp/></div>Tin nổi bật</h2>
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900"><div className="w-6 h-6 text-amber-500"><Icons.TrendingUp/></div>Tin mới nhất</h2>
                 {featuredNews.length===0?<div className="bg-white rounded-xl p-8 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>:<div className="space-y-4 mb-6">{featuredNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSel(n)} featured/>)}</div>}
                 {otherNews.length>0&&(<><h2 className="text-lg font-bold mb-3 text-gray-900">Tin khác</h2><div className="space-y-3">{otherNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSel(n)}/>)}</div></>)}
             </div>
@@ -460,7 +481,7 @@ const NewsScreen=({newsData,onAddToCalendar})=>{
     );
 };
 
-// ============ SUPPORT SCREEN - Simplified with Category Filter ============
+// ============ SUPPORT SCREEN - With Dropdown Category ============
 const SupportScreen=({provinces,agencies})=>{
     const[province,setProvince]=useState(provinces[0]?.id||'');
     const[searchQuery,setSearchQuery]=useState('');
@@ -475,7 +496,7 @@ const SupportScreen=({provinces,agencies})=>{
     
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Landmark/></div></div><h1 className="text-2xl font-bold text-gray-900">Cơ quan Nhà nước</h1></div></div>
+            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Headphones/></div></div><h1 className="text-2xl font-bold text-gray-900">Hỗ trợ</h1></div></div>
             <div className="flex-1 overflow-auto hide-scrollbar">
                 <div className="px-5 py-4">
                     {/* Province Select */}
@@ -484,15 +505,14 @@ const SupportScreen=({provinces,agencies})=>{
                         <div className="relative"><select value={province} onChange={e=>setProvince(e.target.value)} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none appearance-none pr-10 text-gray-900 font-semibold">{provinces.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><div className="w-5 h-5 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown/></div></div>
                     </div>
                     
-                    {/* Category Filter */}
+                    {/* Category Dropdown */}
                     <div className="mb-4">
                         <label className="text-sm font-bold text-gray-800 mb-2 block">Danh mục cơ quan</label>
-                        <div className="flex flex-wrap gap-2">
-                            {agencyCategories.map(cat=>(
-                                <button key={cat.id} onClick={()=>setSelectedCategory(cat.id)} className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-1.5 ${selectedCategory===cat.id?'bg-navy-600 text-white':'bg-white text-gray-700 border border-gray-200'}`}>
-                                    <span>{cat.icon}</span>{cat.name}
-                                </button>
-                            ))}
+                        <div className="relative">
+                            <select value={selectedCategory} onChange={e=>setSelectedCategory(e.target.value)} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none appearance-none pr-10 text-gray-900 font-semibold">
+                                {agencyCategories.map(cat=><option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>)}
+                            </select>
+                            <div className="w-5 h-5 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown/></div>
                         </div>
                     </div>
                     
@@ -565,7 +585,7 @@ const PaymentModal=({plan,onClose,onSuccess})=>{
     );
 };
 
-// ============ SETTINGS SCREEN - With Notifications ============
+// ============ SETTINGS SCREEN ============
 const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeMembership,notifications,onUpdateNotifications})=>{
     const[showProfileForm,setShowProfileForm]=useState(false);
     const[profile,setProfile]=useState(userProfile||{userType:'business'});
@@ -599,13 +619,13 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
 
     return(
         <div className="h-full bg-slate-100 overflow-auto hide-scrollbar pb-24">
-            <div className="bg-gradient-to-br from-navy-600 to-navy-800 pt-14 pb-8 px-5 safe-top">
-                <h1 className="text-2xl font-bold text-white mb-5">Cài đặt</h1>
-                <div className="bg-white/15 rounded-2xl p-5 border border-white/20">
+            <div className="header-gradient header-pattern pt-14 pb-8 px-5 safe-top border-b border-gray-200">
+                <h1 className="text-2xl font-bold text-gray-900 mb-5">Cài đặt</h1>
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
                     <div className="flex items-center gap-4">
-                        {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-white/30"/>:<div className="bg-white p-2.5 rounded-xl shadow-lg"><Logo size={36}/></div>}
-                        <div className="flex-1 min-w-0"><p className="text-white font-bold text-lg truncate">{userProfile?.name||'Người dùng'}</p><p className="text-sky-200 truncate font-semibold">{userProfile?.userType==='business'?(userProfile?.taxCode?`MST: ${userProfile.taxCode}`:'Doanh nghiệp'):(userProfile?.job||'Cá nhân')}</p></div>
-                        {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-amber-500 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
+                        {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow"/>:<div className="bg-navy-50 p-2.5 rounded-xl border border-navy-100"><Logo size={36}/></div>}
+                        <div className="flex-1 min-w-0"><p className="text-gray-900 font-bold text-lg truncate">{userProfile?.name||'Người dùng'}</p><p className="text-gray-500 truncate font-semibold">{userProfile?.userType==='business'?(userProfile?.taxCode?`MST: ${userProfile.taxCode}`:'Doanh nghiệp'):(userProfile?.job||'Cá nhân')}</p></div>
+                        {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-gradient-to-r from-amber-400 to-amber-500 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
                     </div>
                 </div>
             </div>
@@ -615,7 +635,6 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
                     {userProfile?.name?(<div className="space-y-2 text-sm"><p><span className="text-gray-500">Loại:</span> <span className="text-gray-900 font-semibold">{userProfile.userType==='business'?'Doanh nghiệp':'Cá nhân'}</span></p><p><span className="text-gray-500">{userProfile.userType==='business'?'Công ty':'Họ tên'}:</span> <span className="text-gray-900 font-semibold">{userProfile.name}</span></p>{userProfile.phone&&<p><span className="text-gray-500">SĐT:</span> <span className="text-gray-900 font-semibold">{userProfile.phone}</span></p>}{userProfile.email&&<p><span className="text-gray-500">Email:</span> <span className="text-gray-900 font-semibold">{userProfile.email}</span></p>}</div>):<p className="text-gray-500 text-sm font-semibold">Chưa thiết lập hồ sơ.</p>}
                 </div>
                 
-                {/* Notifications Section */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm mb-5 border border-gray-200">
                     <h3 className="font-bold mb-4 text-gray-900 flex items-center gap-2"><div className="w-5 h-5 text-amber-500"><Icons.Bell/></div>Thông báo</h3>
                     <div className="space-y-4">
@@ -638,7 +657,7 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
                 
                 <div className="bg-white rounded-2xl px-5 shadow-sm mb-5 border border-gray-200">
                     <h3 className="font-bold pt-5 pb-3 text-gray-900">Về ứng dụng</h3>
-                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.4.0</span></div>
+                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.5.0</span></div>
                     <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Shield/></div><span className="flex-1 text-gray-800 font-semibold">Chính sách bảo mật</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                     <div className="py-4 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.HelpCircle/></div><span className="flex-1 text-gray-800 font-semibold">Liên hệ hỗ trợ</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                 </div>
@@ -657,9 +676,9 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
     );
 };
 
-// ============ TAB BAR ============
+// ============ TAB BAR - Changed "Cơ quan" to "Hỗ trợ" ============
 const TabBar=({activeTab,onTabChange})=>{
-    const tabs=[{id:'home',I:Icons.Home,l:'Trang chủ'},{id:'calendar',I:Icons.Calendar,l:'Lịch'},{id:'news',I:Icons.Newspaper,l:'Tin tức'},{id:'support',I:Icons.Landmark,l:'Cơ quan'},{id:'settings',I:Icons.Settings,l:'Cài đặt'}];
+    const tabs=[{id:'home',I:Icons.Home,l:'Trang chủ'},{id:'calendar',I:Icons.Calendar,l:'Lịch'},{id:'news',I:Icons.Newspaper,l:'Tin tức'},{id:'support',I:Icons.Headphones,l:'Hỗ trợ'},{id:'settings',I:Icons.Settings,l:'Cài đặt'}];
     return<div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 flex safe-bottom z-40 max-w-lg mx-auto shadow-2xl">{tabs.map(t=><button key={t.id} onClick={()=>onTabChange(t.id)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all ${activeTab===t.id?'text-navy-600':'text-gray-400'}`}><div className="w-6 h-6"><t.I/></div><span className={`text-xs ${activeTab===t.id?'font-bold':'font-semibold'}`}>{t.l}</span></button>)}</div>;
 };
 
@@ -708,7 +727,7 @@ function App(){
         <div className="h-full w-full max-w-lg mx-auto bg-slate-100 relative overflow-hidden">
             {screen==='splash'&&<SplashScreen onFinish={()=>setScreen('main')}/>}
             {screen==='main'&&<>
-                {tab==='home'&&<DashboardScreen events={events} news={newsData} onEventClick={setSelEvent} onNewsClick={()=>setTab('news')} membership={membership} savedEvents={savedEvents} personalEvents={personalEvents}/>}
+                {tab==='home'&&<DashboardScreen events={events} news={newsData} onEventClick={setSelEvent} membership={membership} savedEvents={savedEvents} personalEvents={personalEvents} userProfile={userProfile} onAddToCalendar={addToCalendarFromNews}/>}
                 {tab==='calendar'&&<CalendarScreen events={events} onEventClick={setSelEvent} savedEvents={savedEvents} personalEvents={personalEvents} onAddPersonalEvent={addPersonalEvent} onDeletePersonalEvent={deletePersonalEvent}/>}
                 {tab==='news'&&<NewsScreen newsData={newsData} onAddToCalendar={addToCalendarFromNews}/>}
                 {tab==='support'&&<SupportScreen provinces={provinces} agencies={agencies}/>}
