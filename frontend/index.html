@@ -66,7 +66,7 @@ const COMPANY_INFO={name:'HTIC LAW FIRM',website:'www.htic.com.vn',phone:'0379 0
 const MEMBERSHIP_PLANS={free:{name:'Miễn phí',price:0,features:['Xem lịch pháp lý','Đọc tin tức','Có quảng cáo']},pro_monthly:{name:'Pro Tháng',price:61000,period:'tháng',features:['Không quảng cáo','Ưu tiên hỗ trợ','Nhắc nhở qua email']},pro_yearly:{name:'Pro Năm',price:599000,period:'năm',features:['Không quảng cáo','Ưu tiên hỗ trợ','Nhắc nhở qua email','Tiết kiệm 133k']}};
 const USER_TYPES=[{id:'business',name:'Doanh nghiệp'},{id:'individual',name:'Cá nhân'}];
 const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'realestate',name:'Bất động sản'},{id:'other',name:'Khác'}];
-const categoryConfig={tax:{label:'Thuế',color:'bg-red-600',lightColor:'bg-red-50',textColor:'text-red-700',borderColor:'border-red-200'},insurance:{label:'BHXH',color:'bg-blue-600',lightColor:'bg-blue-50',textColor:'text-blue-700',borderColor:'border-blue-200'},report:{label:'Báo cáo',color:'bg-emerald-600',lightColor:'bg-emerald-50',textColor:'text-emerald-700',borderColor:'border-emerald-200'},license:{label:'Giấy phép',color:'bg-amber-600',lightColor:'bg-amber-50',textColor:'text-amber-700',borderColor:'border-amber-200'},news:{label:'Tin tức',color:'bg-purple-600',lightColor:'bg-purple-50',textColor:'text-purple-700',borderColor:'border-purple-200'},personal:{label:'Cá nhân',color:'bg-pink-600',lightColor:'bg-pink-50',textColor:'text-pink-700',borderColor:'border-pink-200'}};
+const categoryConfig={tax:{label:'Thuế',color:'bg-red-600',lightColor:'bg-red-50',textColor:'text-red-700',borderColor:'border-red-200'},insurance:{label:'Bảo hiểm',color:'bg-blue-600',lightColor:'bg-blue-50',textColor:'text-blue-700',borderColor:'border-blue-200'},labor:{label:'Lao động',color:'bg-orange-600',lightColor:'bg-orange-50',textColor:'text-orange-700',borderColor:'border-orange-200'},safety:{label:'An toàn',color:'bg-rose-600',lightColor:'bg-rose-50',textColor:'text-rose-700',borderColor:'border-rose-200'},environment:{label:'Môi trường',color:'bg-green-600',lightColor:'bg-green-50',textColor:'text-green-700',borderColor:'border-green-200'},investment:{label:'Đầu tư',color:'bg-violet-600',lightColor:'bg-violet-50',textColor:'text-violet-700',borderColor:'border-violet-200'},report:{label:'Báo cáo',color:'bg-emerald-600',lightColor:'bg-emerald-50',textColor:'text-emerald-700',borderColor:'border-emerald-200'},license:{label:'Giấy phép',color:'bg-amber-600',lightColor:'bg-amber-50',textColor:'text-amber-700',borderColor:'border-amber-200'},news:{label:'Tin tức',color:'bg-purple-600',lightColor:'bg-purple-50',textColor:'text-purple-700',borderColor:'border-purple-200'},personal:{label:'Cá nhân',color:'bg-pink-600',lightColor:'bg-pink-50',textColor:'text-pink-700',borderColor:'border-pink-200'}};
 
 // 4 Danh mục tổ chức pháp lý - không icon
 const agencyCategories=[
@@ -113,7 +113,7 @@ const Icons={
     Globe:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
 };
 
-const getDeadlineFromEvent=(ev)=>{const now=new Date();const y=now.getFullYear();const m=now.getMonth();let day=ev.dayOfMonth||20;if(ev.frequency==='monthly')return new Date(y,m,day);if(ev.frequency==='quarterly'){const qMonth=Math.floor(m/3)*3+2;return new Date(y,qMonth,day);}if(ev.frequency==='yearly'){const eventMonth=(ev.month||1)-1;return new Date(y,eventMonth,day);}return new Date(y,m,day);};
+const getDeadlineFromEvent=(ev)=>{if(ev.date)return new Date(ev.date);const now=new Date();const y=now.getFullYear();const m=now.getMonth();let day=ev.dayOfMonth||20;if(ev.frequency==='monthly')return new Date(y,m,day);if(ev.frequency==='quarterly'){const qMonth=Math.floor(m/3)*3+2;return new Date(y,qMonth,day);}if(ev.frequency==='yearly'){const eventMonth=(ev.month||1)-1;return new Date(y,eventMonth,day);}return new Date(y,m,day);};
 const getDaysUntil=(date)=>{const d=typeof date==='string'?new Date(date):date;const today=new Date();today.setHours(0,0,0,0);d.setHours(0,0,0,0);return Math.ceil((d-today)/(1000*60*60*24));};
 const formatPrice=(price)=>new Intl.NumberFormat('vi-VN').format(price)+'đ';
 
@@ -125,7 +125,7 @@ const SplashScreen=({onFinish})=>{
             <div className="bg-white p-6 rounded-3xl shadow-2xl mb-8 animate-float"><Logo size={100}/></div>
             <h1 className="text-4xl font-bold text-white mb-3">HTIC Legal</h1>
             <p className="text-white text-center text-lg mb-2 font-semibold">Lịch Pháp Lý Doanh Nghiệp</p>
-            <p className="text-sky-200 text-center text-sm font-medium">Quản lý deadline thuế, BHXH, báo cáo</p>
+            <p className="text-sky-200 text-center text-sm font-medium">Lịch pháp lý doanh nghiệp 2026</p>
             <div className="mt-12 flex gap-2">{[0,1,2].map(i=><div key={i} className="w-3 h-3 bg-white rounded-full animate-pulse" style={{animationDelay:`${i*.2}s`}}/>)}</div>
             <p className="mt-8 text-sky-300 text-sm font-semibold">by {COMPANY_INFO.name}</p>
         </div>
@@ -339,8 +339,8 @@ const AddPersonalEventModal=({onClose,onAdd})=>{
 // ============ CALENDAR SCREEN - Fixed smooth scroll ============
 const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPersonalEvent,onDeletePersonalEvent})=>{
     const today=new Date();
-    const[month,setMonth]=useState(today.getMonth());
-    const[year,setYear]=useState(today.getFullYear());
+    const[month,setMonth]=useState(0);
+    const[year,setYear]=useState(2026);
     const[sel,setSel]=useState(null);
     const[calendarMode,setCalendarMode]=useState('full'); // 'full' or 'week'
     const[showAddModal,setShowAddModal]=useState(false);
@@ -397,7 +397,7 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
             {/* Fixed Header */}
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div></div><h1 className="text-2xl font-bold text-gray-900">Lịch pháp lý</h1></div>
+                    <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div></div><h1 className="text-2xl font-bold text-gray-900">Lịch pháp lý 2026</h1></div>
                     <button onClick={()=>setShowAddModal(true)} className="bg-navy-600 text-white p-2.5 rounded-xl shadow-md hover:bg-navy-700"><div className="w-5 h-5"><Icons.Plus/></div></button>
                 </div>
             </div>
