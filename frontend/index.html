@@ -45,10 +45,9 @@
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        const { useState, useEffect, useCallback, useMemo } = React;
+        const { useState, useEffect, useMemo } = React;
         const API = '/api';
 
-        // ============ HTIC LOGO ============
         const HTICLogo = ({ size = 40 }) => (
             <svg viewBox="0 0 100 100" width={size} height={size}>
                 <circle cx="50" cy="50" r="46" fill="none" stroke="#1a5276" strokeWidth="6"/>
@@ -60,8 +59,7 @@
             </svg>
         );
 
-        // ============ CONSTANTS ============
-        const COMPANY_INFO = { name: 'Công ty Luật HTIC', shortName: 'HTIC LAW', website: 'www.htic.com.vn', phone: '0379 044 299', email: 'contact@htic.com.vn' };
+        const COMPANY_INFO = { name: 'Công ty Luật HTIC', website: 'www.htic.com.vn', phone: '0379 044 299', email: 'contact@htic.com.vn' };
         
         const QUICK_LINKS = [
             { id: 1, name: 'Thuế điện tử', icon: '💰', url: 'https://thuedientu.gdt.gov.vn', color: 'bg-red-100' },
@@ -120,63 +118,42 @@
         const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
         const dayNames = ['CN','T2','T3','T4','T5','T6','T7'];
 
-        // ============ ICONS ============
         const Icons = {
             Home: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
             Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
             Newspaper: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>,
-            Headphones: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>,
             Settings: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
-            Bell: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
             Check: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><polyline points="20 6 9 17 4 12"/></svg>,
             CheckCircle: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
             ChevronLeft: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m15 18-6-6 6-6"/></svg>,
             ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m9 18 6-6-6-6"/></svg>,
             ChevronDown: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m6 9 6 6 6-6"/></svg>,
             Clock: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
-            Crown: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
             X: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
             Mail: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>,
-            Lock: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
             Phone: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
             Building: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>,
             FileText: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>,
-            Eye: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
-            EyeOff: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>,
             MapPin: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>,
             Search: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
             Landmark: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>,
             TrendingUp: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
-            Bookmark: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>,
-            Share: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>,
-            MessageCircle: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>,
             Info: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
             Shield: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
             HelpCircle: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>,
-            Star: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
-            LogOut: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
             Trash: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
             ExternalLink: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>,
             AlertTriangle: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
-            User: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-            Filter: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
         };
 
-        // ============ HELPERS ============
         const getDeadlineFromEvent = (ev) => {
             const now = new Date();
             const y = now.getFullYear();
             const m = now.getMonth();
             let day = ev.dayOfMonth || 20;
             if (ev.frequency === 'monthly') return new Date(y, m, day);
-            if (ev.frequency === 'quarterly') {
-                const qMonth = Math.floor(m / 3) * 3 + 2;
-                return new Date(y, qMonth, day);
-            }
-            if (ev.frequency === 'yearly') {
-                const eventMonth = (ev.month || 1) - 1;
-                return new Date(y, eventMonth, day);
-            }
+            if (ev.frequency === 'quarterly') { const qMonth = Math.floor(m / 3) * 3 + 2; return new Date(y, qMonth, day); }
+            if (ev.frequency === 'yearly') { const eventMonth = (ev.month || 1) - 1; return new Date(y, eventMonth, day); }
             return new Date(y, m, day);
         };
 
@@ -188,21 +165,9 @@
             return Math.ceil((d - today) / (1000 * 60 * 60 * 24));
         };
 
-        const formatCountdown = (days) => {
-            if (days < 0) return { text: `Quá hạn ${Math.abs(days)} ngày`, urgent: true };
-            if (days === 0) return { text: 'Hôm nay là hạn chót!', urgent: true };
-            if (days === 1) return { text: 'Còn 1 ngày', urgent: true };
-            if (days <= 7) return { text: `Còn ${days} ngày`, urgent: true };
-            return { text: `Còn ${days} ngày`, urgent: false };
-        };
-
-        // ============ SEARCH COMPONENT ============
         const SearchBar = ({ onSearch, placeholder = "Tìm kiếm..." }) => {
             const [query, setQuery] = useState('');
-            const handleChange = (e) => {
-                setQuery(e.target.value);
-                onSearch(e.target.value);
-            };
+            const handleChange = (e) => { setQuery(e.target.value); onSearch(e.target.value); };
             return (
                 <div className="relative">
                     <div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Search /></div>
@@ -212,16 +177,13 @@
             );
         };
 
-        // ============ GLOBAL SEARCH MODAL ============
-        const GlobalSearchModal = ({ isOpen, onClose, events, news, agencies, onSelectEvent, onSelectNews }) => {
+        const GlobalSearchModal = ({ isOpen, onClose, events, news, agencies, onSelectEvent }) => {
             const [query, setQuery] = useState('');
             if (!isOpen) return null;
-
             const q = query.toLowerCase();
             const filteredEvents = events.filter(e => e.title.toLowerCase().includes(q) || e.description?.toLowerCase().includes(q));
             const filteredNews = news.filter(n => n.title.toLowerCase().includes(q) || n.summary?.toLowerCase().includes(q));
             const filteredAgencies = agencies.filter(a => a.name.toLowerCase().includes(q) || a.address?.toLowerCase().includes(q));
-
             return (
                 <div className="fixed inset-0 bg-black/50 z-50 fade-in" onClick={onClose}>
                     <div className="bg-white w-full max-w-lg mx-auto mt-20 rounded-2xl max-h-[70vh] overflow-hidden" onClick={e => e.stopPropagation()}>
@@ -232,45 +194,12 @@
                             </div>
                         </div>
                         <div className="overflow-auto max-h-[50vh] p-4">
-                            {query.length < 2 ? (
-                                <p className="text-gray-500 text-center py-8">Nhập ít nhất 2 ký tự để tìm kiếm</p>
-                            ) : (
+                            {query.length < 2 ? <p className="text-gray-500 text-center py-8">Nhập ít nhất 2 ký tự để tìm kiếm</p> : (
                                 <>
-                                    {filteredEvents.length > 0 && (
-                                        <div className="mb-4">
-                                            <h3 className="text-sm font-semibold text-gray-500 mb-2">LỊCH PHÁP LÝ ({filteredEvents.length})</h3>
-                                            {filteredEvents.slice(0, 5).map(e => (
-                                                <button key={e.id} onClick={() => { onSelectEvent(e); onClose(); }} className="w-full text-left p-3 rounded-xl hover:bg-gray-50 flex items-center gap-3">
-                                                    <div className={`w-3 h-3 rounded-full ${categoryConfig[e.category]?.color || 'bg-gray-400'}`} />
-                                                    <span className="text-gray-800">{e.title}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {filteredNews.length > 0 && (
-                                        <div className="mb-4">
-                                            <h3 className="text-sm font-semibold text-gray-500 mb-2">TIN TỨC ({filteredNews.length})</h3>
-                                            {filteredNews.slice(0, 5).map(n => (
-                                                <button key={n.id} onClick={() => { onSelectNews(n); onClose(); }} className="w-full text-left p-3 rounded-xl hover:bg-gray-50">
-                                                    <span className="text-gray-800">{n.title}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {filteredAgencies.length > 0 && (
-                                        <div className="mb-4">
-                                            <h3 className="text-sm font-semibold text-gray-500 mb-2">CƠ QUAN ({filteredAgencies.length})</h3>
-                                            {filteredAgencies.slice(0, 5).map(a => (
-                                                <div key={a.id} className="p-3 rounded-xl hover:bg-gray-50">
-                                                    <p className="text-gray-800 font-medium">{a.name}</p>
-                                                    <p className="text-gray-500 text-sm">{a.address}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    {filteredEvents.length === 0 && filteredNews.length === 0 && filteredAgencies.length === 0 && (
-                                        <p className="text-gray-500 text-center py-8">Không tìm thấy kết quả</p>
-                                    )}
+                                    {filteredEvents.length > 0 && <div className="mb-4"><h3 className="text-sm font-semibold text-gray-500 mb-2">LỊCH PHÁP LÝ ({filteredEvents.length})</h3>{filteredEvents.slice(0, 5).map(e => <button key={e.id} onClick={() => { onSelectEvent(e); onClose(); }} className="w-full text-left p-3 rounded-xl hover:bg-gray-50 flex items-center gap-3"><div className={`w-3 h-3 rounded-full ${categoryConfig[e.category]?.color || 'bg-gray-400'}`} /><span className="text-gray-800">{e.title}</span></button>)}</div>}
+                                    {filteredNews.length > 0 && <div className="mb-4"><h3 className="text-sm font-semibold text-gray-500 mb-2">TIN TỨC ({filteredNews.length})</h3>{filteredNews.slice(0, 5).map(n => <div key={n.id} className="p-3 rounded-xl hover:bg-gray-50"><span className="text-gray-800">{n.title}</span></div>)}</div>}
+                                    {filteredAgencies.length > 0 && <div className="mb-4"><h3 className="text-sm font-semibold text-gray-500 mb-2">CƠ QUAN ({filteredAgencies.length})</h3>{filteredAgencies.slice(0, 5).map(a => <div key={a.id} className="p-3 rounded-xl hover:bg-gray-50"><p className="text-gray-800 font-medium">{a.name}</p><p className="text-gray-500 text-sm">{a.address}</p></div>)}</div>}
+                                    {filteredEvents.length === 0 && filteredNews.length === 0 && filteredAgencies.length === 0 && <p className="text-gray-500 text-center py-8">Không tìm thấy kết quả</p>}
                                 </>
                             )}
                         </div>
@@ -279,387 +208,125 @@
             );
         };
 
-        // ============ EVENT CARD ============
-        const EventCard = ({ event, onClick, showCategory = true }) => {
+        const EventCard = ({ event, onClick }) => {
             const c = categoryConfig[event.category] || categoryConfig.tax;
             const deadline = getDeadlineFromEvent(event);
             const d = getDaysUntil(deadline);
             const isOverdue = d < 0 && !event.completed;
             const isUrgent = d >= 0 && d <= 7 && !event.completed;
-            
             return (
                 <button onClick={onClick} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 text-left touch-active transition-all active:scale-[0.98]">
-                    <div className={`p-3 rounded-xl ${c.lightColor} flex-shrink-0`}>
-                        <div className={`w-5 h-5 ${c.textColor}`}><Icons.FileText /></div>
-                    </div>
+                    <div className={`p-3 rounded-xl ${c.lightColor} flex-shrink-0`}><div className={`w-5 h-5 ${c.textColor}`}><Icons.FileText /></div></div>
                     <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-800 truncate text-sm">{event.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                            Ngày {event.dayOfMonth || 20} {event.frequency === 'monthly' ? 'hàng tháng' : event.frequency === 'quarterly' ? 'hàng quý' : 'hàng năm'}
-                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">Ngày {event.dayOfMonth || 20} {event.frequency === 'monthly' ? 'hàng tháng' : event.frequency === 'quarterly' ? 'hàng quý' : 'hàng năm'}</p>
                     </div>
-                    {event.completed ? (
-                        <div className="w-6 h-6 text-green-500 flex-shrink-0"><Icons.CheckCircle /></div>
-                    ) : isOverdue ? (
-                        <span className="text-xs font-semibold text-white bg-red-500 px-2.5 py-1 rounded-full flex-shrink-0 animate-pulse-custom">{Math.abs(d)}d</span>
-                    ) : isUrgent ? (
-                        <span className="text-xs font-semibold text-white bg-yellow-500 px-2.5 py-1 rounded-full flex-shrink-0">{d}d</span>
-                    ) : (
-                        <span className="text-xs font-semibold text-navy-600 bg-navy-50 px-2.5 py-1 rounded-full flex-shrink-0">{d}d</span>
-                    )}
+                    {event.completed ? <div className="w-6 h-6 text-green-500 flex-shrink-0"><Icons.CheckCircle /></div> : isOverdue ? <span className="text-xs font-semibold text-white bg-red-500 px-2.5 py-1 rounded-full flex-shrink-0 animate-pulse-custom">Quá {Math.abs(d)} ngày</span> : isUrgent ? <span className="text-xs font-semibold text-white bg-yellow-500 px-2.5 py-1 rounded-full flex-shrink-0">Còn {d} ngày</span> : <span className="text-xs font-semibold text-navy-600 bg-navy-50 px-2.5 py-1 rounded-full flex-shrink-0">Còn {d} ngày</span>}
                 </button>
             );
         };
 
-        // ============ EVENT DETAIL MODAL WITH CHECKLIST ============
         const EventDetailModal = ({ event, onClose, onToggle, checklistState, onChecklistChange }) => {
             if (!event) return null;
             const c = categoryConfig[event.category] || categoryConfig.tax;
             const deadline = getDeadlineFromEvent(event);
             const d = getDaysUntil(deadline);
             const isOverdue = d < 0 && !event.completed;
-            
             const checklist = event.checklist || [];
             const completedSteps = checklistState[event.id] || [];
             const progress = checklist.length > 0 ? Math.round((completedSteps.length / checklist.length) * 100) : 0;
-
-            const toggleStep = (stepId) => {
-                const current = completedSteps || [];
-                const newState = current.includes(stepId) 
-                    ? current.filter(id => id !== stepId)
-                    : [...current, stepId];
-                onChecklistChange(event.id, newState);
-            };
-
+            const toggleStep = (stepId) => { const current = completedSteps || []; const newState = current.includes(stepId) ? current.filter(id => id !== stepId) : [...current, stepId]; onChecklistChange(event.id, newState); };
             return (
                 <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 fade-in" onClick={onClose}>
                     <div className="bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] overflow-auto hide-scrollbar slide-up safe-bottom" onClick={e => e.stopPropagation()}>
                         <div className="sticky top-0 bg-white px-5 py-4 border-b flex justify-between items-center z-10">
                             <div className={`px-3 py-1.5 rounded-full ${c.lightColor} ${c.textColor} text-sm font-semibold`}>{c.label}</div>
-                            <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 touch-active">
-                                <div className="w-5 h-5 text-gray-500"><Icons.X /></div>
-                            </button>
+                            <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 touch-active"><div className="w-5 h-5 text-gray-500"><Icons.X /></div></button>
                         </div>
                         <div className="p-5 space-y-5">
                             <h2 className="text-xl font-bold text-gray-900">{event.title}</h2>
-                            
-                            {/* Deadline Status */}
                             <div className={`p-4 rounded-2xl ${event.completed ? 'bg-green-50' : isOverdue ? 'bg-red-50' : d <= 7 ? 'bg-yellow-50' : 'bg-navy-50'}`}>
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${event.completed ? 'bg-green-500' : isOverdue ? 'bg-red-500' : d <= 7 ? 'bg-yellow-500' : 'bg-navy-600'}`}>
-                                        <div className="w-5 h-5 text-white">{event.completed ? <Icons.Check /> : <Icons.Clock />}</div>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Hạn nộp: Ngày {event.dayOfMonth || 20}</p>
-                                        <p className={`font-bold ${event.completed ? 'text-green-600' : isOverdue ? 'text-red-600' : d <= 7 ? 'text-yellow-600' : 'text-navy-700'}`}>
-                                            {event.completed ? 'Đã hoàn thành' : isOverdue ? `Quá hạn ${Math.abs(d)} ngày` : d === 0 ? 'Hôm nay là hạn chót!' : `Còn ${d} ngày`}
-                                        </p>
-                                    </div>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${event.completed ? 'bg-green-500' : isOverdue ? 'bg-red-500' : d <= 7 ? 'bg-yellow-500' : 'bg-navy-600'}`}><div className="w-5 h-5 text-white">{event.completed ? <Icons.Check /> : <Icons.Clock />}</div></div>
+                                    <div><p className="text-sm text-gray-600">Hạn nộp: Ngày {event.dayOfMonth || 20}</p><p className={`font-bold ${event.completed ? 'text-green-600' : isOverdue ? 'text-red-600' : d <= 7 ? 'text-yellow-600' : 'text-navy-700'}`}>{event.completed ? 'Đã hoàn thành' : isOverdue ? `Quá hạn ${Math.abs(d)} ngày` : d === 0 ? 'Hôm nay là hạn chót!' : `Còn ${d} ngày`}</p></div>
                                 </div>
                             </div>
-
-                            {/* Checklist */}
                             {checklist.length > 0 && (
                                 <div className="bg-gray-50 rounded-2xl p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h3 className="font-semibold text-gray-800">Các bước thực hiện</h3>
-                                        <span className="text-sm text-gray-500">{completedSteps.length}/{checklist.length} bước</span>
-                                    </div>
-                                    {/* Progress Bar */}
-                                    <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                                        <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${progress}%` }} />
-                                    </div>
+                                    <div className="flex items-center justify-between mb-3"><h3 className="font-semibold text-gray-800">Các bước thực hiện</h3><span className="text-sm text-gray-500">{completedSteps.length}/{checklist.length} bước</span></div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2 mb-4"><div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${progress}%` }} /></div>
                                     <div className="space-y-2">
                                         {checklist.map((step, idx) => (
                                             <div key={step.id} className="flex items-start gap-3 p-2 rounded-xl hover:bg-white transition-colors">
-                                                <button onClick={() => toggleStep(step.id)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 touch-active ${completedSteps.includes(step.id) ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
-                                                    {completedSteps.includes(step.id) && <div className="w-4 h-4 text-white"><Icons.Check /></div>}
-                                                </button>
-                                                <div className="flex-1">
-                                                    <p className={`text-sm ${completedSteps.includes(step.id) ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                                                        {idx + 1}. {step.text}
-                                                    </p>
-                                                    {step.link && (
-                                                        <a href={step.link} target="_blank" rel="noopener noreferrer" className="text-xs text-navy-600 flex items-center gap-1 mt-1 hover:underline">
-                                                            <div className="w-3 h-3"><Icons.ExternalLink /></div>
-                                                            Mở liên kết
-                                                        </a>
-                                                    )}
-                                                </div>
+                                                <button onClick={() => toggleStep(step.id)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 touch-active ${completedSteps.includes(step.id) ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>{completedSteps.includes(step.id) && <div className="w-4 h-4 text-white"><Icons.Check /></div>}</button>
+                                                <div className="flex-1"><p className={`text-sm ${completedSteps.includes(step.id) ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{idx + 1}. {step.text}</p>{step.link && <a href={step.link} target="_blank" rel="noopener noreferrer" className="text-xs text-navy-600 flex items-center gap-1 mt-1 hover:underline"><div className="w-3 h-3"><Icons.ExternalLink /></div>Mở liên kết</a>}</div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             )}
-
-                            {event.description && (
-                                <div>
-                                    <h3 className="font-semibold mb-2 text-gray-800">Mô tả</h3>
-                                    <p className="text-gray-600 text-sm">{event.description}</p>
-                                </div>
-                            )}
-                            
-                            {event.legalReference && (
-                                <div>
-                                    <h3 className="font-semibold mb-2 text-gray-800">Căn cứ pháp lý</h3>
-                                    <p className="text-gray-600 text-sm">{event.legalReference}</p>
-                                </div>
-                            )}
-                            
-                            {event.penalty && (
-                                <div className="bg-red-50 p-4 rounded-xl">
-                                    <h3 className="font-semibold mb-2 text-red-700 flex items-center gap-2">
-                                        <div className="w-5 h-5"><Icons.AlertTriangle /></div>
-                                        Mức phạt nếu vi phạm
-                                    </h3>
-                                    <p className="text-red-600 text-sm">{event.penalty}</p>
-                                </div>
-                            )}
-
-                            <button onClick={() => onToggle(event.id)} className={`w-full py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 touch-active ${event.completed ? 'bg-gray-100 text-gray-700' : 'bg-green-500 text-white'}`}>
-                                <div className="w-5 h-5">{event.completed ? <Icons.X /> : <Icons.Check />}</div>
-                                {event.completed ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành'}
-                            </button>
+                            {event.description && <div><h3 className="font-semibold mb-2 text-gray-800">Mô tả</h3><p className="text-gray-600 text-sm">{event.description}</p></div>}
+                            {event.legalReference && <div><h3 className="font-semibold mb-2 text-gray-800">Căn cứ pháp lý</h3><p className="text-gray-600 text-sm">{event.legalReference}</p></div>}
+                            {event.penalty && <div className="bg-red-50 p-4 rounded-xl"><h3 className="font-semibold mb-2 text-red-700 flex items-center gap-2"><div className="w-5 h-5"><Icons.AlertTriangle /></div>Mức phạt nếu vi phạm</h3><p className="text-red-600 text-sm">{event.penalty}</p></div>}
+                            <button onClick={() => onToggle(event.id)} className={`w-full py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 touch-active ${event.completed ? 'bg-gray-100 text-gray-700' : 'bg-green-500 text-white'}`}><div className="w-5 h-5">{event.completed ? <Icons.X /> : <Icons.Check />}</div>{event.completed ? 'Bỏ đánh dấu hoàn thành' : 'Đánh dấu hoàn thành'}</button>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // ============ QUICK LINKS COMPONENT ============
         const QuickLinks = () => (
             <div className="bg-white rounded-2xl p-4 shadow-sm">
-                <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    <div className="w-5 h-5 text-navy-600"><Icons.ExternalLink /></div>
-                    Truy cập nhanh
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                    {QUICK_LINKS.map(link => (
-                        <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={`${link.color} rounded-xl p-3 text-center touch-active hover:opacity-80 transition-opacity`}>
-                            <span className="text-2xl">{link.icon}</span>
-                            <p className="text-xs font-medium text-gray-700 mt-1">{link.name}</p>
-                        </a>
-                    ))}
-                </div>
+                <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2"><div className="w-5 h-5 text-navy-600"><Icons.ExternalLink /></div>Truy cập nhanh</h3>
+                <div className="grid grid-cols-3 gap-3">{QUICK_LINKS.map(link => <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className={`${link.color} rounded-xl p-3 text-center touch-active hover:opacity-80 transition-opacity`}><span className="text-2xl">{link.icon}</span><p className="text-xs font-medium text-gray-700 mt-1">{link.name}</p></a>)}</div>
             </div>
         );
 
-        // ============ SPLASH & AUTH SCREENS ============
-        const SplashScreen = ({ onFinish }) => {
-            useEffect(() => { const t = setTimeout(onFinish, 2000); return () => clearTimeout(t); }, []);
-            return (
-                <div className="h-full bg-gradient-to-br from-navy-700 to-navy-900 flex flex-col items-center justify-center p-8">
-                    <div className="bg-white p-5 rounded-3xl shadow-2xl mb-6"><HTICLogo size={80} /></div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Lịch Pháp Lý</h1>
-                    <p className="text-navy-200 text-center">by HTIC LAW</p>
-                    <div className="mt-10 flex gap-2">{[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />)}</div>
-                </div>
-            );
-        };
-
-        const AuthScreen = ({ onLogin, onSkip }) => {
-            const [mode, setMode] = useState('welcome');
-            const [form, setForm] = useState({ email: '', password: '', companyName: '', taxCode: '', phone: '' });
-            const [showPw, setShowPw] = useState(false);
-            const [agreed, setAgreed] = useState(false);
-            const upd = (k, v) => setForm({ ...form, [k]: v });
-
-            if (mode === 'welcome') return (
-                <div className="h-full bg-gradient-to-br from-navy-700 to-navy-900 flex flex-col p-8 safe-top safe-bottom">
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                        <div className="bg-white p-4 rounded-2xl shadow-xl mb-8"><HTICLogo size={60} /></div>
-                        <h1 className="text-3xl font-bold text-white text-center mb-3">Lịch Pháp Lý</h1>
-                        <p className="text-navy-200 text-center max-w-xs">Quản lý deadline thuế, BHXH, báo cáo dễ dàng cho doanh nghiệp</p>
-                    </div>
-                    <div className="space-y-4">
-                        <button onClick={() => setMode('login')} className="w-full py-4 rounded-2xl bg-white text-navy-700 font-semibold touch-active">Đăng nhập</button>
-                        <button onClick={() => setMode('register')} className="w-full py-4 rounded-2xl border-2 border-white text-white font-semibold touch-active">Đăng ký</button>
-                        <button onClick={onSkip} className="w-full py-3 text-navy-200">Dùng thử không cần tài khoản →</button>
-                    </div>
-                </div>
-            );
-
-            if (mode === 'success') return (
-                <div className="h-full bg-gradient-to-br from-green-500 to-green-600 flex flex-col items-center justify-center p-8">
-                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6"><div className="w-12 h-12 text-green-500"><Icons.Check /></div></div>
-                    <h1 className="text-2xl font-bold text-white mb-2">Đăng ký thành công!</h1>
-                    <p className="text-green-100">Đang chuyển hướng...</p>
-                </div>
-            );
-
-            const isL = mode === 'login';
-            return (
-                <div className="h-full bg-gray-50 flex flex-col safe-top safe-bottom">
-                    <div className="p-5"><button onClick={() => setMode('welcome')} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active"><div className="w-6 h-6 text-gray-600"><Icons.ChevronLeft /></div></button></div>
-                    <div className="flex-1 px-5 overflow-auto hide-scrollbar">
-                        <div className="flex items-center gap-3 mb-8"><div className="bg-navy-100 p-3 rounded-xl"><HTICLogo size={32} /></div><div><h1 className="text-2xl font-bold text-gray-800">{isL ? 'Đăng nhập' : 'Đăng ký'}</h1><p className="text-gray-500 text-sm">HTIC Legal App</p></div></div>
-                        <div className="space-y-4">
-                            <div><label className="text-sm font-medium text-gray-700 mb-2 block">Email</label><div className="relative"><div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Mail /></div><input type="email" placeholder="email@company.com" value={form.email} onChange={e => upd('email', e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" /></div></div>
-                            {!isL && (<>
-                                <div><label className="text-sm font-medium text-gray-700 mb-2 block">Số điện thoại</label><div className="relative"><div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Phone /></div><input type="tel" placeholder="0912 345 678" value={form.phone} onChange={e => upd('phone', e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" /></div></div>
-                                <div><label className="text-sm font-medium text-gray-700 mb-2 block">Tên công ty</label><div className="relative"><div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Building /></div><input type="text" placeholder="Công ty TNHH ABC" value={form.companyName} onChange={e => upd('companyName', e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" /></div></div>
-                            </>)}
-                            <div><label className="text-sm font-medium text-gray-700 mb-2 block">Mật khẩu</label><div className="relative"><div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Lock /></div><input type={showPw ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={e => upd('password', e.target.value)} className="w-full pl-12 pr-12 py-4 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" /><button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 touch-active"><div className="w-5 h-5 text-gray-400">{showPw ? <Icons.EyeOff /> : <Icons.Eye />}</div></button></div></div>
-                            {!isL && <label className="flex items-start gap-3 cursor-pointer"><div onClick={() => setAgreed(!agreed)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center mt-0.5 flex-shrink-0 touch-active ${agreed ? 'bg-navy-600 border-navy-600' : 'border-gray-300'}`}>{agreed && <div className="w-4 h-4 text-white"><Icons.Check /></div>}</div><span className="text-gray-600">Tôi đồng ý với Điều khoản sử dụng</span></label>}
-                        </div>
-                    </div>
-                    <div className="p-5 space-y-4">
-                        <button onClick={() => { if (isL) { onLogin({ ...form, isMember: true }); } else { setMode('success'); setTimeout(() => onLogin({ ...form, isMember: true }), 2000); } }} disabled={!isL && !agreed} className={`w-full py-4 rounded-2xl font-semibold text-white touch-active ${(!isL && !agreed) ? 'bg-gray-300' : 'bg-navy-700'}`}>{isL ? 'Đăng nhập' : 'Đăng ký'}</button>
-                        <p className="text-center text-gray-500">{isL ? 'Chưa có tài khoản?' : 'Đã có tài khoản?'} <button onClick={() => setMode(isL ? 'register' : 'login')} className="text-gold-600 font-semibold">{isL ? 'Đăng ký ngay' : 'Đăng nhập'}</button></p>
-                    </div>
-                </div>
-            );
-        };
-
-        // ============ NEW DASHBOARD SCREEN ============
         const DashboardScreen = ({ events, onEventClick, onShowSearch, businessProfile }) => {
             const [filter, setFilter] = useState('all');
             const today = new Date();
-            
-            const eventsWithDeadline = useMemo(() => events.map(e => ({
-                ...e,
-                deadline: getDeadlineFromEvent(e),
-                daysUntil: getDaysUntil(getDeadlineFromEvent(e))
-            })), [events]);
-
-            // Filter events based on business profile
+            const eventsWithDeadline = useMemo(() => events.map(e => ({ ...e, deadline: getDeadlineFromEvent(e), daysUntil: getDaysUntil(getDeadlineFromEvent(e)) })), [events]);
             const filteredByProfile = useMemo(() => {
                 if (!businessProfile?.taxPeriod) return eventsWithDeadline;
                 return eventsWithDeadline.filter(e => {
-                    if (businessProfile.taxPeriod === 'quarterly' && e.frequency === 'monthly' && e.category === 'tax') {
-                        return false;
-                    }
-                    if (e.businessTypes && !e.businessTypes.includes(businessProfile.businessType)) {
-                        return false;
-                    }
+                    if (businessProfile.taxPeriod === 'quarterly' && e.frequency === 'monthly' && e.category === 'tax') return false;
+                    if (e.businessTypes && !e.businessTypes.includes(businessProfile.businessType)) return false;
                     return true;
                 });
             }, [eventsWithDeadline, businessProfile]);
-
             const overdue = filteredByProfile.filter(e => e.daysUntil < 0 && !e.completed);
             const within7Days = filteredByProfile.filter(e => e.daysUntil >= 0 && e.daysUntil <= 7 && !e.completed);
             const upcoming = filteredByProfile.filter(e => e.daysUntil > 7 && !e.completed);
             const completed = filteredByProfile.filter(e => e.completed);
-            
             const nearestDeadline = filteredByProfile.filter(e => !e.completed).sort((a, b) => a.daysUntil - b.daysUntil)[0];
             const totalTasks = filteredByProfile.length;
             const completedTasks = completed.length;
             const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-            const filteredEvents = useMemo(() => {
-                let list = filteredByProfile.filter(e => !e.completed);
-                if (filter !== 'all') {
-                    list = list.filter(e => e.category === filter);
-                }
-                return list.sort((a, b) => a.daysUntil - b.daysUntil);
-            }, [filteredByProfile, filter]);
-
+            const filteredEvents = useMemo(() => { let list = filteredByProfile.filter(e => !e.completed); if (filter !== 'all') list = list.filter(e => e.category === filter); return list.sort((a, b) => a.daysUntil - b.daysUntil); }, [filteredByProfile, filter]);
             return (
                 <div className="h-full bg-gray-50 overflow-auto hide-scrollbar pb-24">
-                    {/* Header */}
                     <div className="bg-gradient-to-br from-navy-700 to-navy-800 pt-14 pb-6 px-5 safe-top">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-white p-2 rounded-xl shadow"><HTICLogo size={32} /></div>
-                                <div>
-                                    <p className="text-white font-bold text-lg">Lịch Pháp Lý</p>
-                                    <p className="text-navy-300 text-xs">by HTIC LAW</p>
-                                </div>
-                            </div>
-                            <button onClick={onShowSearch} className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center touch-active">
-                                <div className="w-5 h-5 text-white"><Icons.Search /></div>
-                            </button>
+                            <div className="flex items-center gap-3"><div className="bg-white p-2 rounded-xl shadow"><HTICLogo size={32} /></div><div><p className="text-white font-bold text-lg">Lịch Pháp Lý</p><p className="text-navy-300 text-xs">by HTIC LAW</p></div></div>
+                            <button onClick={onShowSearch} className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center touch-active"><div className="w-5 h-5 text-white"><Icons.Search /></div></button>
                         </div>
                         <p className="text-navy-200 text-sm">{today.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
                     </div>
-
-                    {/* Countdown Card */}
-                    {nearestDeadline && (
-                        <div className="px-5 -mt-3">
-                            <div className={`rounded-2xl p-5 shadow-lg ${nearestDeadline.daysUntil < 0 ? 'bg-red-500' : nearestDeadline.daysUntil <= 7 ? 'bg-yellow-500' : 'bg-green-500'}`}>
-                                <div className="flex justify-between items-start">
-                                    <div className="flex-1">
-                                        <p className="text-white/80 text-sm mb-1">Deadline gần nhất</p>
-                                        <p className="text-white font-bold text-lg mb-2 line-clamp-2">{nearestDeadline.title}</p>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-5 h-5 text-white/80"><Icons.Clock /></div>
-                                            <p className="text-white font-bold text-2xl">
-                                                {nearestDeadline.daysUntil < 0 ? `Quá hạn ${Math.abs(nearestDeadline.daysUntil)} ngày` : 
-                                                 nearestDeadline.daysUntil === 0 ? 'Hôm nay!' : `Còn ${nearestDeadline.daysUntil} ngày`}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button onClick={() => onEventClick(nearestDeadline)} className="bg-white/20 p-3 rounded-full touch-active">
-                                        <div className="w-6 h-6 text-white"><Icons.ChevronRight /></div>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Status Cards */}
+                    {overdue.length > 0 && <div className="px-5 -mt-3 mb-3"><div className="bg-red-500 rounded-2xl p-4 shadow-lg animate-pulse-custom"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"><div className="w-6 h-6 text-white"><Icons.AlertTriangle /></div></div><div className="flex-1"><p className="text-white font-bold">⚠️ CẢNH BÁO: {overdue.length} việc đã quá hạn!</p><p className="text-red-100 text-sm">Vui lòng xử lý ngay để tránh bị phạt</p></div></div></div></div>}
+                    {nearestDeadline && <div className={`px-5 ${overdue.length === 0 ? '-mt-3' : ''}`}><div className={`rounded-2xl p-5 shadow-lg ${nearestDeadline.daysUntil < 0 ? 'bg-red-500' : nearestDeadline.daysUntil <= 7 ? 'bg-yellow-500' : 'bg-green-500'}`}><div className="flex justify-between items-start"><div className="flex-1"><p className="text-white/80 text-sm mb-1">Deadline gần nhất</p><p className="text-white font-bold text-lg mb-2 line-clamp-2">{nearestDeadline.title}</p><div className="flex items-center gap-2"><div className="w-5 h-5 text-white/80"><Icons.Clock /></div><p className="text-white font-bold text-2xl">{nearestDeadline.daysUntil < 0 ? `Quá hạn ${Math.abs(nearestDeadline.daysUntil)} ngày` : nearestDeadline.daysUntil === 0 ? 'Hôm nay!' : `Còn ${nearestDeadline.daysUntil} ngày`}</p></div></div><button onClick={() => onEventClick(nearestDeadline)} className="bg-white/20 p-3 rounded-full touch-active"><div className="w-6 h-6 text-white"><Icons.ChevronRight /></div></button></div></div></div>}
                     <div className="px-5 py-4 grid grid-cols-3 gap-3">
-                        <div className="bg-white rounded-xl p-3 shadow-sm border-l-4 border-red-500">
-                            <p className="text-2xl font-bold text-red-500">{overdue.length}</p>
-                            <p className="text-xs text-gray-500">Quá hạn</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 shadow-sm border-l-4 border-yellow-500">
-                            <p className="text-2xl font-bold text-yellow-500">{within7Days.length}</p>
-                            <p className="text-xs text-gray-500">Trong 7 ngày</p>
-                        </div>
-                        <div className="bg-white rounded-xl p-3 shadow-sm border-l-4 border-green-500">
-                            <p className="text-2xl font-bold text-green-500">{upcoming.length}</p>
-                            <p className="text-xs text-gray-500">Sắp tới</p>
-                        </div>
+                        <div className="bg-white rounded-xl p-3 shadow-sm border-l-4 border-red-500"><p className="text-2xl font-bold text-red-500">{overdue.length}</p><p className="text-xs text-gray-500">Quá hạn</p></div>
+                        <div className="bg-white rounded-xl p-3 shadow-sm border-l-4 border-yellow-500"><p className="text-2xl font-bold text-yellow-500">{within7Days.length}</p><p className="text-xs text-gray-500">Trong 7 ngày</p></div>
+                        <div className="bg-white rounded-xl p-3 shadow-sm border-l-4 border-green-500"><p className="text-2xl font-bold text-green-500">{upcoming.length}</p><p className="text-xs text-gray-500">Sắp tới</p></div>
                     </div>
-
-                    {/* Progress Bar */}
-                    <div className="px-5 mb-4">
-                        <div className="bg-white rounded-xl p-4 shadow-sm">
-                            <div className="flex justify-between items-center mb-2">
-                                <p className="text-sm font-medium text-gray-700">Tiến độ tháng {today.getMonth() + 1}</p>
-                                <p className="text-sm font-bold text-navy-600">{completedTasks}/{totalTasks} việc</p>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-3">
-                                <div className="bg-gradient-to-r from-navy-500 to-navy-600 h-3 rounded-full transition-all" style={{ width: `${progressPercent}%` }} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Quick Links */}
-                    <div className="px-5 mb-4">
-                        <QuickLinks />
-                    </div>
-
-                    {/* Filter Tabs */}
-                    <div className="px-5 mb-3">
-                        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
-                            <button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${filter === 'all' ? 'bg-navy-700 text-white' : 'bg-white text-gray-600 shadow-sm'}`}>Tất cả</button>
-                            {Object.entries(categoryConfig).map(([k, v]) => (
-                                <button key={k} onClick={() => setFilter(k)} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${filter === k ? 'bg-navy-700 text-white' : 'bg-white text-gray-600 shadow-sm'}`}>{v.label}</button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Events List */}
-                    <div className="px-5">
-                        <h2 className="text-lg font-bold mb-3 text-gray-800">Deadline sắp tới</h2>
-                        {filteredEvents.length === 0 ? (
-                            <div className="text-center py-10 text-gray-500">
-                                <div className="w-16 h-16 text-gray-300 mx-auto mb-4"><Icons.CheckCircle /></div>
-                                <p>Không có deadline nào</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {filteredEvents.map(e => <EventCard key={e.id} event={e} onClick={() => onEventClick(e)} />)}
-                            </div>
-                        )}
-                    </div>
+                    <div className="px-5 mb-4"><div className="bg-white rounded-xl p-4 shadow-sm"><div className="flex justify-between items-center mb-2"><p className="text-sm font-medium text-gray-700">Tiến độ tháng {today.getMonth() + 1}</p><p className="text-sm font-bold text-navy-600">{completedTasks}/{totalTasks} việc</p></div><div className="w-full bg-gray-200 rounded-full h-3"><div className="bg-gradient-to-r from-navy-500 to-navy-600 h-3 rounded-full transition-all" style={{ width: `${progressPercent}%` }} /></div></div></div>
+                    <div className="px-5 mb-4"><QuickLinks /></div>
+                    <div className="px-5 mb-3"><div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1"><button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${filter === 'all' ? 'bg-navy-700 text-white' : 'bg-white text-gray-600 shadow-sm'}`}>Tất cả</button>{Object.entries(categoryConfig).map(([k, v]) => <button key={k} onClick={() => setFilter(k)} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${filter === k ? 'bg-navy-700 text-white' : 'bg-white text-gray-600 shadow-sm'}`}>{v.label}</button>)}</div></div>
+                    <div className="px-5"><h2 className="text-lg font-bold mb-3 text-gray-800">📋 Sự kiện pháp lý sắp tới</h2>{filteredEvents.length === 0 ? <div className="text-center py-10 text-gray-500"><div className="w-16 h-16 text-gray-300 mx-auto mb-4"><Icons.CheckCircle /></div><p>Không có deadline nào</p></div> : <div className="space-y-3">{filteredEvents.map(e => <EventCard key={e.id} event={e} onClick={() => onEventClick(e)} />)}</div>}</div>
                 </div>
             );
         };
 
-        // ============ CALENDAR SCREEN ============
         const CalendarScreen = ({ events, onEventClick }) => {
             const today = new Date();
             const [month, setMonth] = useState(today.getMonth());
@@ -670,12 +337,9 @@
             const eventsWithDeadline = events.map(e => ({ ...e, deadline: getDeadlineFromEvent(e) }));
             const getEv = d => eventsWithDeadline.filter(e => { const dd = new Date(e.deadline); return dd.getDate() === d && dd.getMonth() === month && dd.getFullYear() === year; });
             const selEv = sel ? getEv(sel) : [];
-
             return (
                 <div className="h-full bg-gray-50 flex flex-col pb-20">
-                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
-                        <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-navy-700"><Icons.Calendar /></div></div><h1 className="text-2xl font-bold text-gray-800">Lịch</h1></div>
-                    </div>
+                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top"><div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-navy-700"><Icons.Calendar /></div></div><h1 className="text-2xl font-bold text-gray-800">Lịch</h1></div></div>
                     <div className="bg-white px-5 py-4 flex justify-between items-center border-b">
                         <button onClick={() => { if (month === 0) { setMonth(11); setYear(year - 1); } else { setMonth(month - 1); } }} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active"><div className="w-6 h-6 text-gray-600"><Icons.ChevronLeft /></div></button>
                         <h2 className="text-lg font-bold text-gray-800">{monthNames[month]} {year}</h2>
@@ -685,432 +349,113 @@
                         <div className="grid grid-cols-7 mb-2">{dayNames.map(d => <div key={d} className="text-center text-sm font-semibold text-gray-500 py-2">{d}</div>)}</div>
                         <div className="grid grid-cols-7 gap-1">
                             {Array.from({ length: first }).map((_, i) => <div key={`e-${i}`} />)}
-                            {Array.from({ length: days }).map((_, i) => {
-                                const day = i + 1;
-                                const ev = getEv(day);
-                                const isT = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-                                const isS = day === sel;
-                                return (
-                                    <button key={day} onClick={() => setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all touch-active ${isS ? 'bg-navy-700 shadow-lg' : isT ? 'bg-navy-100' : 'hover:bg-gray-100'}`}>
-                                        <span className={`text-sm font-medium ${isS ? 'text-white' : isT ? 'text-navy-700 font-bold' : 'text-gray-700'}`}>{day}</span>
-                                        {ev.length > 0 && <div className="flex gap-0.5 mt-1">{ev.slice(0, 3).map((e, idx) => <div key={idx} className={`w-1.5 h-1.5 rounded-full ${isS ? 'bg-white' : (categoryConfig[e.category]?.color || 'bg-gray-400')}`} />)}</div>}
-                                    </button>
-                                );
-                            })}
+                            {Array.from({ length: days }).map((_, i) => { const day = i + 1; const ev = getEv(day); const isT = day === today.getDate() && month === today.getMonth() && year === today.getFullYear(); const isS = day === sel; return <button key={day} onClick={() => setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all touch-active ${isS ? 'bg-navy-700 shadow-lg' : isT ? 'bg-navy-100' : 'hover:bg-gray-100'}`}><span className={`text-sm font-medium ${isS ? 'text-white' : isT ? 'text-navy-700 font-bold' : 'text-gray-700'}`}>{day}</span>{ev.length > 0 && <div className="flex gap-0.5 mt-1">{ev.slice(0, 3).map((e, idx) => <div key={idx} className={`w-1.5 h-1.5 rounded-full ${isS ? 'bg-white' : (categoryConfig[e.category]?.color || 'bg-gray-400')}`} />)}</div>}</button>; })}
                         </div>
                     </div>
-                    <div className="bg-white px-5 py-3 flex flex-wrap gap-4 border-t">
-                        {Object.entries(categoryConfig).map(([k, c]) => <div key={k} className="flex items-center gap-2"><div className={`w-3 h-3 rounded-full ${c.color}`} /><span className="text-xs text-gray-600">{c.label}</span></div>)}
-                    </div>
-                    {sel && (
-                        <div className="flex-1 bg-gray-50 px-5 py-4 overflow-auto hide-scrollbar">
-                            <h3 className="font-semibold mb-3 text-gray-800">Ngày {sel}/{month + 1}/{year}</h3>
-                            {selEv.length > 0 ? <div className="space-y-3">{selEv.map(e => <EventCard key={e.id} event={e} onClick={() => onEventClick(e)} />)}</div> : <p className="text-gray-500 text-center py-6">Không có sự kiện</p>}
-                        </div>
-                    )}
+                    <div className="bg-white px-5 py-3 flex flex-wrap gap-4 border-t">{Object.entries(categoryConfig).map(([k, c]) => <div key={k} className="flex items-center gap-2"><div className={`w-3 h-3 rounded-full ${c.color}`} /><span className="text-xs text-gray-600">{c.label}</span></div>)}</div>
+                    {sel && <div className="flex-1 bg-gray-50 px-5 py-4 overflow-auto hide-scrollbar"><h3 className="font-semibold mb-3 text-gray-800">Ngày {sel}/{month + 1}/{year}</h3>{selEv.length > 0 ? <div className="space-y-3">{selEv.map(e => <EventCard key={e.id} event={e} onClick={() => onEventClick(e)} />)}</div> : <p className="text-gray-500 text-center py-6">Không có sự kiện</p>}</div>}
                 </div>
             );
         };
 
-        // ============ NEWS SCREEN ============
         const NewsScreen = ({ newsData }) => {
             const [sel, setSel] = useState(null);
-
-            if (sel) return (
-                <div className="h-full bg-gray-50 flex flex-col pb-20">
-                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
-                        <div className="flex items-center gap-3"><button onClick={() => setSel(null)} className="touch-active"><div className="w-7 h-7 text-gray-600"><Icons.ChevronLeft /></div></button><h1 className="text-xl font-bold text-gray-800">Chi tiết tin</h1></div>
-                    </div>
-                    <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
-                        <div className="flex items-center gap-2 mb-4">
-                            <span className="bg-navy-100 text-navy-700 text-sm px-3 py-1 rounded-full font-medium">{sel.category}</span>
-                            {sel.isHot && <span className="bg-red-100 text-red-600 text-sm px-3 py-1 rounded-full font-medium">🔥 Hot</span>}
-                        </div>
-                        <h2 className="text-2xl font-bold mb-3 text-gray-900">{sel.title}</h2>
-                        <p className="text-gray-500 mb-5">{sel.date}</p>
-                        <p className="text-gray-700 text-lg leading-relaxed">{sel.summary}</p>
-                        {sel.content && <p className="text-gray-700 mt-5 leading-relaxed">{sel.content}</p>}
-                    </div>
-                </div>
-            );
-
+            if (sel) return <div className="h-full bg-gray-50 flex flex-col pb-20"><div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top"><div className="flex items-center gap-3"><button onClick={() => setSel(null)} className="touch-active"><div className="w-7 h-7 text-gray-600"><Icons.ChevronLeft /></div></button><h1 className="text-xl font-bold text-gray-800">Chi tiết tin</h1></div></div><div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar"><div className="flex items-center gap-2 mb-4"><span className="bg-navy-100 text-navy-700 text-sm px-3 py-1 rounded-full font-medium">{sel.category}</span>{sel.isHot && <span className="bg-red-100 text-red-600 text-sm px-3 py-1 rounded-full font-medium">🔥 Hot</span>}</div><h2 className="text-2xl font-bold mb-3 text-gray-900">{sel.title}</h2><p className="text-gray-500 mb-5">{sel.date}</p><p className="text-gray-700 text-lg leading-relaxed">{sel.summary}</p>{sel.content && <p className="text-gray-700 mt-5 leading-relaxed">{sel.content}</p>}</div></div>;
             return (
                 <div className="h-full bg-gray-50 flex flex-col pb-20">
-                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
-                        <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-navy-700"><Icons.Newspaper /></div></div><h1 className="text-2xl font-bold text-gray-800">Tin tức pháp luật</h1></div>
-                    </div>
+                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top"><div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-navy-700"><Icons.Newspaper /></div></div><h1 className="text-2xl font-bold text-gray-800">Tin tức pháp luật</h1></div></div>
                     <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
                         <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800"><div className="w-6 h-6 text-gold-500"><Icons.TrendingUp /></div>Tin mới nhất</h2>
-                        {newsData.length === 0 ? (
-                            <div className="text-center py-10 text-gray-500">Đang tải...</div>
-                        ) : (
-                            <div className="space-y-4">
-                                {newsData.map(n => (
-                                    <button key={n.id} onClick={() => setSel(n)} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left touch-active transition-all active:scale-[0.98]">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <span className="bg-navy-100 text-navy-700 text-xs px-2.5 py-1 rounded-full font-medium">{n.category}</span>
-                                            {n.isHot && <span className="bg-red-100 text-red-600 text-xs px-2.5 py-1 rounded-full font-medium">🔥 Hot</span>}
-                                        </div>
-                                        <h3 className="font-semibold text-gray-800 mb-2">{n.title}</h3>
-                                        <p className="text-gray-500 text-sm line-clamp-2">{n.summary}</p>
-                                        <p className="text-gray-400 text-xs mt-3">{n.date}</p>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        {newsData.length === 0 ? <div className="text-center py-10 text-gray-500">Đang tải...</div> : <div className="space-y-4">{newsData.map(n => <button key={n.id} onClick={() => setSel(n)} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left touch-active transition-all active:scale-[0.98]"><div className="flex items-center gap-2 mb-3"><span className="bg-navy-100 text-navy-700 text-xs px-2.5 py-1 rounded-full font-medium">{n.category}</span>{n.isHot && <span className="bg-red-100 text-red-600 text-xs px-2.5 py-1 rounded-full font-medium">🔥 Hot</span>}</div><h3 className="font-semibold text-gray-800 mb-2">{n.title}</h3><p className="text-gray-500 text-sm line-clamp-2">{n.summary}</p><p className="text-gray-400 text-xs mt-3">{n.date}</p></button>)}</div>}
                     </div>
                 </div>
             );
         };
 
-        // ============ SUPPORT SCREEN ============
         const SupportScreen = ({ provinces, agencies }) => {
             const [province, setProvince] = useState(provinces[0]?.id || '');
             const [agencyFilter, setAgencyFilter] = useState('all');
             const [searchQuery, setSearchQuery] = useState('');
-
-            const filteredAgencies = agencies.filter(a => {
-                const matchProvince = a.provinceId === province;
-                const matchCategory = agencyFilter === 'all' || a.category === agencyFilter;
-                const matchSearch = a.name.toLowerCase().includes(searchQuery.toLowerCase());
-                return matchProvince && matchCategory && matchSearch;
-            });
-
+            const filteredAgencies = agencies.filter(a => a.provinceId === province && (agencyFilter === 'all' || a.category === agencyFilter) && a.name.toLowerCase().includes(searchQuery.toLowerCase()));
             return (
                 <div className="h-full bg-gray-50 flex flex-col pb-20">
-                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
-                        <div className="flex items-center gap-3"><div className="bg-purple-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-purple-700"><Icons.Landmark /></div></div><h1 className="text-2xl font-bold text-gray-800">Cơ quan nhà nước</h1></div>
-                    </div>
+                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top"><div className="flex items-center gap-3"><div className="bg-purple-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-purple-700"><Icons.Landmark /></div></div><h1 className="text-2xl font-bold text-gray-800">Cơ quan nhà nước</h1></div></div>
                     <div className="flex-1 overflow-auto hide-scrollbar">
                         <div className="px-5 py-4">
-                            <div className="mb-4">
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">Chọn tỉnh/thành phố</label>
-                                <div className="relative">
-                                    <select value={province} onChange={e => setProvince(e.target.value)} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none appearance-none pr-10">
-                                        {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </select>
-                                    <div className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown /></div>
-                                </div>
-                            </div>
-                            <div className="mb-4">
-                                <SearchBar onSearch={setSearchQuery} placeholder="Tìm cơ quan..." />
-                            </div>
-                            <div className="flex gap-2 mb-4 overflow-x-auto hide-scrollbar pb-1">
-                                <button onClick={() => setAgencyFilter('all')} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${agencyFilter === 'all' ? 'bg-navy-700 text-white' : 'bg-white text-gray-600 shadow-sm'}`}>Tất cả</button>
-                                {Object.entries(agencyCategories).map(([k, v]) => (
-                                    <button key={k} onClick={() => setAgencyFilter(k)} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${agencyFilter === k ? 'bg-navy-700 text-white' : 'bg-white text-gray-600 shadow-sm'}`}>{v.label}</button>
-                                ))}
-                            </div>
-                            <div className="space-y-3">
-                                {filteredAgencies.length === 0 ? (
-                                    <div className="text-center py-10"><p className="text-gray-500">Không tìm thấy cơ quan</p></div>
-                                ) : filteredAgencies.map(agency => {
-                                    const catInfo = agencyCategories[agency.category] || { label: agency.category, color: 'bg-gray-100 text-gray-600' };
-                                    return (
-                                        <div key={agency.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                                            <div className="flex items-start gap-3">
-                                                <div className={`p-2.5 rounded-xl ${catInfo.color} flex-shrink-0`}><div className="w-5 h-5"><Icons.Landmark /></div></div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className="font-semibold text-gray-800 mb-1">{agency.name}</h3>
-                                                    <div className="flex items-center gap-1.5 text-gray-500 text-sm"><div className="w-4 h-4 flex-shrink-0"><Icons.MapPin /></div><span className="truncate">{agency.address}</span></div>
-                                                    <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-1"><div className="w-4 h-4 flex-shrink-0"><Icons.Phone /></div><span>{agency.phone}</span></div>
-                                                    {agency.hours && <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-1"><div className="w-4 h-4 flex-shrink-0"><Icons.Clock /></div><span>{agency.hours}</span></div>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                            <div className="mb-4"><label className="text-sm font-medium text-gray-700 mb-2 block">Chọn tỉnh/thành phố</label><div className="relative"><select value={province} onChange={e => setProvince(e.target.value)} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none appearance-none pr-10">{provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select><div className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown /></div></div></div>
+                            <div className="mb-4"><SearchBar onSearch={setSearchQuery} placeholder="Tìm cơ quan..." /></div>
+                            <div className="flex gap-2 mb-4 overflow-x-auto hide-scrollbar pb-1"><button onClick={() => setAgencyFilter('all')} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${agencyFilter === 'all' ? 'bg-navy-700 text-white' : 'bg-white text-gray-600 shadow-sm'}`}>Tất cả</button>{Object.entries(agencyCategories).map(([k, v]) => <button key={k} onClick={() => setAgencyFilter(k)} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${agencyFilter === k ? 'bg-navy-700 text-white' : 'bg-white text-gray-600 shadow-sm'}`}>{v.label}</button>)}</div>
+                            <div className="space-y-3">{filteredAgencies.length === 0 ? <div className="text-center py-10"><p className="text-gray-500">Không tìm thấy cơ quan</p></div> : filteredAgencies.map(agency => { const catInfo = agencyCategories[agency.category] || { label: agency.category, color: 'bg-gray-100 text-gray-600' }; return <div key={agency.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div className="flex items-start gap-3"><div className={`p-2.5 rounded-xl ${catInfo.color} flex-shrink-0`}><div className="w-5 h-5"><Icons.Landmark /></div></div><div className="flex-1 min-w-0"><h3 className="font-semibold text-gray-800 mb-1">{agency.name}</h3><div className="flex items-center gap-1.5 text-gray-500 text-sm"><div className="w-4 h-4 flex-shrink-0"><Icons.MapPin /></div><span className="truncate">{agency.address}</span></div><div className="flex items-center gap-1.5 text-gray-500 text-sm mt-1"><div className="w-4 h-4 flex-shrink-0"><Icons.Phone /></div><span>{agency.phone}</span></div>{agency.hours && <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-1"><div className="w-4 h-4 flex-shrink-0"><Icons.Clock /></div><span>{agency.hours}</span></div>}</div></div></div>; })}</div>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // ============ SETTINGS SCREEN WITH BUSINESS PROFILE ============
-        const SettingsScreen = ({ user, onLogout, onReset, businessProfile, onUpdateProfile }) => {
+        const SettingsScreen = ({ onReset, businessProfile, onUpdateProfile }) => {
             const [showProfileForm, setShowProfileForm] = useState(false);
             const [profile, setProfile] = useState(businessProfile || {});
-
-            const saveProfile = () => {
-                onUpdateProfile(profile);
-                setShowProfileForm(false);
-            };
-
-            if (showProfileForm) return (
-                <div className="h-full bg-gray-50 flex flex-col pb-20">
-                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
-                        <div className="flex items-center gap-3">
-                            <button onClick={() => setShowProfileForm(false)} className="touch-active"><div className="w-7 h-7 text-gray-600"><Icons.ChevronLeft /></div></button>
-                            <h1 className="text-xl font-bold text-gray-800">Hồ sơ doanh nghiệp</h1>
-                        </div>
-                    </div>
-                    <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">Tên công ty</label>
-                                <input type="text" value={profile.companyName || ''} onChange={e => setProfile({...profile, companyName: e.target.value})} placeholder="Công ty TNHH ABC" className="w-full p-4 rounded-xl border border-gray-200 focus:border-navy-500 focus:outline-none" />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">Mã số thuế</label>
-                                <input type="text" value={profile.taxCode || ''} onChange={e => setProfile({...profile, taxCode: e.target.value})} placeholder="0123456789" className="w-full p-4 rounded-xl border border-gray-200 focus:border-navy-500 focus:outline-none" />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">Loại hình doanh nghiệp</label>
-                                <select value={profile.businessType || ''} onChange={e => setProfile({...profile, businessType: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none">
-                                    <option value="">-- Chọn loại hình --</option>
-                                    {BUSINESS_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">Ngành nghề</label>
-                                <select value={profile.industry || ''} onChange={e => setProfile({...profile, industry: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none">
-                                    <option value="">-- Chọn ngành nghề --</option>
-                                    {INDUSTRIES.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">Quy mô</label>
-                                <select value={profile.size || ''} onChange={e => setProfile({...profile, size: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none">
-                                    <option value="">-- Chọn quy mô --</option>
-                                    {COMPANY_SIZES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium text-gray-700 mb-2 block">Kê khai thuế</label>
-                                <select value={profile.taxPeriod || ''} onChange={e => setProfile({...profile, taxPeriod: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none">
-                                    <option value="">-- Chọn kỳ kê khai --</option>
-                                    {TAX_PERIODS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="p-5">
-                        <button onClick={saveProfile} className="w-full py-4 rounded-2xl bg-navy-700 text-white font-semibold touch-active">Lưu thông tin</button>
-                    </div>
-                </div>
-            );
-
+            const saveProfile = () => { onUpdateProfile(profile); setShowProfileForm(false); };
+            if (showProfileForm) return <div className="h-full bg-gray-50 flex flex-col pb-20"><div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top"><div className="flex items-center gap-3"><button onClick={() => setShowProfileForm(false)} className="touch-active"><div className="w-7 h-7 text-gray-600"><Icons.ChevronLeft /></div></button><h1 className="text-xl font-bold text-gray-800">Hồ sơ doanh nghiệp</h1></div></div><div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar"><div className="space-y-4"><div><label className="text-sm font-medium text-gray-700 mb-2 block">Tên công ty</label><input type="text" value={profile.companyName || ''} onChange={e => setProfile({...profile, companyName: e.target.value})} placeholder="Công ty TNHH ABC" className="w-full p-4 rounded-xl border border-gray-200 focus:border-navy-500 focus:outline-none" /></div><div><label className="text-sm font-medium text-gray-700 mb-2 block">Mã số thuế</label><input type="text" value={profile.taxCode || ''} onChange={e => setProfile({...profile, taxCode: e.target.value})} placeholder="0123456789" className="w-full p-4 rounded-xl border border-gray-200 focus:border-navy-500 focus:outline-none" /></div><div><label className="text-sm font-medium text-gray-700 mb-2 block">Loại hình doanh nghiệp</label><select value={profile.businessType || ''} onChange={e => setProfile({...profile, businessType: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none"><option value="">-- Chọn loại hình --</option>{BUSINESS_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div><div><label className="text-sm font-medium text-gray-700 mb-2 block">Ngành nghề</label><select value={profile.industry || ''} onChange={e => setProfile({...profile, industry: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none"><option value="">-- Chọn ngành nghề --</option>{INDUSTRIES.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}</select></div><div><label className="text-sm font-medium text-gray-700 mb-2 block">Quy mô</label><select value={profile.size || ''} onChange={e => setProfile({...profile, size: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none"><option value="">-- Chọn quy mô --</option>{COMPANY_SIZES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div><label className="text-sm font-medium text-gray-700 mb-2 block">Kê khai thuế</label><select value={profile.taxPeriod || ''} onChange={e => setProfile({...profile, taxPeriod: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 bg-white focus:border-navy-500 focus:outline-none"><option value="">-- Chọn kỳ kê khai --</option>{TAX_PERIODS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div></div></div><div className="p-5"><button onClick={saveProfile} className="w-full py-4 rounded-2xl bg-navy-700 text-white font-semibold touch-active">Lưu thông tin</button></div></div>;
             return (
                 <div className="h-full bg-gray-50 overflow-auto hide-scrollbar pb-24">
-                    <div className="bg-gradient-to-br from-navy-700 to-navy-800 pt-14 pb-8 px-5 safe-top">
-                        <h1 className="text-2xl font-bold text-white mb-5">Cài đặt</h1>
-                        <div className="bg-white/10 rounded-2xl p-5">
-                            <div className="flex items-center gap-4">
-                                <div className="bg-white p-2.5 rounded-full shadow"><HTICLogo size={40} /></div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-white font-bold text-lg truncate">{businessProfile?.companyName || user?.companyName || 'Người dùng'}</p>
-                                    <p className="text-navy-200 truncate">{user?.email || 'Chưa đăng nhập'}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div className="bg-gradient-to-br from-navy-700 to-navy-800 pt-14 pb-8 px-5 safe-top"><h1 className="text-2xl font-bold text-white mb-5">Cài đặt</h1><div className="bg-white/10 rounded-2xl p-5"><div className="flex items-center gap-4"><div className="bg-white p-2.5 rounded-full shadow"><HTICLogo size={40} /></div><div className="flex-1 min-w-0"><p className="text-white font-bold text-lg truncate">{businessProfile?.companyName || 'Doanh nghiệp'}</p><p className="text-navy-200 truncate">{businessProfile?.taxCode ? `MST: ${businessProfile.taxCode}` : 'Chưa thiết lập hồ sơ'}</p></div></div></div></div>
                     <div className="px-5 py-5">
-                        {/* Business Profile Card */}
-                        <div className="bg-white rounded-2xl p-5 shadow-sm mb-5">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                                    <div className="w-5 h-5 text-navy-600"><Icons.Building /></div>
-                                    Hồ sơ doanh nghiệp
-                                </h3>
-                                <button onClick={() => setShowProfileForm(true)} className="text-navy-600 text-sm font-medium">Chỉnh sửa</button>
-                            </div>
-                            {businessProfile?.companyName ? (
-                                <div className="space-y-2 text-sm">
-                                    <p><span className="text-gray-500">Tên:</span> <span className="text-gray-800">{businessProfile.companyName}</span></p>
-                                    {businessProfile.taxCode && <p><span className="text-gray-500">MST:</span> <span className="text-gray-800">{businessProfile.taxCode}</span></p>}
-                                    {businessProfile.businessType && <p><span className="text-gray-500">Loại hình:</span> <span className="text-gray-800">{BUSINESS_TYPES.find(t => t.id === businessProfile.businessType)?.name}</span></p>}
-                                    {businessProfile.taxPeriod && <p><span className="text-gray-500">Kê khai:</span> <span className="text-gray-800">{TAX_PERIODS.find(p => p.id === businessProfile.taxPeriod)?.name}</span></p>}
-                                </div>
-                            ) : (
-                                <p className="text-gray-500 text-sm">Chưa thiết lập hồ sơ. Thiết lập để cá nhân hóa nội dung.</p>
-                            )}
-                        </div>
-
-                        <div className="bg-white rounded-2xl px-5 shadow-sm mb-5">
-                            <h3 className="font-bold pt-5 pb-3 text-gray-800">Về ứng dụng</h3>
-                            <div className="py-4 border-b border-gray-100 flex items-center gap-4">
-                                <div className="w-5 h-5 text-gray-500"><Icons.Info /></div>
-                                <span className="flex-1 text-gray-700">Phiên bản</span>
-                                <span className="text-gray-400">4.0.0</span>
-                            </div>
-                            <div className="py-4 border-b border-gray-100 flex items-center gap-4">
-                                <div className="w-5 h-5 text-gray-500"><Icons.Shield /></div>
-                                <span className="flex-1 text-gray-700">Chính sách bảo mật</span>
-                                <div className="w-5 h-5 text-gray-400"><Icons.ChevronRight /></div>
-                            </div>
-                            <div className="py-4 flex items-center gap-4">
-                                <div className="w-5 h-5 text-gray-500"><Icons.HelpCircle /></div>
-                                <span className="flex-1 text-gray-700">Liên hệ hỗ trợ</span>
-                                <div className="w-5 h-5 text-gray-400"><Icons.ChevronRight /></div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-2xl p-5 shadow-sm mb-5">
-                            <h3 className="font-bold mb-4 text-gray-800">Nhà phát hành</h3>
-                            <div className="flex items-center gap-4">
-                                <div className="bg-navy-100 p-3 rounded-xl"><HTICLogo size={28} /></div>
-                                <div>
-                                    <p className="font-semibold text-gray-800">{COMPANY_INFO.name}</p>
-                                    <p className="text-sm text-gray-500">{COMPANY_INFO.website}</p>
-                                </div>
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-                                <div className="flex items-center gap-3 text-gray-500"><div className="w-5 h-5"><Icons.Phone /></div><span>{COMPANY_INFO.phone}</span></div>
-                                <div className="flex items-center gap-3 text-gray-500"><div className="w-5 h-5"><Icons.Mail /></div><span>{COMPANY_INFO.email}</span></div>
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-2xl px-5 shadow-sm">
-                            {user?.isMember && (
-                                <button onClick={onLogout} className="w-full py-4 border-b border-gray-100 flex items-center gap-4 touch-active">
-                                    <div className="w-5 h-5 text-gray-500"><Icons.LogOut /></div>
-                                    <span className="text-gray-700">Đăng xuất</span>
-                                </button>
-                            )}
-                            <button onClick={onReset} className="w-full py-4 flex items-center gap-4 touch-active">
-                                <div className="w-5 h-5 text-red-500"><Icons.Trash /></div>
-                                <span className="text-red-500">Đặt lại dữ liệu</span>
-                            </button>
-                        </div>
+                        <div className="bg-white rounded-2xl p-5 shadow-sm mb-5"><div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-800 flex items-center gap-2"><div className="w-5 h-5 text-navy-600"><Icons.Building /></div>Hồ sơ doanh nghiệp</h3><button onClick={() => setShowProfileForm(true)} className="text-navy-600 text-sm font-medium">Chỉnh sửa</button></div>{businessProfile?.companyName ? <div className="space-y-2 text-sm"><p><span className="text-gray-500">Tên:</span> <span className="text-gray-800">{businessProfile.companyName}</span></p>{businessProfile.taxCode && <p><span className="text-gray-500">MST:</span> <span className="text-gray-800">{businessProfile.taxCode}</span></p>}{businessProfile.businessType && <p><span className="text-gray-500">Loại hình:</span> <span className="text-gray-800">{BUSINESS_TYPES.find(t => t.id === businessProfile.businessType)?.name}</span></p>}{businessProfile.taxPeriod && <p><span className="text-gray-500">Kê khai:</span> <span className="text-gray-800">{TAX_PERIODS.find(p => p.id === businessProfile.taxPeriod)?.name}</span></p>}</div> : <p className="text-gray-500 text-sm">Chưa thiết lập hồ sơ. Thiết lập để cá nhân hóa nội dung.</p>}</div>
+                        <div className="bg-white rounded-2xl px-5 shadow-sm mb-5"><h3 className="font-bold pt-5 pb-3 text-gray-800">Về ứng dụng</h3><div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info /></div><span className="flex-1 text-gray-700">Phiên bản</span><span className="text-gray-400">4.0.0</span></div><div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Shield /></div><span className="flex-1 text-gray-700">Chính sách bảo mật</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight /></div></div><div className="py-4 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.HelpCircle /></div><span className="flex-1 text-gray-700">Liên hệ hỗ trợ</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight /></div></div></div>
+                        <div className="bg-white rounded-2xl p-5 shadow-sm mb-5"><h3 className="font-bold mb-4 text-gray-800">Nhà phát hành</h3><div className="flex items-center gap-4"><div className="bg-navy-100 p-3 rounded-xl"><HTICLogo size={28} /></div><div><p className="font-semibold text-gray-800">{COMPANY_INFO.name}</p><p className="text-sm text-gray-500">{COMPANY_INFO.website}</p></div></div><div className="mt-4 pt-4 border-t border-gray-100 space-y-3"><div className="flex items-center gap-3 text-gray-500"><div className="w-5 h-5"><Icons.Phone /></div><span>{COMPANY_INFO.phone}</span></div><div className="flex items-center gap-3 text-gray-500"><div className="w-5 h-5"><Icons.Mail /></div><span>{COMPANY_INFO.email}</span></div></div></div>
+                        <div className="bg-white rounded-2xl px-5 shadow-sm"><button onClick={onReset} className="w-full py-4 flex items-center gap-4 touch-active"><div className="w-5 h-5 text-red-500"><Icons.Trash /></div><span className="text-red-500">Đặt lại dữ liệu</span></button></div>
                     </div>
                 </div>
             );
         };
 
-        // ============ TAB BAR ============
         const TabBar = ({ activeTab, onTabChange }) => {
-            const tabs = [
-                { id: 'home', I: Icons.Home, l: 'Trang chủ' },
-                { id: 'calendar', I: Icons.Calendar, l: 'Lịch' },
-                { id: 'news', I: Icons.Newspaper, l: 'Tin tức' },
-                { id: 'support', I: Icons.Landmark, l: 'Cơ quan' },
-                { id: 'settings', I: Icons.Settings, l: 'Cài đặt' }
-            ];
-            return (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex safe-bottom z-40 max-w-lg mx-auto">
-                    {tabs.map(t => (
-                        <button key={t.id} onClick={() => onTabChange(t.id)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors touch-active ${activeTab === t.id ? 'text-navy-700' : 'text-gray-400'}`}>
-                            <div className="w-6 h-6"><t.I /></div>
-                            <span className="text-xs font-medium">{t.l}</span>
-                        </button>
-                    ))}
-                </div>
-            );
+            const tabs = [{ id: 'home', I: Icons.Home, l: 'Trang chủ' }, { id: 'calendar', I: Icons.Calendar, l: 'Lịch' }, { id: 'news', I: Icons.Newspaper, l: 'Tin tức' }, { id: 'support', I: Icons.Landmark, l: 'Cơ quan' }, { id: 'settings', I: Icons.Settings, l: 'Cài đặt' }];
+            return <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex safe-bottom z-40 max-w-lg mx-auto">{tabs.map(t => <button key={t.id} onClick={() => onTabChange(t.id)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors touch-active ${activeTab === t.id ? 'text-navy-700' : 'text-gray-400'}`}><div className="w-6 h-6"><t.I /></div><span className="text-xs font-medium">{t.l}</span></button>)}</div>;
         };
 
-        // ============ MAIN APP ============
         function App() {
-            const [screen, setScreen] = useState('splash');
             const [tab, setTab] = useState('home');
-            const [user, setUser] = useState(null);
             const [selEvent, setSelEvent] = useState(null);
             const [showSearch, setShowSearch] = useState(false);
-            const [selNews, setSelNews] = useState(null);
-
-            // Data states
             const [events, setEvents] = useState([]);
             const [newsData, setNewsData] = useState([]);
             const [provinces, setProvinces] = useState([]);
             const [agencies, setAgencies] = useState([]);
-            
-            // Checklist state (stored locally)
-            const [checklistState, setChecklistState] = useState(() => {
-                const saved = localStorage.getItem('checklistState');
-                return saved ? JSON.parse(saved) : {};
-            });
-
-            // Business profile state
-            const [businessProfile, setBusinessProfile] = useState(() => {
-                const saved = localStorage.getItem('businessProfile');
-                return saved ? JSON.parse(saved) : {};
-            });
-
-            // Save checklist state
-            useEffect(() => {
-                localStorage.setItem('checklistState', JSON.stringify(checklistState));
-            }, [checklistState]);
-
-            // Save business profile
-            useEffect(() => {
-                localStorage.setItem('businessProfile', JSON.stringify(businessProfile));
-            }, [businessProfile]);
-
-            // Fetch data
+            const [checklistState, setChecklistState] = useState(() => { const saved = localStorage.getItem('checklistState'); return saved ? JSON.parse(saved) : {}; });
+            const [businessProfile, setBusinessProfile] = useState(() => { const saved = localStorage.getItem('businessProfile'); return saved ? JSON.parse(saved) : {}; });
+            useEffect(() => { localStorage.setItem('checklistState', JSON.stringify(checklistState)); }, [checklistState]);
+            useEffect(() => { localStorage.setItem('businessProfile', JSON.stringify(businessProfile)); }, [businessProfile]);
             useEffect(() => {
                 const fetchData = async () => {
                     try {
-                        const [evRes, newsRes, provRes, agRes] = await Promise.all([
-                            fetch(API + '/events'),
-                            fetch(API + '/news'),
-                            fetch(API + '/provinces'),
-                            fetch(API + '/agencies')
-                        ]);
-                        
-                        const evData = await evRes.json();
-                        const newsDataJson = await newsRes.json();
-                        const provData = await provRes.json();
-                        const agData = await agRes.json();
-
+                        const [evRes, newsRes, provRes, agRes] = await Promise.all([fetch(API + '/events'), fetch(API + '/news'), fetch(API + '/provinces'), fetch(API + '/agencies')]);
+                        const evData = await evRes.json(); const newsDataJson = await newsRes.json(); const provData = await provRes.json(); const agData = await agRes.json();
                         if (evData.success) setEvents(evData.data.map(e => ({ ...e, completed: false })));
                         if (newsDataJson.success) setNewsData(newsDataJson.data);
                         if (provData.success) setProvinces(provData.data);
                         if (agData.success) setAgencies(agData.data);
-                    } catch (err) {
-                        console.error('Error fetching data:', err);
-                    }
+                    } catch (err) { console.error('Error fetching data:', err); }
                 };
                 fetchData();
             }, []);
-
-            const login = u => { setUser(u); setScreen('main'); };
-            const skip = () => { setUser({ isMember: false }); setScreen('main'); };
-            
-            const toggleEvent = id => {
-                setEvents(events.map(e => e.id === id ? { ...e, completed: !e.completed } : e));
-                setSelEvent(p => p && p.id === id ? { ...p, completed: !p.completed } : p);
-            };
-
-            const handleChecklistChange = (eventId, completedSteps) => {
-                setChecklistState(prev => ({ ...prev, [eventId]: completedSteps }));
-            };
-
-            const reset = () => { 
-                setScreen('splash'); 
-                setUser(null); 
-                setChecklistState({});
-                setBusinessProfile({});
-                localStorage.removeItem('checklistState');
-                localStorage.removeItem('businessProfile');
-            };
-            
-            const logout = () => { setUser({ isMember: false }); };
-
-            const handleSelectNews = (news) => {
-                setTab('news');
-                setSelNews(news);
-            };
-
+            const toggleEvent = id => { setEvents(events.map(e => e.id === id ? { ...e, completed: !e.completed } : e)); setSelEvent(p => p && p.id === id ? { ...p, completed: !p.completed } : p); };
+            const handleChecklistChange = (eventId, completedSteps) => { setChecklistState(prev => ({ ...prev, [eventId]: completedSteps })); };
+            const reset = () => { setChecklistState({}); setBusinessProfile({}); localStorage.removeItem('checklistState'); localStorage.removeItem('businessProfile'); window.location.reload(); };
             return (
                 <div className="h-full w-full max-w-lg mx-auto bg-gray-50 relative overflow-hidden">
-                    {screen === 'splash' && <SplashScreen onFinish={() => setScreen('auth')} />}
-                    {screen === 'auth' && <AuthScreen onLogin={login} onSkip={skip} />}
-                    {screen === 'main' && (
-                        <>
-                            {tab === 'home' && <DashboardScreen events={events} onEventClick={setSelEvent} onShowSearch={() => setShowSearch(true)} businessProfile={businessProfile} />}
-                            {tab === 'calendar' && <CalendarScreen events={events} onEventClick={setSelEvent} />}
-                            {tab === 'news' && <NewsScreen newsData={newsData} />}
-                            {tab === 'support' && <SupportScreen provinces={provinces} agencies={agencies} />}
-                            {tab === 'settings' && <SettingsScreen user={user} onLogout={logout} onReset={reset} businessProfile={businessProfile} onUpdateProfile={setBusinessProfile} />}
-                            <TabBar activeTab={tab} onTabChange={setTab} />
-                            {selEvent && <EventDetailModal event={selEvent} onClose={() => setSelEvent(null)} onToggle={toggleEvent} checklistState={checklistState} onChecklistChange={handleChecklistChange} />}
-                            <GlobalSearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} events={events} news={newsData} agencies={agencies} onSelectEvent={(e) => { setSelEvent(e); setShowSearch(false); }} onSelectNews={handleSelectNews} />
-                        </>
-                    )}
+                    {tab === 'home' && <DashboardScreen events={events} onEventClick={setSelEvent} onShowSearch={() => setShowSearch(true)} businessProfile={businessProfile} />}
+                    {tab === 'calendar' && <CalendarScreen events={events} onEventClick={setSelEvent} />}
+                    {tab === 'news' && <NewsScreen newsData={newsData} />}
+                    {tab === 'support' && <SupportScreen provinces={provinces} agencies={agencies} />}
+                    {tab === 'settings' && <SettingsScreen onReset={reset} businessProfile={businessProfile} onUpdateProfile={setBusinessProfile} />}
+                    <TabBar activeTab={tab} onTabChange={setTab} />
+                    {selEvent && <EventDetailModal event={selEvent} onClose={() => setSelEvent(null)} onToggle={toggleEvent} checklistState={checklistState} onChecklistChange={handleChecklistChange} />}
+                    <GlobalSearchModal isOpen={showSearch} onClose={() => setShowSearch(false)} events={events} news={newsData} agencies={agencies} onSelectEvent={(e) => { setSelEvent(e); setShowSearch(false); }} />
                 </div>
             );
         }
-
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
