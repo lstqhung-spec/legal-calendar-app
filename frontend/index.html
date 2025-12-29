@@ -68,6 +68,26 @@ const USER_TYPES=[{id:'business',name:'Doanh nghiệp'},{id:'individual',name:'C
 const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'realestate',name:'Bất động sản'},{id:'other',name:'Khác'}];
 const categoryConfig={tax:{label:'Thuế',color:'bg-red-600',lightColor:'bg-red-50',textColor:'text-red-700',borderColor:'border-red-200'},insurance:{label:'Bảo hiểm',color:'bg-blue-600',lightColor:'bg-blue-50',textColor:'text-blue-700',borderColor:'border-blue-200'},labor:{label:'Lao động',color:'bg-orange-600',lightColor:'bg-orange-50',textColor:'text-orange-700',borderColor:'border-orange-200'},safety:{label:'An toàn',color:'bg-rose-600',lightColor:'bg-rose-50',textColor:'text-rose-700',borderColor:'border-rose-200'},environment:{label:'Môi trường',color:'bg-green-600',lightColor:'bg-green-50',textColor:'text-green-700',borderColor:'border-green-200'},investment:{label:'Đầu tư',color:'bg-violet-600',lightColor:'bg-violet-50',textColor:'text-violet-700',borderColor:'border-violet-200'},report:{label:'Báo cáo',color:'bg-emerald-600',lightColor:'bg-emerald-50',textColor:'text-emerald-700',borderColor:'border-emerald-200'},license:{label:'Giấy phép',color:'bg-amber-600',lightColor:'bg-amber-50',textColor:'text-amber-700',borderColor:'border-amber-200'},news:{label:'Tin tức',color:'bg-purple-600',lightColor:'bg-purple-50',textColor:'text-purple-700',borderColor:'border-purple-200'},personal:{label:'Cá nhân',color:'bg-pink-600',lightColor:'bg-pink-50',textColor:'text-pink-700',borderColor:'border-pink-200'}};
 
+// ============ BANNER CONFIG FOR EACH TAB ============
+const bannerConfig={
+    home:{title:'TRANG CHỦ',gradient:'from-sky-600 to-sky-500',lightBg:'bg-sky-50',textColor:'text-sky-700'},
+    calendar:{title:'LỊCH PHÁP LÝ',gradient:'from-indigo-600 to-indigo-500',lightBg:'bg-indigo-50',textColor:'text-indigo-700'},
+    news:{title:'TIN TỨC PHÁP LUẬT',gradient:'from-amber-500 to-orange-500',lightBg:'bg-amber-50',textColor:'text-amber-700'},
+    support:{title:'HỖ TRỢ',gradient:'from-teal-600 to-teal-500',lightBg:'bg-teal-50',textColor:'text-teal-700'},
+    settings:{title:'CÀI ĐẶT',gradient:'from-slate-600 to-slate-500',lightBg:'bg-slate-50',textColor:'text-slate-700'}
+};
+
+// ============ PAGE BANNER COMPONENT ============
+const PageBanner=({type,children})=>{
+    const config=bannerConfig[type]||bannerConfig.home;
+    return(
+        <div className={`bg-gradient-to-r ${config.gradient} pt-14 pb-5 px-5 safe-top`}>
+            <h1 className="text-white font-bold text-2xl tracking-wide mb-1">{config.title}</h1>
+            {children}
+        </div>
+    );
+};
+
 // 4 Danh mục tổ chức pháp lý - không icon
 const agencyCategories=[
     {id:'government',name:'Cơ quan Nhà nước',color:'bg-blue-500',lightColor:'bg-blue-50',desc:'Thuế, BHXH, Sở KH&ĐT...'},
@@ -267,31 +287,18 @@ const DashboardScreen=({events,news,onEventClick,membership,savedEvents,personal
     
     return(
         <div className="h-full bg-slate-100 overflow-auto hide-scrollbar pb-24">
-            {/* Banner with Logo and App Title */}
-            <div className="bg-gradient-to-r from-navy-700 to-navy-600 pt-14 pb-4 px-5 safe-top">
-                <div className="flex items-center gap-4">
-                    <div className="bg-white p-2 rounded-xl shadow-lg"><Logo size={48}/></div>
-                    <div>
-                        <h1 className="text-white font-bold text-2xl tracking-wide">LỊCH PHÁP LÝ</h1>
-                        <p className="text-sky-200 text-sm font-medium">Nắm lịch pháp lý - tránh bị phạt khi trễ hạn</p>
-                    </div>
-                </div>
-            </div>
-            
-            {/* User Info Section */}
-            <div className="header-gradient header-pattern py-4 px-5 border-b border-gray-200">
-                <div className="flex items-center gap-4">
-                    {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-lg"/>:<div className="w-14 h-14 bg-navy-100 rounded-2xl flex items-center justify-center border-2 border-navy-200"><div className="w-7 h-7 text-navy-600"><Icons.User/></div></div>}
+            {/* Banner */}
+            <PageBanner type="home">
+                <div className="flex items-center gap-3 mt-3">
+                    {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-14 h-14 rounded-2xl object-cover border-2 border-white/50 shadow-lg"/>:<div className="bg-white/20 p-2 rounded-xl"><Logo size={42}/></div>}
                     <div className="flex-1 min-w-0">
-                        <p className="text-gray-500 text-sm font-medium">Xin chào,</p>
-                        <p className="text-navy-700 font-bold text-lg truncate">{userName}</p>
-                        {userProfile?.userType==='business'&&userProfile?.taxCode&&<p className="text-gray-500 text-xs font-medium">MST: {userProfile.taxCode}</p>}
-                        {userProfile?.userType==='individual'&&userProfile?.job&&<p className="text-gray-500 text-xs font-medium">{userProfile.job}</p>}
+                        <p className="text-white/80 text-sm font-medium">Xin chào,</p>
+                        <p className="text-white font-bold text-lg truncate">{userName}</p>
                     </div>
-                    {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
+                    {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-white/25 px-3 py-1.5 rounded-full flex items-center gap-1"><div className="w-4 h-4 text-amber-300"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
                 </div>
-                <p className="text-gray-600 text-sm font-semibold mt-2">{today.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
-            </div>
+                <p className="text-white/80 text-sm font-medium mt-2">{today.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+            </PageBanner>
             
             {nearestDeadline&&(
                 <div className="px-5 -mt-3 mb-4">
@@ -406,17 +413,16 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
 
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            {/* Fixed Header */}
-            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200 flex-shrink-0">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div></div><h1 className="text-2xl font-bold text-gray-900">Lịch pháp lý</h1></div>
-                    <button onClick={()=>setShowAddModal(true)} className="bg-navy-600 text-white p-2.5 rounded-xl shadow-md hover:bg-navy-700"><div className="w-5 h-5"><Icons.Plus/></div></button>
+            {/* Banner */}
+            <PageBanner type="calendar">
+                <div className="flex items-center justify-between mt-2">
+                    <button onClick={()=>setShowAddModal(true)} className="bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-white/30"><div className="w-4 h-4"><Icons.Plus/></div>Thêm lịch</button>
                 </div>
-            </div>
+            </PageBanner>
             
             {/* View Mode Toggle */}
             <div className="bg-white px-5 py-2.5 flex gap-2 border-b border-gray-200 flex-shrink-0">
-                <button onClick={()=>setViewMode('all')} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${viewMode==='all'?'bg-navy-600 text-white':'bg-gray-100 text-gray-700'}`}>📅 Tất cả</button>
+                <button onClick={()=>setViewMode('all')} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${viewMode==='all'?'bg-indigo-600 text-white':'bg-gray-100 text-gray-700'}`}>📅 Tất cả</button>
                 <button onClick={()=>setViewMode('personal')} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${viewMode==='personal'?'bg-pink-500 text-white':'bg-gray-100 text-gray-700'}`}>👤 Lịch của bạn</button>
             </div>
             
@@ -488,7 +494,7 @@ const NewsScreen=({newsData,onAddToCalendar})=>{
     
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Newspaper/></div></div><h1 className="text-2xl font-bold text-gray-900">Tin tức pháp luật</h1></div></div>
+            <PageBanner type="news"/>
             <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar smooth-scroll">
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900"><div className="w-6 h-6 text-amber-500"><Icons.TrendingUp/></div>Tin mới nhất</h2>
                 {featuredNews.length===0?<div className="bg-white rounded-xl p-8 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>:<div className="space-y-4 mb-6">{featuredNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSel(n)} featured/>)}</div>}
@@ -516,15 +522,9 @@ const SupportScreen=({provinces,agencies})=>{
     
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Search/></div></div>
-                    <div>
-                        <h1 className="text-xl font-bold text-gray-900">Hỗ trợ</h1>
-                        <p className="text-sm text-gray-500 font-medium">Tìm kiếm tổ chức pháp lý</p>
-                    </div>
-                </div>
-            </div>
+            <PageBanner type="support">
+                <p className="text-white/80 text-sm font-medium mt-1">Tìm kiếm tổ chức pháp lý</p>
+            </PageBanner>
             <div className="flex-1 overflow-auto hide-scrollbar smooth-scroll">
                 <div className="px-5 py-4">
                     {/* 4 Category Cards - Grid 2x2 - No icons */}
@@ -653,16 +653,13 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
 
     return(
         <div className="h-full bg-slate-100 overflow-auto hide-scrollbar smooth-scroll pb-24">
-            <div className="header-gradient header-pattern pt-14 pb-8 px-5 safe-top border-b border-gray-200">
-                <h1 className="text-2xl font-bold text-gray-900 mb-5">Cài đặt</h1>
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-                    <div className="flex items-center gap-4">
-                        {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow"/>:<div className="bg-navy-50 p-2.5 rounded-xl border border-navy-100"><Logo size={36}/></div>}
-                        <div className="flex-1 min-w-0"><p className="text-gray-900 font-bold text-lg truncate">{userProfile?.name||'Người dùng'}</p><p className="text-gray-500 truncate font-semibold">{userProfile?.userType==='business'?(userProfile?.taxCode?`MST: ${userProfile.taxCode}`:'Doanh nghiệp'):(userProfile?.job||'Cá nhân')}</p></div>
-                        {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-gradient-to-r from-amber-400 to-amber-500 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
-                    </div>
+            <PageBanner type="settings">
+                <div className="flex items-center gap-3 mt-3 bg-white/15 rounded-xl p-3">
+                    {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white/50 shadow"/>:<div className="bg-white/20 p-2 rounded-xl"><Logo size={32}/></div>}
+                    <div className="flex-1 min-w-0"><p className="text-white font-bold truncate">{userProfile?.name||'Người dùng'}</p><p className="text-white/70 text-sm truncate font-medium">{userProfile?.userType==='business'?(userProfile?.taxCode?`MST: ${userProfile.taxCode}`:'Doanh nghiệp'):(userProfile?.job||'Cá nhân')}</p></div>
+                    {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-amber-400 px-2.5 py-1 rounded-full flex items-center gap-1"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
                 </div>
-            </div>
+            </PageBanner>
             <div className="px-5 py-5">
                 <div className="bg-white rounded-2xl p-5 shadow-sm mb-5 border border-gray-200">
                     <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-900 flex items-center gap-2"><div className="w-5 h-5 text-navy-600"><Icons.User/></div>Hồ sơ người dùng</h3><button onClick={()=>setShowProfileForm(true)} className="text-navy-600 text-sm font-bold hover:underline">Chỉnh sửa</button></div>
