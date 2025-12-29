@@ -3,75 +3,36 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
-const dataDir = path.join(__dirname, 'data');
-const frontendDir = path.join(__dirname, '..', 'frontend');
+const DATA_DIR = path.join(__dirname, 'data');
 
-// ============ HELPER FUNCTIONS ============
-
-// Doc du lieu tu file JSON
-const readData = (filename) => {
+// Helper functions
+const readJSON = (file) => {
     try {
-        const filepath = path.join(dataDir, filename);
-        const data = fs.readFileSync(filepath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error(`Loi doc file ${filename}:`, error.message);
+        return JSON.parse(fs.readFileSync(path.join(DATA_DIR, file), 'utf8'));
+    } catch (e) {
         return [];
     }
 };
 
-// Ghi du lieu vao file JSON
-const writeData = (filename, data) => {
-    try {
-        const filepath = path.join(dataDir, filename);
-        fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf8');
-        return true;
-    } catch (error) {
-        console.error(`Loi ghi file ${filename}:`, error.message);
-        return false;
-    }
+const writeJSON = (file, data) => {
+    fs.writeFileSync(path.join(DATA_DIR, file), JSON.stringify(data, null, 2), 'utf8');
 };
 
-// Parse JSON body tu request
-const parseBody = (req) => {
-    return new Promise((resolve, reject) => {
-        let body = '';
-        req.on('data', chunk => { body += chunk.toString(); });
-        req.on('end', () => {
-            try {
-                resolve(body ? JSON.parse(body) : {});
-            } catch (e) {
-                reject(e);
-            }
-        });
-        req.on('error', reject);
-    });
-};
-
-// Tra ve JSON response
-const sendJSON = (res, statusCode, data) => {
-    res.writeHead(statusCode, { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-    });
+const sendJSON = (res, data, status = 200) => {
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(data));
 };
 
-// Tra ve file tinh (HTML, CSS, JS, images)
-const serveStatic = (res, filepath, contentType) => {
-    fs.readFile(filepath, (err, content) => {
-        if (err) {
-            res.writeHead(404);
-            res.end('File not found');
-        } else {
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(content);
-        }
+const parseBody = (req) => new Promise((resolve) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+        try { resolve(JSON.parse(body)); }
+        catch { resolve({}); }
     });
-};
+});
 
-// Xac dinh content type theo extension
-const getContentType = (ext) => {
+const getMimeType = (ext) => {
     const types = {
         '.html': 'text/html; charset=utf-8',
         '.css': 'text/css',
@@ -79,509 +40,344 @@ const getContentType = (ext) => {
         '.json': 'application/json',
         '.png': 'image/png',
         '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
         '.svg': 'image/svg+xml',
         '.ico': 'image/x-icon'
     };
-    return types[ext] || 'text/plain';
+    return types[ext] || 'application/octet-stream';
 };
 
-// Tao ID moi
-const generateId = (items) => {
-    if (items.length === 0) return 1;
-    return Math.max(...items.map(item => item.id)) + 1;
-};
-
-// ============ API HANDLERS ============
-
-// --- PROVINCES ---
-const handleProvinces = (req, res, method) => {
-    const provinces = readData('provinces.json');
+// Initialize data files if not exist
+const initData = () => {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     
-    if (method === 'GET') {
-        sendJSON(res, 200, { success: true, data: provinces });
-    }
-};
-
-// --- AGENCIES ---
-const handleAgencies = (req, res, method, urlParts, body) => {
-    let agencies = readData('agencies.json');
-    const id = urlParts[3] ? parseInt(urlParts[3]) : null;
-    const provinceId = new URL(req.url, `http://localhost`).searchParams.get('province');
-    
-    if (method === 'GET') {
-        if (id) {
-            const agency = agencies.find(a => a.id === id);
-            if (agency) {
-                sendJSON(res, 200, { success: true, data: agency });
-            } else {
-                sendJSON(res, 404, { success: false, message: 'Khong tim thay co quan' });
-            }
-        } else {
-            let result = agencies.filter(a => a.isActive);
-            if (provinceId) {
-                result = result.filter(a => a.provinceId === provinceId);
-            }
-            sendJSON(res, 200, { success: true, data: result });
+    const files = {
+        'events.json': [
+            { id: 1, title: "Nộp tờ khai thuế GTGT", category: "tax", dayOfMonth: 20, frequency: "monthly", description: "Nộp tờ khai thuế GTGT tháng/quý", legalReference: "Luật Quản lý thuế 2019", penalty: "Phạt từ 2-5 triệu đồng", isActive: true, checklist: [{ id: 1, text: "Tập hợp hóa đơn đầu vào" }, { id: 2, text: "Kiểm tra hóa đơn đầu ra" }, { id: 3, text: "Lập tờ khai trên phần mềm HTKK" }, { id: 4, text: "Nộp tờ khai qua thuedientu.gdt.gov.vn", link: "https://thuedientu.gdt.gov.vn" }] },
+            { id: 2, title: "Nộp tiền thuế GTGT", category: "tax", dayOfMonth: 20, frequency: "monthly", description: "Nộp tiền thuế GTGT phát sinh", isActive: true, checklist: [{ id: 1, text: "Kiểm tra số thuế phải nộp" }, { id: 2, text: "Chuyển khoản vào tài khoản Kho bạc" }] },
+            { id: 3, title: "Nộp BHXH, BHYT, BHTN", category: "insurance", dayOfMonth: 25, frequency: "monthly", description: "Nộp bảo hiểm xã hội, y tế, thất nghiệp", legalReference: "Luật BHXH 2014", penalty: "Phạt 12-15% số tiền chậm nộp/năm", isActive: true, checklist: [{ id: 1, text: "Lập danh sách lao động tham gia" }, { id: 2, text: "Tính số tiền phải nộp" }, { id: 3, text: "Nộp tiền qua ngân hàng" }] },
+            { id: 4, title: "Nộp tờ khai thuế TNCN", category: "tax", dayOfMonth: 20, frequency: "monthly", description: "Kê khai thuế thu nhập cá nhân", isActive: true, checklist: [{ id: 1, text: "Tổng hợp thu nhập nhân viên" }, { id: 2, text: "Tính thuế TNCN" }, { id: 3, text: "Nộp tờ khai" }] },
+            { id: 5, title: "Báo cáo tình hình sử dụng hóa đơn", category: "report", dayOfMonth: 20, frequency: "quarterly", description: "Báo cáo tình hình sử dụng hóa đơn quý", isActive: true, checklist: [{ id: 1, text: "Thống kê hóa đơn đã sử dụng" }, { id: 2, text: "Lập báo cáo BC26" }, { id: 3, text: "Nộp báo cáo" }] },
+            { id: 6, title: "Nộp báo cáo tài chính năm", category: "report", dayOfMonth: 31, month: 3, frequency: "yearly", description: "Nộp báo cáo tài chính năm trước", legalReference: "Luật Kế toán 2015", penalty: "Phạt từ 5-10 triệu đồng", isActive: true, checklist: [{ id: 1, text: "Hoàn thiện sổ sách kế toán" }, { id: 2, text: "Lập bảng cân đối kế toán" }, { id: 3, text: "Lập báo cáo kết quả kinh doanh" }, { id: 4, text: "Nộp qua thuedientu.gdt.gov.vn" }] }
+        ],
+        'news.json': [
+            { id: 1, title: "Hướng dẫn mới về kê khai thuế điện tử", category: "Thuế", summary: "Tổng cục Thuế ban hành hướng dẫn mới về quy trình kê khai thuế điện tử, áp dụng từ 01/01/2025.", date: "28/12/2024", isHot: true, isActive: true, image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400" },
+            { id: 2, title: "Thay đổi mức đóng BHXH năm 2025", category: "BHXH", summary: "Mức lương cơ sở tăng lên 2.340.000 đồng, ảnh hưởng đến mức đóng BHXH của doanh nghiệp.", date: "25/12/2024", isHot: true, isActive: true, image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400" },
+            { id: 3, title: "Quy định mới về hóa đơn điện tử", category: "Hóa đơn", summary: "Nghị định mới quy định chi tiết về hóa đơn điện tử, có hiệu lực từ tháng 1/2025.", date: "20/12/2024", isHot: false, isActive: true, image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400" },
+            { id: 4, title: "Hướng dẫn thành lập doanh nghiệp online", category: "Doanh nghiệp", summary: "Quy trình đăng ký doanh nghiệp trực tuyến đơn giản hóa, rút ngắn thời gian xử lý.", date: "18/12/2024", isHot: false, isActive: true, image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" },
+            { id: 5, title: "Cập nhật biểu thuế xuất nhập khẩu 2025", category: "Thuế", summary: "Biểu thuế xuất nhập khẩu mới có nhiều thay đổi quan trọng cho doanh nghiệp XNK.", date: "15/12/2024", isHot: false, isActive: true, image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400" }
+        ],
+        'provinces.json': [
+            { id: "hanoi", name: "Hà Nội" },
+            { id: "hcm", name: "TP. Hồ Chí Minh" },
+            { id: "danang", name: "Đà Nẵng" },
+            { id: "haiphong", name: "Hải Phòng" },
+            { id: "cantho", name: "Cần Thơ" }
+        ],
+        'agencies.json': [
+            { id: 1, name: "Cục Thuế TP. Hà Nội", provinceId: "hanoi", category: "tax", address: "Số 20 Lý Thường Kiệt, Hoàn Kiếm", phone: "024 3825 2222", isActive: true },
+            { id: 2, name: "BHXH TP. Hà Nội", provinceId: "hanoi", category: "insurance", address: "Số 15 Trần Bình Trọng, Hoàn Kiếm", phone: "024 3943 0333", isActive: true },
+            { id: 3, name: "Cục Thuế TP. HCM", provinceId: "hcm", category: "tax", address: "Số 63 Hai Bà Trưng, Quận 1", phone: "028 3829 7999", isActive: true },
+            { id: 4, name: "BHXH TP. HCM", provinceId: "hcm", category: "insurance", address: "Số 136 Nam Kỳ Khởi Nghĩa, Quận 1", phone: "028 3821 7777", isActive: true },
+            { id: 5, name: "Sở KH&ĐT Hà Nội", provinceId: "hanoi", category: "business", address: "Số 16 Cát Linh, Đống Đa", phone: "024 3733 5252", isActive: true }
+        ],
+        'businesses.json': [],
+        'admins.json': [
+            { id: 1, username: "admin", password: "htic2025", name: "Admin HTIC" }
+        ],
+        'settings.json': {
+            logo: null,
+            appName: "HTIC Legal",
+            phone: "0379 044 299",
+            email: "contact@htic.com.vn"
         }
-    }
-};
-
-// --- ADMIN AGENCIES ---
-const handleAdminAgencies = async (req, res, method, urlParts, body) => {
-    let agencies = readData('agencies.json');
-    const id = urlParts[4] ? parseInt(urlParts[4]) : null;
-    
-    if (method === 'GET') {
-        if (id) {
-            const agency = agencies.find(a => a.id === id);
-            sendJSON(res, 200, { success: true, data: agency });
-        } else {
-            sendJSON(res, 200, { success: true, data: agencies });
-        }
-    } else if (method === 'POST') {
-        const newAgency = {
-            id: generateId(agencies),
-            ...body,
-            isActive: true,
-            createdAt: new Date().toISOString()
-        };
-        agencies.push(newAgency);
-        writeData('agencies.json', agencies);
-        sendJSON(res, 201, { success: true, data: newAgency, message: 'Them co quan thanh cong' });
-    } else if (method === 'PUT' && id) {
-        const index = agencies.findIndex(a => a.id === id);
-        if (index !== -1) {
-            agencies[index] = { ...agencies[index], ...body, updatedAt: new Date().toISOString() };
-            writeData('agencies.json', agencies);
-            sendJSON(res, 200, { success: true, data: agencies[index], message: 'Cap nhat thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay co quan' });
-        }
-    } else if (method === 'DELETE' && id) {
-        const index = agencies.findIndex(a => a.id === id);
-        if (index !== -1) {
-            agencies.splice(index, 1);
-            writeData('agencies.json', agencies);
-            sendJSON(res, 200, { success: true, message: 'Xoa thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay co quan' });
-        }
-    }
-};
-
-// --- EVENTS ---
-const handleEvents = (req, res, method, urlParts) => {
-    const events = readData('events.json');
-    
-    if (method === 'GET') {
-        const activeEvents = events.filter(e => e.isActive);
-        sendJSON(res, 200, { success: true, data: activeEvents });
-    }
-};
-
-// --- ADMIN EVENTS ---
-const handleAdminEvents = async (req, res, method, urlParts, body) => {
-    let events = readData('events.json');
-    const id = urlParts[4] ? parseInt(urlParts[4]) : null;
-    
-    if (method === 'GET') {
-        if (id) {
-            const event = events.find(e => e.id === id);
-            sendJSON(res, 200, { success: true, data: event });
-        } else {
-            sendJSON(res, 200, { success: true, data: events });
-        }
-    } else if (method === 'POST') {
-        const newEvent = {
-            id: generateId(events),
-            ...body,
-            isActive: true,
-            createdAt: new Date().toISOString()
-        };
-        events.push(newEvent);
-        writeData('events.json', events);
-        sendJSON(res, 201, { success: true, data: newEvent, message: 'Them su kien thanh cong' });
-    } else if (method === 'PUT' && id) {
-        const index = events.findIndex(e => e.id === id);
-        if (index !== -1) {
-            events[index] = { ...events[index], ...body, updatedAt: new Date().toISOString() };
-            writeData('events.json', events);
-            sendJSON(res, 200, { success: true, data: events[index], message: 'Cap nhat thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay su kien' });
-        }
-    } else if (method === 'DELETE' && id) {
-        const index = events.findIndex(e => e.id === id);
-        if (index !== -1) {
-            events.splice(index, 1);
-            writeData('events.json', events);
-            sendJSON(res, 200, { success: true, message: 'Xoa thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay su kien' });
-        }
-    }
-};
-
-// --- NEWS ---
-const handleNews = (req, res, method, urlParts) => {
-    const news = readData('news.json');
-    const id = urlParts[3] ? parseInt(urlParts[3]) : null;
-    
-    if (method === 'GET') {
-        if (id) {
-            const article = news.find(n => n.id === id && n.isActive);
-            if (article) {
-                sendJSON(res, 200, { success: true, data: article });
-            } else {
-                sendJSON(res, 404, { success: false, message: 'Khong tim thay bai viet' });
-            }
-        } else {
-            const activeNews = news.filter(n => n.isActive).sort((a, b) => new Date(b.date) - new Date(a.date));
-            sendJSON(res, 200, { success: true, data: activeNews });
-        }
-    }
-};
-
-// --- ADMIN NEWS ---
-const handleAdminNews = async (req, res, method, urlParts, body) => {
-    let news = readData('news.json');
-    const id = urlParts[4] ? parseInt(urlParts[4]) : null;
-    
-    if (method === 'GET') {
-        if (id) {
-            const article = news.find(n => n.id === id);
-            sendJSON(res, 200, { success: true, data: article });
-        } else {
-            sendJSON(res, 200, { success: true, data: news });
-        }
-    } else if (method === 'POST') {
-        const newArticle = {
-            id: generateId(news),
-            ...body,
-            isActive: true,
-            createdAt: new Date().toISOString()
-        };
-        news.push(newArticle);
-        writeData('news.json', news);
-        sendJSON(res, 201, { success: true, data: newArticle, message: 'Them bai viet thanh cong' });
-    } else if (method === 'PUT' && id) {
-        const index = news.findIndex(n => n.id === id);
-        if (index !== -1) {
-            news[index] = { ...news[index], ...body, updatedAt: new Date().toISOString() };
-            writeData('news.json', news);
-            sendJSON(res, 200, { success: true, data: news[index], message: 'Cap nhat thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay bai viet' });
-        }
-    } else if (method === 'DELETE' && id) {
-        const index = news.findIndex(n => n.id === id);
-        if (index !== -1) {
-            news.splice(index, 1);
-            writeData('news.json', news);
-            sendJSON(res, 200, { success: true, message: 'Xoa thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay bai viet' });
-        }
-    }
-};
-
-// --- BUSINESSES ---
-const handleBusinesses = (req, res, method, urlParts) => {
-    const businesses = readData('businesses.json');
-    
-    if (method === 'GET') {
-        const activeBusinesses = businesses.filter(b => b.isActive);
-        sendJSON(res, 200, { success: true, data: activeBusinesses });
-    }
-};
-
-// --- ADMIN BUSINESSES ---
-const handleAdminBusinesses = async (req, res, method, urlParts, body) => {
-    let businesses = readData('businesses.json');
-    const id = urlParts[4] ? parseInt(urlParts[4]) : null;
-    
-    if (method === 'GET') {
-        if (id) {
-            const business = businesses.find(b => b.id === id);
-            sendJSON(res, 200, { success: true, data: business });
-        } else {
-            sendJSON(res, 200, { success: true, data: businesses });
-        }
-    } else if (method === 'POST') {
-        const newBusiness = {
-            id: generateId(businesses),
-            ...body,
-            verified: false,
-            isActive: true,
-            createdAt: new Date().toISOString()
-        };
-        businesses.push(newBusiness);
-        writeData('businesses.json', businesses);
-        sendJSON(res, 201, { success: true, data: newBusiness, message: 'Them doanh nghiep thanh cong' });
-    } else if (method === 'PUT' && id) {
-        const index = businesses.findIndex(b => b.id === id);
-        if (index !== -1) {
-            businesses[index] = { ...businesses[index], ...body, updatedAt: new Date().toISOString() };
-            writeData('businesses.json', businesses);
-            sendJSON(res, 200, { success: true, data: businesses[index], message: 'Cap nhat thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay doanh nghiep' });
-        }
-    } else if (method === 'DELETE' && id) {
-        const index = businesses.findIndex(b => b.id === id);
-        if (index !== -1) {
-            businesses.splice(index, 1);
-            writeData('businesses.json', businesses);
-            sendJSON(res, 200, { success: true, message: 'Xoa thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay doanh nghiep' });
-        }
-    }
-};
-
-// --- USERS ---
-const handleAdminUsers = async (req, res, method, urlParts, body) => {
-    let users = readData('users.json');
-    const id = urlParts[4] ? parseInt(urlParts[4]) : null;
-    
-    if (method === 'GET') {
-        if (id) {
-            const user = users.find(u => u.id === id);
-            sendJSON(res, 200, { success: true, data: user });
-        } else {
-            // Khong tra ve password
-            const safeUsers = users.map(u => {
-                const { password, ...rest } = u;
-                return rest;
-            });
-            sendJSON(res, 200, { success: true, data: safeUsers });
-        }
-    } else if (method === 'DELETE' && id) {
-        const index = users.findIndex(u => u.id === id);
-        if (index !== -1) {
-            users.splice(index, 1);
-            writeData('users.json', users);
-            sendJSON(res, 200, { success: true, message: 'Xoa thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay nguoi dung' });
-        }
-    }
-};
-
-// --- USER REGISTRATION ---
-const handleUserRegister = async (req, res, body) => {
-    let users = readData('users.json');
-    
-    // Kiem tra email da ton tai
-    if (users.find(u => u.email === body.email)) {
-        sendJSON(res, 400, { success: false, message: 'Email da duoc su dung' });
-        return;
-    }
-    
-    const newUser = {
-        id: generateId(users),
-        ...body,
-        isPro: false,
-        isActive: true,
-        createdAt: new Date().toISOString()
     };
-    
-    users.push(newUser);
-    writeData('users.json', users);
-    
-    const { password, ...safeUser } = newUser;
-    sendJSON(res, 201, { success: true, data: safeUser, message: 'Dang ky thanh cong' });
-};
 
-// --- USER LOGIN ---
-const handleUserLogin = async (req, res, body) => {
-    const users = readData('users.json');
-    const user = users.find(u => u.email === body.email && u.password === body.password);
-    
-    if (user) {
-        const { password, ...safeUser } = user;
-        sendJSON(res, 200, { success: true, data: safeUser, message: 'Dang nhap thanh cong' });
-    } else {
-        sendJSON(res, 401, { success: false, message: 'Email hoac mat khau khong dung' });
-    }
-};
-
-// --- ADMIN LOGIN ---
-const handleAdminLogin = async (req, res, body) => {
-    const admins = readData('admins.json');
-    const admin = admins.find(a => a.username === body.username && a.password === body.password);
-    
-    if (admin) {
-        const { password, ...safeAdmin } = admin;
-        sendJSON(res, 200, { success: true, data: safeAdmin, message: 'Dang nhap thanh cong' });
-    } else {
-        sendJSON(res, 401, { success: false, message: 'Sai ten dang nhap hoac mat khau' });
-    }
-};
-
-// --- STATISTICS ---
-const handleAdminStats = (req, res) => {
-    const events = readData('events.json');
-    const news = readData('news.json');
-    const agencies = readData('agencies.json');
-    const businesses = readData('businesses.json');
-    const users = readData('users.json');
-    const provinces = readData('provinces.json');
-    
-    const stats = {
-        events: { total: events.length, active: events.filter(e => e.isActive).length },
-        news: { total: news.length, active: news.filter(n => n.isActive).length },
-        agencies: { total: agencies.length, active: agencies.filter(a => a.isActive).length },
-        businesses: { total: businesses.length, verified: businesses.filter(b => b.verified).length },
-        users: { total: users.length, pro: users.filter(u => u.isPro).length },
-        provinces: { total: provinces.length }
-    };
-    
-    sendJSON(res, 200, { success: true, data: stats });
-};
-
-// --- PROVINCES ADMIN ---
-const handleAdminProvinces = async (req, res, method, urlParts, body) => {
-    let provinces = readData('provinces.json');
-    const id = urlParts[4] || null;
-    
-    if (method === 'GET') {
-        sendJSON(res, 200, { success: true, data: provinces });
-    } else if (method === 'POST') {
-        const newProvince = {
-            id: body.id,
-            name: body.name,
-            region: body.region || 'other'
-        };
-        provinces.push(newProvince);
-        writeData('provinces.json', provinces);
-        sendJSON(res, 201, { success: true, data: newProvince, message: 'Them tinh/thanh thanh cong' });
-    } else if (method === 'PUT' && id) {
-        const index = provinces.findIndex(p => p.id === id);
-        if (index !== -1) {
-            provinces[index] = { ...provinces[index], ...body };
-            writeData('provinces.json', provinces);
-            sendJSON(res, 200, { success: true, data: provinces[index], message: 'Cap nhat thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay tinh/thanh' });
-        }
-    } else if (method === 'DELETE' && id) {
-        const index = provinces.findIndex(p => p.id === id);
-        if (index !== -1) {
-            provinces.splice(index, 1);
-            writeData('provinces.json', provinces);
-            sendJSON(res, 200, { success: true, message: 'Xoa thanh cong' });
-        } else {
-            sendJSON(res, 404, { success: false, message: 'Khong tim thay tinh/thanh' });
+    for (const [file, data] of Object.entries(files)) {
+        const filePath = path.join(DATA_DIR, file);
+        if (!fs.existsSync(filePath)) {
+            writeJSON(file, data);
         }
     }
 };
 
-// ============ MAIN SERVER ============
+initData();
+
+// Request handler
 const server = http.createServer(async (req, res) => {
-    const method = req.method;
-    const url = new URL(req.url, `http://localhost:${PORT}`);
+    const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
-    const urlParts = pathname.split('/').filter(Boolean);
-    
-    // CORS headers
+    const method = req.method;
+
+    // CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+
+    // ============ SETTINGS API ============
     
-    // Handle preflight
-    if (method === 'OPTIONS') {
-        res.writeHead(204);
-        res.end();
-        return;
+    // GET /api/settings/logo - Lấy logo (public)
+    if (pathname === '/api/settings/logo' && method === 'GET') {
+        const settings = readJSON('settings.json');
+        return sendJSON(res, { success: true, data: { logo: settings.logo || null } });
     }
-    
-    // Parse body for POST/PUT
-    let body = {};
-    if (method === 'POST' || method === 'PUT') {
-        try {
-            body = await parseBody(req);
-        } catch (e) {
-            sendJSON(res, 400, { success: false, message: 'Invalid JSON' });
-            return;
-        }
+
+    // POST /api/admin/settings/logo - Upload logo (admin)
+    if (pathname === '/api/admin/settings/logo' && method === 'POST') {
+        const body = await parseBody(req);
+        const settings = readJSON('settings.json');
+        settings.logo = body.logo;
+        writeJSON('settings.json', settings);
+        return sendJSON(res, { success: true, message: 'Logo đã được cập nhật' });
     }
-    
-    // ============ ROUTING ============
-    
-    // API Routes
-    if (urlParts[0] === 'api') {
-        
-        // Public APIs
-        if (urlParts[1] === 'provinces') {
-            handleProvinces(req, res, method);
-        } else if (urlParts[1] === 'agencies') {
-            handleAgencies(req, res, method, urlParts, body);
-        } else if (urlParts[1] === 'events') {
-            handleEvents(req, res, method, urlParts);
-        } else if (urlParts[1] === 'news') {
-            handleNews(req, res, method, urlParts);
-        } else if (urlParts[1] === 'businesses') {
-            handleBusinesses(req, res, method, urlParts);
-        } else if (urlParts[1] === 'register' && method === 'POST') {
-            await handleUserRegister(req, res, body);
-        } else if (urlParts[1] === 'login' && method === 'POST') {
-            await handleUserLogin(req, res, body);
+
+    // DELETE /api/admin/settings/logo - Xóa logo (admin)
+    if (pathname === '/api/admin/settings/logo' && method === 'DELETE') {
+        const settings = readJSON('settings.json');
+        settings.logo = null;
+        writeJSON('settings.json', settings);
+        return sendJSON(res, { success: true, message: 'Logo đã được xóa' });
+    }
+
+    // POST /api/admin/settings/info - Cập nhật thông tin app (admin)
+    if (pathname === '/api/admin/settings/info' && method === 'POST') {
+        const body = await parseBody(req);
+        const settings = readJSON('settings.json');
+        if (body.name) settings.appName = body.name;
+        if (body.phone) settings.phone = body.phone;
+        if (body.email) settings.email = body.email;
+        writeJSON('settings.json', settings);
+        return sendJSON(res, { success: true, message: 'Thông tin đã được cập nhật' });
+    }
+
+    // ============ PUBLIC API ============
+
+    // GET /api/events
+    if (pathname === '/api/events' && method === 'GET') {
+        const events = readJSON('events.json').filter(e => e.isActive);
+        return sendJSON(res, { success: true, data: events });
+    }
+
+    // GET /api/news
+    if (pathname === '/api/news' && method === 'GET') {
+        const news = readJSON('news.json').filter(n => n.isActive);
+        return sendJSON(res, { success: true, data: news });
+    }
+
+    // GET /api/provinces
+    if (pathname === '/api/provinces' && method === 'GET') {
+        return sendJSON(res, { success: true, data: readJSON('provinces.json') });
+    }
+
+    // GET /api/agencies
+    if (pathname === '/api/agencies' && method === 'GET') {
+        const agencies = readJSON('agencies.json').filter(a => a.isActive);
+        return sendJSON(res, { success: true, data: agencies });
+    }
+
+    // GET /api/businesses
+    if (pathname === '/api/businesses' && method === 'GET') {
+        const businesses = readJSON('businesses.json').filter(b => b.isActive);
+        return sendJSON(res, { success: true, data: businesses });
+    }
+
+    // ============ ADMIN API ============
+
+    // POST /api/admin/login
+    if (pathname === '/api/admin/login' && method === 'POST') {
+        const body = await parseBody(req);
+        const admins = readJSON('admins.json');
+        const admin = admins.find(a => a.username === body.username && a.password === body.password);
+        if (admin) {
+            return sendJSON(res, { success: true, token: 'admin-token-' + Date.now(), admin: { name: admin.name } });
         }
-        
-        // Admin APIs
-        else if (urlParts[1] === 'admin') {
-            if (urlParts[2] === 'login' && method === 'POST') {
-                await handleAdminLogin(req, res, body);
-            } else if (urlParts[2] === 'stats') {
-                handleAdminStats(req, res);
-            } else if (urlParts[2] === 'provinces') {
-                await handleAdminProvinces(req, res, method, urlParts, body);
-            } else if (urlParts[2] === 'agencies') {
-                await handleAdminAgencies(req, res, method, urlParts, body);
-            } else if (urlParts[2] === 'events') {
-                await handleAdminEvents(req, res, method, urlParts, body);
-            } else if (urlParts[2] === 'news') {
-                await handleAdminNews(req, res, method, urlParts, body);
-            } else if (urlParts[2] === 'businesses') {
-                await handleAdminBusinesses(req, res, method, urlParts, body);
-            } else if (urlParts[2] === 'users') {
-                await handleAdminUsers(req, res, method, urlParts, body);
-            } else {
-                sendJSON(res, 404, { success: false, message: 'API not found' });
+        return sendJSON(res, { success: false, message: 'Sai tên đăng nhập hoặc mật khẩu' }, 401);
+    }
+
+    // GET /api/admin/stats
+    if (pathname === '/api/admin/stats' && method === 'GET') {
+        return sendJSON(res, {
+            success: true,
+            data: {
+                events: { total: readJSON('events.json').length },
+                news: { total: readJSON('news.json').length },
+                agencies: { total: readJSON('agencies.json').length },
+                businesses: { total: readJSON('businesses.json').length },
+                provinces: { total: readJSON('provinces.json').length }
             }
-        }
-        
-        else {
-            sendJSON(res, 404, { success: false, message: 'API not found' });
-        }
-        
-        return;
+        });
     }
-    
-    // Static Files
-    let filepath;
-    if (pathname === '/' || pathname === '/index.html') {
-        filepath = path.join(frontendDir, 'index.html');
-    } else if (pathname === '/admin' || pathname === '/admin.html') {
-        filepath = path.join(frontendDir, 'admin.html');
-    } else {
-        filepath = path.join(frontendDir, pathname);
+
+    // ============ ADMIN EVENTS ============
+    if (pathname === '/api/admin/events' && method === 'GET') {
+        return sendJSON(res, { success: true, data: readJSON('events.json') });
     }
+    if (pathname.match(/^\/api\/admin\/events\/\d+$/) && method === 'GET') {
+        const id = parseInt(pathname.split('/').pop());
+        const event = readJSON('events.json').find(e => e.id === id);
+        return event ? sendJSON(res, { success: true, data: event }) : sendJSON(res, { success: false }, 404);
+    }
+    if (pathname === '/api/admin/events' && method === 'POST') {
+        const body = await parseBody(req);
+        const events = readJSON('events.json');
+        body.id = Math.max(0, ...events.map(e => e.id)) + 1;
+        events.push(body);
+        writeJSON('events.json', events);
+        return sendJSON(res, { success: true, data: body });
+    }
+    if (pathname.match(/^\/api\/admin\/events\/\d+$/) && method === 'PUT') {
+        const id = parseInt(pathname.split('/').pop());
+        const body = await parseBody(req);
+        let events = readJSON('events.json');
+        events = events.map(e => e.id === id ? { ...e, ...body } : e);
+        writeJSON('events.json', events);
+        return sendJSON(res, { success: true });
+    }
+    if (pathname.match(/^\/api\/admin\/events\/\d+$/) && method === 'DELETE') {
+        const id = parseInt(pathname.split('/').pop());
+        let events = readJSON('events.json');
+        events = events.filter(e => e.id !== id);
+        writeJSON('events.json', events);
+        return sendJSON(res, { success: true });
+    }
+
+    // ============ ADMIN NEWS ============
+    if (pathname === '/api/admin/news' && method === 'GET') {
+        return sendJSON(res, { success: true, data: readJSON('news.json') });
+    }
+    if (pathname.match(/^\/api\/admin\/news\/\d+$/) && method === 'GET') {
+        const id = parseInt(pathname.split('/').pop());
+        const news = readJSON('news.json').find(n => n.id === id);
+        return news ? sendJSON(res, { success: true, data: news }) : sendJSON(res, { success: false }, 404);
+    }
+    if (pathname === '/api/admin/news' && method === 'POST') {
+        const body = await parseBody(req);
+        const news = readJSON('news.json');
+        body.id = Math.max(0, ...news.map(n => n.id)) + 1;
+        news.unshift(body);
+        writeJSON('news.json', news);
+        return sendJSON(res, { success: true, data: body });
+    }
+    if (pathname.match(/^\/api\/admin\/news\/\d+$/) && method === 'PUT') {
+        const id = parseInt(pathname.split('/').pop());
+        const body = await parseBody(req);
+        let news = readJSON('news.json');
+        news = news.map(n => n.id === id ? { ...n, ...body } : n);
+        writeJSON('news.json', news);
+        return sendJSON(res, { success: true });
+    }
+    if (pathname.match(/^\/api\/admin\/news\/\d+$/) && method === 'DELETE') {
+        const id = parseInt(pathname.split('/').pop());
+        let news = readJSON('news.json');
+        news = news.filter(n => n.id !== id);
+        writeJSON('news.json', news);
+        return sendJSON(res, { success: true });
+    }
+
+    // ============ ADMIN AGENCIES ============
+    if (pathname === '/api/admin/agencies' && method === 'GET') {
+        return sendJSON(res, { success: true, data: readJSON('agencies.json') });
+    }
+    if (pathname.match(/^\/api\/admin\/agencies\/\d+$/) && method === 'GET') {
+        const id = parseInt(pathname.split('/').pop());
+        const agency = readJSON('agencies.json').find(a => a.id === id);
+        return agency ? sendJSON(res, { success: true, data: agency }) : sendJSON(res, { success: false }, 404);
+    }
+    if (pathname === '/api/admin/agencies' && method === 'POST') {
+        const body = await parseBody(req);
+        const agencies = readJSON('agencies.json');
+        body.id = Math.max(0, ...agencies.map(a => a.id)) + 1;
+        agencies.push(body);
+        writeJSON('agencies.json', agencies);
+        return sendJSON(res, { success: true, data: body });
+    }
+    if (pathname.match(/^\/api\/admin\/agencies\/\d+$/) && method === 'PUT') {
+        const id = parseInt(pathname.split('/').pop());
+        const body = await parseBody(req);
+        let agencies = readJSON('agencies.json');
+        agencies = agencies.map(a => a.id === id ? { ...a, ...body } : a);
+        writeJSON('agencies.json', agencies);
+        return sendJSON(res, { success: true });
+    }
+    if (pathname.match(/^\/api\/admin\/agencies\/\d+$/) && method === 'DELETE') {
+        const id = parseInt(pathname.split('/').pop());
+        let agencies = readJSON('agencies.json');
+        agencies = agencies.filter(a => a.id !== id);
+        writeJSON('agencies.json', agencies);
+        return sendJSON(res, { success: true });
+    }
+
+    // ============ ADMIN BUSINESSES ============
+    if (pathname === '/api/admin/businesses' && method === 'GET') {
+        return sendJSON(res, { success: true, data: readJSON('businesses.json') });
+    }
+    if (pathname.match(/^\/api\/admin\/businesses\/\d+$/) && method === 'GET') {
+        const id = parseInt(pathname.split('/').pop());
+        const biz = readJSON('businesses.json').find(b => b.id === id);
+        return biz ? sendJSON(res, { success: true, data: biz }) : sendJSON(res, { success: false }, 404);
+    }
+    if (pathname === '/api/admin/businesses' && method === 'POST') {
+        const body = await parseBody(req);
+        const businesses = readJSON('businesses.json');
+        body.id = Math.max(0, ...businesses.map(b => b.id || 0)) + 1;
+        businesses.push(body);
+        writeJSON('businesses.json', businesses);
+        return sendJSON(res, { success: true, data: body });
+    }
+    if (pathname.match(/^\/api\/admin\/businesses\/\d+$/) && method === 'PUT') {
+        const id = parseInt(pathname.split('/').pop());
+        const body = await parseBody(req);
+        let businesses = readJSON('businesses.json');
+        businesses = businesses.map(b => b.id === id ? { ...b, ...body } : b);
+        writeJSON('businesses.json', businesses);
+        return sendJSON(res, { success: true });
+    }
+    if (pathname.match(/^\/api\/admin\/businesses\/\d+$/) && method === 'DELETE') {
+        const id = parseInt(pathname.split('/').pop());
+        let businesses = readJSON('businesses.json');
+        businesses = businesses.filter(b => b.id !== id);
+        writeJSON('businesses.json', businesses);
+        return sendJSON(res, { success: true });
+    }
+
+    // ============ ADMIN PROVINCES ============
+    if (pathname === '/api/admin/provinces' && method === 'POST') {
+        const body = await parseBody(req);
+        const provinces = readJSON('provinces.json');
+        if (!provinces.find(p => p.id === body.id)) {
+            provinces.push(body);
+            writeJSON('provinces.json', provinces);
+        }
+        return sendJSON(res, { success: true });
+    }
+    if (pathname.match(/^\/api\/admin\/provinces\/[^/]+$/) && method === 'DELETE') {
+        const id = pathname.split('/').pop();
+        let provinces = readJSON('provinces.json');
+        provinces = provinces.filter(p => p.id !== id);
+        writeJSON('provinces.json', provinces);
+        return sendJSON(res, { success: true });
+    }
+
+    // ============ STATIC FILES ============
+    let filePath = pathname === '/' ? '/index.html' : pathname;
+    if (pathname === '/admin' || pathname === '/admin/') filePath = '/admin.html';
     
-    const ext = path.extname(filepath);
-    const contentType = getContentType(ext || '.html');
+    const fullPath = path.join(__dirname, '..', 'frontend', filePath);
     
-    serveStatic(res, filepath, contentType);
+    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+        const ext = path.extname(fullPath);
+        res.writeHead(200, { 'Content-Type': getMimeType(ext) });
+        return fs.createReadStream(fullPath).pipe(res);
+    }
+
+    // 404
+    sendJSON(res, { success: false, message: 'Not found' }, 404);
 });
 
-// Start server
 server.listen(PORT, () => {
-    console.log('========================================');
-    console.log(`  HTIC LEGAL APP SERVER`);
-    console.log(`  Dang chay tai: http://localhost:${PORT}`);
-    console.log('========================================');
-    console.log(`  App nguoi dung: http://localhost:${PORT}/`);
-    console.log(`  Trang Admin:    http://localhost:${PORT}/admin`);
-    console.log('========================================');
+    console.log(`🚀 HTIC Legal Server running at http://localhost:${PORT}`);
+    console.log(`📱 User App: http://localhost:${PORT}`);
+    console.log(`⚙️  Admin Panel: http://localhost:${PORT}/admin`);
 });
