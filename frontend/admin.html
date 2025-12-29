@@ -137,7 +137,7 @@
                             </div>
                             <div>
                                 <h1 class="font-bold">HTIC Legal</h1>
-                                <p class="text-xs text-navy-200">Admin Panel v8.8</p>
+                                <p class="text-xs text-navy-200">Admin Panel v8.9</p>
                             </div>
                         </div>
                         <nav class="space-y-2">
@@ -145,6 +145,7 @@
                             <button onclick="loadSection('events')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="events">📅 Lich phap ly</button>
                             <button onclick="loadSection('news')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="news">📰 Tin tuc</button>
                             <button onclick="loadSection('agencies')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="agencies">🏛️ Ho tro</button>
+                            <button onclick="loadSection('provinces')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="provinces">📍 Tinh/Thanh pho</button>
                             <button onclick="loadSection('settings')" class="nav-btn w-full text-left px-4 py-3 rounded-xl hover:bg-navy-600 flex items-center gap-3" data-section="settings">⚙️ Cai dat</button>
                         </nav>
                         <button onclick="logout()" class="absolute bottom-6 left-6 right-6 bg-red-500/20 text-red-300 py-3 rounded-xl hover:bg-red-500/30 font-semibold">🚪 Dang xuat</button>
@@ -166,6 +167,7 @@
                 case 'events': loadEventsContent(); break;
                 case 'news': loadNewsContent(); break;
                 case 'agencies': loadAgenciesContent(); break;
+                case 'provinces': loadProvincesContent(); break;
                 case 'settings': loadSettingsContent(); break;
             }
         }
@@ -939,7 +941,7 @@
                     <div>
                         <h3 class="font-bold text-gray-900 mb-4">📊 Thong tin he thong</h3>
                         <div class="bg-gray-50 p-4 rounded-xl">
-                            <p class="text-sm text-gray-600">Phien ban: <span class="font-semibold">8.8</span></p>
+                            <p class="text-sm text-gray-600">Phien ban: <span class="font-semibold">8.9</span></p>
                             <p class="text-sm text-gray-600 mt-1">Nguon du lieu: <span class="font-semibold">thuvienphapluat.vn</span></p>
                             <p class="text-sm text-gray-600 mt-1">Nam lich: <span class="font-semibold">2026</span></p>
                         </div>
@@ -970,6 +972,249 @@
             if (!event || event.target.classList.contains('modal-overlay')) {
                 modalRoot.innerHTML = '';
             }
+        }
+
+        // ============ PROVINCES MANAGEMENT ============
+        async function loadProvincesContent() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="text-center py-12"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full mx-auto"></div></div>';
+            
+            try {
+                const res = await fetch(API + '/admin/provinces');
+                const data = await res.json();
+                const provinces = data.data || [];
+                
+                content.innerHTML = `
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">📍 Quản lý Tỉnh/Thành phố</h1>
+                            <p class="text-gray-500 mt-1">Danh sách tỉnh/thành phố cho trang Hỗ trợ</p>
+                        </div>
+                        <button onclick="showAddProvinceModal()" class="bg-navy-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-navy-700 flex items-center gap-2">
+                            ➕ Thêm tỉnh/thành
+                        </button>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                        <p class="text-yellow-800 font-semibold">⚠️ Lưu ý:</p>
+                        <p class="text-yellow-700 text-sm mt-1">Thông tin tỉnh/thành sau sáp nhập hành chính có thể chưa cập nhật đầy đủ. Vui lòng cập nhật theo văn bản pháp luật mới nhất.</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                            <span class="font-semibold text-gray-700">Tổng cộng: ${provinces.length} tỉnh/thành</span>
+                            <button onclick="importDefaultProvinces()" class="bg-green-100 text-green-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-200">
+                                📥 Import 63 tỉnh/thành mặc định
+                            </button>
+                        </div>
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">ID</th>
+                                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Tên tỉnh/thành</th>
+                                    <th class="px-4 py-3 text-left text-sm font-bold text-gray-700">Vùng miền</th>
+                                    <th class="px-4 py-3 text-center text-sm font-bold text-gray-700">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                ${provinces.length === 0 ? '<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Chưa có dữ liệu. Nhấn "Import 63 tỉnh/thành mặc định" để thêm.</td></tr>' : 
+                                provinces.map(p => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm text-gray-600 font-mono">${p.id}</td>
+                                        <td class="px-4 py-3 font-semibold text-gray-900">${p.name}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${p.region || '-'}</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <button onclick="editProvince('${p.id}')" class="text-blue-600 hover:text-blue-800 mr-3 text-sm font-semibold">✏️ Sửa</button>
+                                            <button onclick="deleteProvince('${p.id}')" class="text-red-600 hover:text-red-800 text-sm font-semibold">🗑️ Xóa</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (e) {
+                content.innerHTML = '<div class="text-center py-12 text-red-500">Lỗi tải dữ liệu tỉnh/thành</div>';
+            }
+        }
+
+        function showAddProvinceModal(province = null) {
+            const isEdit = province !== null;
+            modalRoot.innerHTML = `
+                <div class="modal-overlay fixed inset-0 bg-black/50 flex items-center justify-center z-50" onclick="closeModal(event)">
+                    <div class="bg-white rounded-2xl w-full max-w-md p-6" onclick="event.stopPropagation()">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">${isEdit ? '✏️ Sửa tỉnh/thành' : '➕ Thêm tỉnh/thành mới'}</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Mã tỉnh/thành (ID) *</label>
+                                <input type="text" id="provinceId" value="${isEdit ? province.id : ''}" ${isEdit ? 'readonly' : ''} 
+                                    placeholder="VD: hcm, hanoi, danang..." 
+                                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none ${isEdit ? 'bg-gray-100' : ''}">
+                                <p class="text-xs text-gray-500 mt-1">Không dấu, viết thường, không khoảng trắng</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Tên tỉnh/thành *</label>
+                                <input type="text" id="provinceName" value="${isEdit ? province.name : ''}" 
+                                    placeholder="VD: Thành phố Hồ Chí Minh, Hà Nội..." 
+                                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">Vùng miền</label>
+                                <select id="provinceRegion" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none">
+                                    <option value="">-- Chọn vùng --</option>
+                                    <option value="mien-bac" ${isEdit && province.region === 'mien-bac' ? 'selected' : ''}>Miền Bắc</option>
+                                    <option value="mien-trung" ${isEdit && province.region === 'mien-trung' ? 'selected' : ''}>Miền Trung</option>
+                                    <option value="mien-nam" ${isEdit && province.region === 'mien-nam' ? 'selected' : ''}>Miền Nam</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 mt-6">
+                            <button onclick="closeModal()" class="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200">Hủy</button>
+                            <button onclick="saveProvince(${isEdit})" class="flex-1 px-4 py-3 bg-navy-600 text-white rounded-xl font-semibold hover:bg-navy-700">${isEdit ? 'Cập nhật' : 'Thêm mới'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveProvince(isEdit) {
+            const id = document.getElementById('provinceId').value.trim().toLowerCase().replace(/\s+/g, '-');
+            const name = document.getElementById('provinceName').value.trim();
+            const region = document.getElementById('provinceRegion').value;
+            
+            if (!id || !name) {
+                alert('Vui lòng nhập đầy đủ ID và tên tỉnh/thành');
+                return;
+            }
+            
+            const data = { id, name, region };
+            
+            try {
+                const url = isEdit ? API + '/admin/provinces/' + id : API + '/admin/provinces';
+                const method = isEdit ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (res.ok) {
+                    closeModal();
+                    loadProvincesContent();
+                    alert(isEdit ? 'Đã cập nhật tỉnh/thành!' : 'Đã thêm tỉnh/thành mới!');
+                } else {
+                    alert('Lỗi lưu dữ liệu');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối server');
+            }
+        }
+
+        async function editProvince(id) {
+            try {
+                const res = await fetch(API + '/admin/provinces/' + id);
+                const data = await res.json();
+                if (data.data) {
+                    showAddProvinceModal(data.data);
+                }
+            } catch (e) {
+                alert('Lỗi tải dữ liệu');
+            }
+        }
+
+        async function deleteProvince(id) {
+            if (!confirm('Xóa tỉnh/thành này?')) return;
+            try {
+                await fetch(API + '/admin/provinces/' + id, { method: 'DELETE' });
+                loadProvincesContent();
+            } catch (e) {
+                alert('Lỗi xóa dữ liệu');
+            }
+        }
+
+        async function importDefaultProvinces() {
+            if (!confirm('Import 63 tỉnh/thành phố Việt Nam?\nDữ liệu hiện tại sẽ được giữ nguyên, chỉ thêm mới nếu chưa tồn tại.')) return;
+            
+            const defaultProvinces = [
+                {id:'hanoi',name:'Hà Nội',region:'mien-bac'},
+                {id:'hcm',name:'Thành phố Hồ Chí Minh',region:'mien-nam'},
+                {id:'danang',name:'Đà Nẵng',region:'mien-trung'},
+                {id:'haiphong',name:'Hải Phòng',region:'mien-bac'},
+                {id:'cantho',name:'Cần Thơ',region:'mien-nam'},
+                {id:'angiang',name:'An Giang',region:'mien-nam'},
+                {id:'bariavungtau',name:'Bà Rịa - Vũng Tàu',region:'mien-nam'},
+                {id:'bacgiang',name:'Bắc Giang',region:'mien-bac'},
+                {id:'backan',name:'Bắc Kạn',region:'mien-bac'},
+                {id:'baclieu',name:'Bạc Liêu',region:'mien-nam'},
+                {id:'bacninh',name:'Bắc Ninh',region:'mien-bac'},
+                {id:'bentre',name:'Bến Tre',region:'mien-nam'},
+                {id:'binhdinh',name:'Bình Định',region:'mien-trung'},
+                {id:'binhduong',name:'Bình Dương',region:'mien-nam'},
+                {id:'binhphuoc',name:'Bình Phước',region:'mien-nam'},
+                {id:'binhthuan',name:'Bình Thuận',region:'mien-trung'},
+                {id:'camau',name:'Cà Mau',region:'mien-nam'},
+                {id:'caobang',name:'Cao Bằng',region:'mien-bac'},
+                {id:'daklak',name:'Đắk Lắk',region:'mien-trung'},
+                {id:'daknong',name:'Đắk Nông',region:'mien-trung'},
+                {id:'dienbien',name:'Điện Biên',region:'mien-bac'},
+                {id:'dongnai',name:'Đồng Nai',region:'mien-nam'},
+                {id:'dongthap',name:'Đồng Tháp',region:'mien-nam'},
+                {id:'gialai',name:'Gia Lai',region:'mien-trung'},
+                {id:'hagiang',name:'Hà Giang',region:'mien-bac'},
+                {id:'hanam',name:'Hà Nam',region:'mien-bac'},
+                {id:'hatinh',name:'Hà Tĩnh',region:'mien-trung'},
+                {id:'haiduong',name:'Hải Dương',region:'mien-bac'},
+                {id:'haugiang',name:'Hậu Giang',region:'mien-nam'},
+                {id:'hoabinh',name:'Hòa Bình',region:'mien-bac'},
+                {id:'hungyen',name:'Hưng Yên',region:'mien-bac'},
+                {id:'khanhhoa',name:'Khánh Hòa',region:'mien-trung'},
+                {id:'kiengiang',name:'Kiên Giang',region:'mien-nam'},
+                {id:'kontum',name:'Kon Tum',region:'mien-trung'},
+                {id:'laichau',name:'Lai Châu',region:'mien-bac'},
+                {id:'lamdong',name:'Lâm Đồng',region:'mien-trung'},
+                {id:'langson',name:'Lạng Sơn',region:'mien-bac'},
+                {id:'laocai',name:'Lào Cai',region:'mien-bac'},
+                {id:'longan',name:'Long An',region:'mien-nam'},
+                {id:'namdinh',name:'Nam Định',region:'mien-bac'},
+                {id:'nghean',name:'Nghệ An',region:'mien-trung'},
+                {id:'ninhbinh',name:'Ninh Bình',region:'mien-bac'},
+                {id:'ninhthuan',name:'Ninh Thuận',region:'mien-trung'},
+                {id:'phutho',name:'Phú Thọ',region:'mien-bac'},
+                {id:'phuyen',name:'Phú Yên',region:'mien-trung'},
+                {id:'quangbinh',name:'Quảng Bình',region:'mien-trung'},
+                {id:'quangnam',name:'Quảng Nam',region:'mien-trung'},
+                {id:'quangngai',name:'Quảng Ngãi',region:'mien-trung'},
+                {id:'quangninh',name:'Quảng Ninh',region:'mien-bac'},
+                {id:'quangtri',name:'Quảng Trị',region:'mien-trung'},
+                {id:'soctrang',name:'Sóc Trăng',region:'mien-nam'},
+                {id:'sonla',name:'Sơn La',region:'mien-bac'},
+                {id:'tayninh',name:'Tây Ninh',region:'mien-nam'},
+                {id:'thaibinh',name:'Thái Bình',region:'mien-bac'},
+                {id:'thainguyen',name:'Thái Nguyên',region:'mien-bac'},
+                {id:'thanhhoa',name:'Thanh Hóa',region:'mien-trung'},
+                {id:'thuathienhue',name:'Thừa Thiên Huế',region:'mien-trung'},
+                {id:'tiengiang',name:'Tiền Giang',region:'mien-nam'},
+                {id:'travinh',name:'Trà Vinh',region:'mien-nam'},
+                {id:'tuyenquang',name:'Tuyên Quang',region:'mien-bac'},
+                {id:'vinhlong',name:'Vĩnh Long',region:'mien-nam'},
+                {id:'vinhphuc',name:'Vĩnh Phúc',region:'mien-bac'},
+                {id:'yenbai',name:'Yên Bái',region:'mien-bac'}
+            ];
+            
+            let added = 0;
+            for (const p of defaultProvinces) {
+                try {
+                    const res = await fetch(API + '/admin/provinces', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(p)
+                    });
+                    if (res.ok) added++;
+                } catch (e) {}
+            }
+            
+            alert('Đã import ' + added + '/63 tỉnh/thành phố!');
+            loadProvincesContent();
         }
 
         checkAuth();
