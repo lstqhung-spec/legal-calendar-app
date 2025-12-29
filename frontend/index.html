@@ -24,12 +24,11 @@
         .touch-active:active{transform:scale(.98);opacity:.9}
         .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-        .calendar-transition{transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
     </style>
 </head>
 <body><div id="root"></div>
 <script type="text/babel">
-const{useState,useEffect,useMemo,useRef,useCallback}=React;
+const{useState,useEffect,useMemo}=React;
 const API='/api';
 
 // ============ LOGO COMPONENT ============
@@ -50,7 +49,7 @@ const Logo=({size=40})=>{
     return(<div style={{width:size,height:size,background:'linear-gradient(135deg,#1e3a5f,#162d4a)',borderRadius:'12px',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{color:'white',fontWeight:'bold',fontSize:size*0.45}}>H</span></div>);
 };
 
-const COMPANY_INFO={name:'Công ty Luật HTIC',website:'www.htic.com.vn',phone:'0379 044 299',email:'contact@htic.com.vn'};
+const COMPANY_INFO={name:'HTIC LAW FIRM',website:'www.htic.com.vn',phone:'0379 044 299',email:'contact@htic.com.vn'};
 const MEMBERSHIP_PLANS={free:{name:'Miễn phí',price:0,features:['Xem lịch pháp lý','Đọc tin tức','Có quảng cáo']},pro_monthly:{name:'Pro Tháng',price:61000,period:'tháng',features:['Không quảng cáo','Hiển thị DN trong Hỗ trợ','Ưu tiên hỗ trợ']},pro_yearly:{name:'Pro Năm',price:599000,period:'năm',features:['Không quảng cáo','Hiển thị DN trong Hỗ trợ','Ưu tiên hỗ trợ','Tiết kiệm 133k']}};
 const BUSINESS_TYPES=[{id:'tnhh',name:'Công ty TNHH'},{id:'joint_stock',name:'Công ty Cổ phần'},{id:'private',name:'DN tư nhân'},{id:'household',name:'Hộ kinh doanh'}];
 const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'other',name:'Khác'}];
@@ -93,6 +92,8 @@ const Icons={
     Crown:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
     CreditCard:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>,
     Upload:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>,
+    Minimize:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>,
+    Maximize:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>,
 };
 
 const getDeadlineFromEvent=(ev)=>{const now=new Date();const y=now.getFullYear();const m=now.getMonth();let day=ev.dayOfMonth||20;if(ev.frequency==='monthly')return new Date(y,m,day);if(ev.frequency==='quarterly'){const qMonth=Math.floor(m/3)*3+2;return new Date(y,qMonth,day);}if(ev.frequency==='yearly'){const eventMonth=(ev.month||1)-1;return new Date(y,eventMonth,day);}return new Date(y,m,day);};
@@ -206,7 +207,7 @@ const DashboardScreen=({events,news,onEventClick,onNewsClick,membership,business
         <div className="h-full bg-slate-100 overflow-auto hide-scrollbar pb-24">
             <div className="bg-gradient-to-br from-navy-600 to-navy-800 pt-14 pb-6 px-5 safe-top">
                 <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3"><div className="bg-white p-2 rounded-xl shadow-lg"><Logo size={32}/></div><div><p className="text-white font-bold text-lg">Lịch Pháp Lý</p><p className="text-sky-200 text-xs font-semibold">by HTIC LAW</p></div></div>
+                    <div className="flex items-center gap-3"><div className="bg-white p-2 rounded-xl shadow-lg"><Logo size={32}/></div><div><p className="text-white font-bold text-lg">Lịch Pháp Lý</p><p className="text-sky-200 text-xs font-semibold">by {COMPANY_INFO.name}</p></div></div>
                     {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-amber-500 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
                 </div>
                 <p className="text-sky-100 text-sm font-semibold">{today.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
@@ -226,14 +227,13 @@ const DashboardScreen=({events,news,onEventClick,onNewsClick,membership,business
     );
 };
 
-// ============ CALENDAR SCREEN - ĐÃ SỬA LỖI ============
+// ============ CALENDAR SCREEN - SIMPLIFIED & SMOOTH ============
 const CalendarScreen=({events,onEventClick,savedEvents})=>{
     const today=new Date();
     const[month,setMonth]=useState(today.getMonth());
     const[year,setYear]=useState(today.getFullYear());
     const[sel,setSel]=useState(null);
-    const[isCollapsed,setIsCollapsed]=useState(false);
-    const lastScrollTop=useRef(0);
+    const[viewMode,setViewMode]=useState('month'); // 'month' or 'week'
     
     const days=new Date(year,month+1,0).getDate();
     const firstDayOfWeek=new Date(year,month,1).getDay();
@@ -252,45 +252,24 @@ const CalendarScreen=({events,onEventClick,savedEvents})=>{
     
     const selectedDayEvents=sel?getEventsForDay(sel):[];
     
-    // Tính tuần chứa ngày được chọn hoặc ngày hiện tại
-    const getWeekDays=useCallback(()=>{
+    // Get current week days
+    const getWeekDays=()=>{
         const targetDay=sel||(month===today.getMonth()&&year===today.getFullYear()?today.getDate():1);
-        const targetDate=new Date(year,month,targetDay);
+        const targetDate=new Date(year,month,Math.min(targetDay,days));
         const dayOfWeek=targetDate.getDay();
         const weekStart=targetDay-dayOfWeek;
         
         const result=[];
         for(let i=0;i<7;i++){
             const d=weekStart+i;
-            if(d>=1&&d<=days){
-                result.push(d);
-            }else if(d<1){
-                result.push(null); // Ngày của tháng trước
-            }else{
-                result.push(null); // Ngày của tháng sau
-            }
+            result.push(d>=1&&d<=days?d:null);
         }
         return result;
-    },[sel,month,year,days,today]);
+    };
     
-    // Scroll handler với debounce
-    const handleScroll=useCallback((e)=>{
-        const scrollTop=e.target.scrollTop;
-        const scrollDiff=scrollTop-lastScrollTop.current;
-        
-        // Kéo xuống > 30px thì thu gọn
-        if(scrollDiff>30&&scrollTop>50){
-            setIsCollapsed(true);
-        }
-        // Kéo lên và gần top thì mở rộng
-        else if(scrollTop<20){
-            setIsCollapsed(false);
-        }
-        
-        lastScrollTop.current=scrollTop;
-    },[]);
+    const weekDays=getWeekDays();
     
-    // Danh sách sự kiện trong tháng
+    // Month events sorted
     const monthEvents=useMemo(()=>
         allEvents.filter(e=>{
             const dd=new Date(e.deadline);
@@ -298,7 +277,31 @@ const CalendarScreen=({events,onEventClick,savedEvents})=>{
         }).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))
     ,[allEvents,month,year]);
 
-    const weekDays=getWeekDays();
+    const prevMonth=()=>{
+        if(month===0){setMonth(11);setYear(y=>y-1);}
+        else setMonth(m=>m-1);
+        setSel(null);
+    };
+    
+    const nextMonth=()=>{
+        if(month===11){setMonth(0);setYear(y=>y+1);}
+        else setMonth(m=>m+1);
+        setSel(null);
+    };
+
+    // Render calendar day
+    const renderDay=(day,isWeekView=false)=>{
+        if(day===null)return <div key={Math.random()} className="aspect-square"/>;
+        const ev=getEventsForDay(day);
+        const isToday=day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
+        const isSelected=day===sel;
+        return(
+            <button key={day} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl ${isSelected?'bg-navy-600 shadow-lg':isToday?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
+                <span className={`text-sm font-bold ${isSelected?'text-white':isToday?'text-navy-700':'text-gray-800'}`}>{day}</span>
+                {ev.length>0&&<div className="flex gap-0.5 mt-1">{ev.slice(0,3).map((e,idx)=><div key={idx} className={`w-1.5 h-1.5 rounded-full ${isSelected?'bg-white':(categoryConfig[e.category]?.color||'bg-purple-500')}`}/>)}</div>}
+            </button>
+        );
+    };
 
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
@@ -312,66 +315,41 @@ const CalendarScreen=({events,onEventClick,savedEvents})=>{
                 </div>
             </div>
             
-            {/* Month navigation */}
+            {/* Month navigation + Toggle button */}
             <div className="bg-white px-5 py-3 flex justify-between items-center border-b border-gray-200">
-                <button onClick={()=>{setMonth(m=>m===0?(setYear(y=>y-1),11):m-1);setIsCollapsed(false);setSel(null);}} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200">
+                <button onClick={prevMonth} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200">
                     <div className="w-6 h-6 text-gray-700"><Icons.ChevronLeft/></div>
                 </button>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     <h2 className="text-lg font-bold text-gray-900">{monthNames[month]} {year}</h2>
-                    {isCollapsed&&(
-                        <button onClick={()=>setIsCollapsed(false)} className="bg-navy-100 text-navy-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-navy-200">
-                            <div className="w-3 h-3"><Icons.ChevronDown/></div>
-                            Mở rộng
-                        </button>
-                    )}
+                    <button onClick={()=>setViewMode(v=>v==='month'?'week':'month')} className="bg-navy-100 text-navy-700 p-2 rounded-lg border border-navy-200 hover:bg-navy-200">
+                        <div className="w-4 h-4">{viewMode==='month'?<Icons.Minimize/>:<Icons.Maximize/>}</div>
+                    </button>
                 </div>
-                <button onClick={()=>{setMonth(m=>m===11?(setYear(y=>y+1),0):m+1);setIsCollapsed(false);setSel(null);}} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200">
+                <button onClick={nextMonth} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200">
                     <div className="w-6 h-6 text-gray-700"><Icons.ChevronRight/></div>
                 </button>
             </div>
             
-            {/* Calendar grid */}
-            <div className="bg-white border-b border-gray-200 calendar-transition" style={{overflow:'hidden'}}>
+            {/* Calendar grid - NO scroll animation, just toggle */}
+            <div className="bg-white border-b border-gray-200">
                 {/* Day names */}
                 <div className="grid grid-cols-7 px-3 pt-2">
                     {dayNames.map(d=><div key={d} className="text-center text-xs font-bold text-gray-500 py-1">{d}</div>)}
                 </div>
                 
                 {/* Calendar days */}
-                <div className="px-3 pb-3 calendar-transition" style={{maxHeight:isCollapsed?'52px':'280px',overflow:'hidden'}}>
-                    {isCollapsed?(
-                        // Thu gọn: 1 tuần
+                <div className="px-3 pb-3">
+                    {viewMode==='week'?(
+                        // Week view - 1 row
                         <div className="grid grid-cols-7 gap-1">
-                            {weekDays.map((day,i)=>{
-                                if(day===null)return <div key={i} className="aspect-square"/>;
-                                const ev=getEventsForDay(day);
-                                const isToday=day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
-                                const isSelected=day===sel;
-                                return(
-                                    <button key={i} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all ${isSelected?'bg-navy-600 shadow-lg':isToday?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
-                                        <span className={`text-sm font-bold ${isSelected?'text-white':isToday?'text-navy-700':'text-gray-800'}`}>{day}</span>
-                                        {ev.length>0&&<div className="flex gap-0.5 mt-0.5">{ev.slice(0,3).map((e,idx)=><div key={idx} className={`w-1.5 h-1.5 rounded-full ${isSelected?'bg-white':(categoryConfig[e.category]?.color||'bg-purple-500')}`}/>)}</div>}
-                                    </button>
-                                );
-                            })}
+                            {weekDays.map((day,i)=>renderDay(day,true))}
                         </div>
                     ):(
-                        // Mở rộng: cả tháng
+                        // Month view - full calendar
                         <div className="grid grid-cols-7 gap-1">
                             {Array.from({length:firstDayOfWeek}).map((_,i)=><div key={`empty-${i}`} className="aspect-square"/>)}
-                            {Array.from({length:days}).map((_,i)=>{
-                                const day=i+1;
-                                const ev=getEventsForDay(day);
-                                const isToday=day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
-                                const isSelected=day===sel;
-                                return(
-                                    <button key={day} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all ${isSelected?'bg-navy-600 shadow-lg':isToday?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
-                                        <span className={`text-sm font-bold ${isSelected?'text-white':isToday?'text-navy-700':'text-gray-800'}`}>{day}</span>
-                                        {ev.length>0&&<div className="flex gap-0.5 mt-1">{ev.slice(0,3).map((e,idx)=><div key={idx} className={`w-1.5 h-1.5 rounded-full ${isSelected?'bg-white':(categoryConfig[e.category]?.color||'bg-purple-500')}`}/>)}</div>}
-                                    </button>
-                                );
-                            })}
+                            {Array.from({length:days}).map((_,i)=>renderDay(i+1))}
                         </div>
                     )}
                 </div>
@@ -383,7 +361,7 @@ const CalendarScreen=({events,onEventClick,savedEvents})=>{
             </div>
             
             {/* Events list */}
-            <div onScroll={handleScroll} className="flex-1 bg-slate-100 px-5 py-4 overflow-auto hide-scrollbar">
+            <div className="flex-1 bg-slate-100 px-5 py-4 overflow-auto hide-scrollbar">
                 {sel?(
                     <>
                         <div className="flex items-center justify-between mb-3">
@@ -632,7 +610,7 @@ const SettingsScreen=({onReset,businessProfile,onUpdateProfile,membership,onUpgr
                 </div>
                 <div className="bg-white rounded-2xl px-5 shadow-sm mb-5 border border-gray-200">
                     <h3 className="font-bold pt-5 pb-3 text-gray-900">Về ứng dụng</h3>
-                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.1.0</span></div>
+                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.2.0</span></div>
                     <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Shield/></div><span className="flex-1 text-gray-800 font-semibold">Chính sách bảo mật</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                     <div className="py-4 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.HelpCircle/></div><span className="flex-1 text-gray-800 font-semibold">Liên hệ hỗ trợ</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                 </div>
