@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "name": "Cong ty TNHH ABC",
+    "field": "San xuat",
+    "intro": "Chuyen san xuat linh kien dien tu, tim nha phan phoi toan quoc",
+    "lookingFor": "Tim nha phan phoi",
+    "employees": 50,
+    "location": "TP.HCM",
+    "phone": "028 1234 5678",
+    "email": "contact@abc.com.vn",
+    "verified": true,
+    "isActive": true,
+    "userId": null,
+    "createdAt": "2025-12-29T04:16:48.366Z"
+  },
+  {
+    "id": 2,
+    "name": "Cong ty CP XYZ",
+    "field": "Thuong mai",
+    "intro": "Nhap khau hang tieu dung tu Nhat Ban, Han Quoc",
+    "lookingFor": "Tim nha cung cap",
+    "employees": 30,
+    "location": "Ha Noi",
+    "phone": "024 9876 5432",
+    "email": "info@xyz.com.vn",
+    "verified": true,
+    "isActive": true,
+    "userId": null,
+    "createdAt": "2025-12-29T04:16:48.366Z"
+  },
+  {
+    "id": 3,
+    "name": "Tech Solutions",
+    "field": "Cong nghe",
+    "intro": "Phat trien phan mem quan ly doanh nghiep",
+    "lookingFor": "Tim doi tac",
+    "employees": 20,
+    "location": "Da Nang",
+    "phone": "0236 1111 2222",
+    "email": "hello@techsolutions.vn",
+    "verified": false,
+    "isActive": true,
+    "userId": null,
+    "createdAt": "2025-12-29T04:16:48.366Z"
+  }
+]

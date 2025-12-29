@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a5276">
+    <meta name="description" content="Ứng dụng quản lý lịch pháp lý cho doanh nghiệp Việt Nam">
+    <title>HTIC Legal - Lịch Pháp Lý Doanh Nghiệp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 50: '#f0f5fa', 100: '#dae4f0', 200: '#b8cce3', 300: '#8badd0', 400: '#5a8ab9', 500: '#3d6d9e', 600: '#1a5276', 700: '#154360', 800: '#143a52', 900: '#0f2d40' },
+                        gold: { 50: '#fef9eb', 100: '#fcefc6', 200: '#f9dc89', 300: '#f5c54c', 400: '#f2b327', 500: '#e67e22', 600: '#c25e0c', 700: '#a1440d', 800: '#843611', 900: '#6d2d13' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        html, body, #root { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #f8fafc; }
+        .safe-top { padding-top: env(safe-area-inset-top, 0px); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .touch-active:active { transform: scale(0.98); opacity: 0.9; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useCallback } = React;
+        const API = '/api';
+
+        // ============ HTIC LOGO ============
+        const HTICLogo = ({ size = 40 }) => (
+            <svg viewBox="0 0 100 100" width={size} height={size}>
+                <circle cx="50" cy="50" r="46" fill="none" stroke="#1a5276" strokeWidth="6"/>
+                <path d="M18 28 L18 72 M18 50 L32 50 M32 28 L32 72" stroke="#1a5276" strokeWidth="6" fill="none" strokeLinecap="round"/>
+                <path d="M42 28 L42 72" stroke="#1a5276" strokeWidth="6" strokeLinecap="round"/>
+                <path d="M52 28 L68 28 M60 28 L60 72" stroke="#1a5276" strokeWidth="6" fill="none" strokeLinecap="round"/>
+                <circle cx="60" cy="36" r="4" fill="#e67e22"/>
+                <path d="M78 50 Q78 28 64 28 M78 50 Q78 72 64 72" stroke="#1a5276" strokeWidth="6" fill="none" strokeLinecap="round"/>
+            </svg>
+        );
+
+        // ============ CONSTANTS ============
+        const COMPANY_INFO = { name: 'Công ty Luật HTIC', shortName: 'HTIC LAW', website: 'www.htic.com.vn', phone: '0379 044 299', email: 'contact@htic.com.vn' };
+        const VI_TEXT = {
+            appName: 'Lịch Pháp Lý', dashboard: 'Trang chủ', calendar: 'Lịch', news: 'Tin tức', support: 'Hỗ trợ', settings: 'Cài đặt',
+            upcomingEvents: 'Deadline sắp tới', daysLeft: 'ngày nữa', markComplete: 'Đánh dấu hoàn thành', markIncomplete: 'Bỏ đánh dấu',
+            legalReference: 'Căn cứ pháp lý', penalty: 'Mức phạt nếu vi phạm', login: 'Đăng nhập', register: 'Đăng ký', email: 'Email',
+            password: 'Mật khẩu', companyName: 'Tên công ty', taxCode: 'Mã số thuế', phoneNumber: 'Số điện thoại', hello: 'Xin chào',
+            noAccount: 'Chưa có tài khoản?', hasAccount: 'Đã có tài khoản?', registerNow: 'Đăng ký ngay', loginNow: 'Đăng nhập',
+            agreeTerms: 'Tôi đồng ý với Điều khoản sử dụng', skipLogin: 'Bỏ qua đăng nhập', useWithoutAccount: 'Dùng thử không cần tài khoản',
+            legalNews: 'Tin tức pháp luật', todayNews: 'Tin mới nhất', newsDetail: 'Chi tiết tin', save: 'Lưu', share: 'Chia sẻ',
+            settingsTitle: 'Cài đặt', notifications: 'Thông báo', reminderEvent: 'Nhắc nhở sự kiện', reminderBefore: 'Nhắc trước', days3: '3 ngày',
+            version: 'Phiên bản', privacyPolicy: 'Chính sách bảo mật', supportContact: 'Liên hệ hỗ trợ', rateApp: 'Đánh giá ứng dụng',
+            publisher: 'Nhà phát hành', resetData: 'Đặt lại dữ liệu', aboutApp: 'Về ứng dụng', logout: 'Đăng xuất',
+            upgrade: 'Nâng cấp', upgradeToPro: 'Nâng cấp Pro', unlockFeatures: 'Mở khóa tất cả tính năng',
+            govAgencies: 'Cơ quan NN', selectProvince: 'Chọn tỉnh/thành phố', allCategories: 'Tất cả', searchAgency: 'Tìm cơ quan...',
+            supportTitle: 'Hỗ trợ', noEvents: 'Không có sự kiện', day: 'Ngày',
+            findPartners: 'Tìm đối tác', publishIntro: 'Đăng giới thiệu', intro: 'Giới thiệu', lookingFor: 'Đang tìm kiếm',
+            scale: 'Quy mô', location: 'Địa điểm', employee: 'nhân viên', viewProfile: 'Xem hồ sơ', contactNow: 'Liên hệ ngay',
+            loading: 'Đang tải...', error: 'Lỗi kết nối'
+        };
+        const categoryConfig = {
+            tax: { label: 'Thuế', color: 'bg-red-500', lightColor: 'bg-red-100', textColor: 'text-red-600' },
+            insurance: { label: 'BHXH', color: 'bg-blue-500', lightColor: 'bg-blue-100', textColor: 'text-blue-600' },
+            report: { label: 'Báo cáo', color: 'bg-green-500', lightColor: 'bg-green-100', textColor: 'text-green-600' },
+            license: { label: 'Giấy phép', color: 'bg-orange-500', lightColor: 'bg-orange-100', textColor: 'text-orange-600' }
+        };
+        const agencyCategories = {
+            tax: { label: 'Thuế', color: 'bg-red-100 text-red-600' },
+            court: { label: 'Tòa án', color: 'bg-purple-100 text-purple-600' },
+            enforcement: { label: 'Thi hành án', color: 'bg-orange-100 text-orange-600' },
+            police: { label: 'Công an', color: 'bg-blue-100 text-blue-600' },
+            insurance: { label: 'BHXH', color: 'bg-green-100 text-green-600' },
+            labor: { label: 'Sở LĐTBXH', color: 'bg-teal-100 text-teal-600' },
+            business: { label: 'Đăng ký KD', color: 'bg-indigo-100 text-indigo-600' }
+        };
+        const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+        const dayNames = ['CN','T2','T3','T4','T5','T6','T7'];
+
+        // ============ ICONS ============
+        const Icons = {
+            Home: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+            Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>,
+            Newspaper: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>,
+            Headphones: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg>,
+            Settings: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+            Bell: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>,
+            Check: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><polyline points="20 6 9 17 4 12"/></svg>,
+            CheckCircle: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            ChevronLeft: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m15 18-6-6 6-6"/></svg>,
+            ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m9 18 6-6-6-6"/></svg>,
+            ChevronDown: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m6 9 6 6 6-6"/></svg>,
+            Clock: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+            Crown: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
+            X: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>,
+            Mail: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>,
+            Lock: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+            Phone: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+            Building: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>,
+            FileText: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>,
+            Eye: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>,
+            EyeOff: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>,
+            MapPin: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>,
+            Search: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>,
+            Landmark: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>,
+            TrendingUp: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>,
+            Bookmark: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>,
+            Share: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>,
+            MessageCircle: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>,
+            Info: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>,
+            Shield: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+            HelpCircle: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>,
+            Star: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+            LogOut: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
+            Trash: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
+        };
+
+        // ============ HELPERS ============
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        };
+        const getDaysUntil = (dateStr) => {
+            const d = new Date(dateStr);
+            return Math.ceil((d - new Date()) / (1000 * 60 * 60 * 24));
+        };
+        const getDeadlineFromEvent = (ev) => {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = now.getMonth();
+            let day = ev.dayOfMonth || 20;
+            if (ev.frequency === 'monthly') return new Date(y, m, day);
+            if (ev.frequency === 'quarterly') return new Date(y, m + 1, day);
+            if (ev.frequency === 'yearly') return new Date(y, 0, day);
+            return new Date(y, m, day);
+        };
+
+        // ============ COMPONENTS ============
+        const EventCard = ({ event, onClick }) => {
+            const c = categoryConfig[event.category] || categoryConfig.tax;
+            const deadline = event.deadline || getDeadlineFromEvent(event);
+            const d = getDaysUntil(deadline);
+            const over = d < 0 && !event.completed;
+            return (
+                <button onClick={onClick} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 text-left touch-active transition-all active:scale-[0.98]">
+                    <div className={`p-3 rounded-xl ${c.lightColor} flex-shrink-0`}><div className={`w-5 h-5 ${c.textColor}`}><Icons.FileText /></div></div>
+                    <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 truncate text-sm">{event.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Ngày {event.dayOfMonth || 20} hàng {event.frequency === 'monthly' ? 'tháng' : event.frequency === 'quarterly' ? 'quý' : 'năm'}</p>
+                    </div>
+                    {event.completed ? (
+                        <div className="w-6 h-6 text-green-500 flex-shrink-0"><Icons.CheckCircle /></div>
+                    ) : over ? (
+                        <span className="text-xs font-semibold text-red-500 bg-red-50 px-2.5 py-1 rounded-full flex-shrink-0">{Math.abs(d)} ngày</span>
+                    ) : (
+                        <span className="text-xs font-semibold text-navy-600 bg-navy-50 px-2.5 py-1 rounded-full flex-shrink-0">{d} ngày</span>
+                    )}
+                </button>
+            );
+        };
+
+        const EventDetailModal = ({ event, onClose, onToggle }) => {
+            if (!event) return null;
+            const c = categoryConfig[event.category] || categoryConfig.tax;
+            const deadline = event.deadline || getDeadlineFromEvent(event);
+            const d = getDaysUntil(deadline);
+            const over = d < 0 && !event.completed;
+            return (
+                <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 fade-in" onClick={onClose}>
+                    <div className="bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] overflow-auto hide-scrollbar slide-up safe-bottom" onClick={e => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-white px-5 py-4 border-b flex justify-between items-center z-10">
+                            <div className={`px-3 py-1.5 rounded-full ${c.lightColor} ${c.textColor} text-sm font-semibold`}>{c.label}</div>
+                            <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 touch-active"><div className="w-5 h-5 text-gray-500"><Icons.X /></div></button>
+                        </div>
+                        <div className="p-5 space-y-5">
+                            <h2 className="text-xl font-bold text-gray-900">{event.title}</h2>
+                            <div className={`p-4 rounded-2xl ${event.completed ? 'bg-green-50' : over ? 'bg-red-50' : 'bg-navy-50'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-6 h-6 text-gray-600"><Icons.Clock /></div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Hạn nộp: Ngày {event.dayOfMonth || 20}</p>
+                                        <p className={`font-semibold ${event.completed ? 'text-green-600' : over ? 'text-red-600' : 'text-navy-700'}`}>
+                                            {event.completed ? 'Đã hoàn thành' : over ? `Quá hạn ${Math.abs(d)} ngày` : `Còn ${d} ngày`}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            {event.description && <div><h3 className="font-semibold mb-2 text-gray-800">Mô tả</h3><p className="text-gray-600">{event.description}</p></div>}
+                            {event.legalReference && <div><h3 className="font-semibold mb-2 text-gray-800">{VI_TEXT.legalReference}</h3><p className="text-gray-600">{event.legalReference}</p></div>}
+                            {event.penalty && <div className="bg-red-50 p-4 rounded-xl"><h3 className="font-semibold mb-2 text-red-700">{VI_TEXT.penalty}</h3><p className="text-red-600">{event.penalty}</p></div>}
+                            {event.instructions && <div><h3 className="font-semibold mb-2 text-gray-800">Hướng dẫn</h3><p className="text-gray-600 whitespace-pre-line">{event.instructions}</p></div>}
+                            <button onClick={() => onToggle(event.id)} className={`w-full py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 touch-active ${event.completed ? 'bg-gray-100 text-gray-700' : 'bg-green-500 text-white'}`}>
+                                <div className="w-5 h-5">{event.completed ? <Icons.X /> : <Icons.Check />}</div>
+                                {event.completed ? VI_TEXT.markIncomplete : VI_TEXT.markComplete}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const UpgradeModal = ({ onClose, onUpgrade }) => (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-5 fade-in" onClick={onClose}>
+                <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                    <div className="bg-gradient-to-br from-gold-400 to-gold-500 p-8 text-center">
+                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4"><div className="w-10 h-10 text-white"><Icons.Crown /></div></div>
+                        <h2 className="text-2xl font-bold text-white mb-2">{VI_TEXT.upgradeToPro}</h2>
+                        <p className="text-gold-100">{VI_TEXT.unlockFeatures}</p>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        {['Xem hồ sơ doanh nghiệp đối tác', 'Không quảng cáo', 'Nhắc nhở qua Email/SMS', 'Hỗ trợ ưu tiên 24/7'].map((f, i) => (
+                            <div key={i} className="flex items-center gap-3"><div className="w-6 h-6 text-green-500"><Icons.CheckCircle /></div><span className="text-gray-700">{f}</span></div>
+                        ))}
+                        <div className="pt-4">
+                            <p className="text-center text-3xl font-bold text-gray-800">199.000đ<span className="text-lg font-normal text-gray-500">/{VI_TEXT.monthly}</span></p>
+                        </div>
+                        <button onClick={onUpgrade} className="w-full py-4 rounded-2xl bg-gradient-to-r from-gold-400 to-gold-500 text-white font-semibold touch-active">Đăng ký ngay</button>
+                        <button onClick={onClose} className="w-full py-3 text-gray-500">Để sau</button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // ============ SCREENS ============
+        const SplashScreen = ({ onFinish }) => {
+            useEffect(() => { const t = setTimeout(onFinish, 2000); return () => clearTimeout(t); }, []);
+            return (
+                <div className="h-full bg-gradient-to-br from-navy-700 to-navy-900 flex flex-col items-center justify-center p-8">
+                    <div className="bg-white p-5 rounded-3xl shadow-2xl mb-6"><HTICLogo size={80} /></div>
+                    <h1 className="text-3xl font-bold text-white mb-2">{VI_TEXT.appName}</h1>
+                    <p className="text-navy-200 text-center">by HTIC LAW</p>
+                    <div className="mt-10 flex gap-2">{[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-white/50 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />)}</div>
+                </div>
+            );
+        };
+
+        const AuthScreen = ({ onLogin, onSkip }) => {
+            const [mode, setMode] = useState('welcome');
+            const [form, setForm] = useState({ email: '', password: '', companyName: '', taxCode: '', phone: '' });
+            const [showPw, setShowPw] = useState(false);
+            const [agreed, setAgreed] = useState(false);
+            const upd = (k, v) => setForm({ ...form, [k]: v });
+
+            if (mode === 'welcome') return (
+                <div className="h-full bg-gradient-to-br from-navy-700 to-navy-900 flex flex-col p-8 safe-top safe-bottom">
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                        <div className="bg-white p-4 rounded-2xl shadow-xl mb-8"><HTICLogo size={60} /></div>
+                        <h1 className="text-3xl font-bold text-white text-center mb-3">{VI_TEXT.appName}</h1>
+                        <p className="text-navy-200 text-center max-w-xs">Quản lý deadline thuế, BHXH, báo cáo dễ dàng cho doanh nghiệp</p>
+                    </div>
+                    <div className="space-y-4">
+                        <button onClick={() => setMode('login')} className="w-full py-4 rounded-2xl bg-white text-navy-700 font-semibold touch-active">{VI_TEXT.login}</button>
+                        <button onClick={() => setMode('register')} className="w-full py-4 rounded-2xl border-2 border-white text-white font-semibold touch-active">{VI_TEXT.register}</button>
+                        <button onClick={onSkip} className="w-full py-3 text-navy-200">{VI_TEXT.useWithoutAccount} →</button>
+                    </div>
+                </div>
+            );
+
+            if (mode === 'success') return (
+                <div className="h-full bg-gradient-to-br from-green-500 to-green-600 flex flex-col items-center justify-center p-8">
+                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6"><div className="w-12 h-12 text-green-500"><Icons.Check /></div></div>
+                    <h1 className="text-2xl font-bold text-white mb-2">Đăng ký thành công!</h1>
+                    <p className="text-green-100">Đang chuyển hướng...</p>
+                </div>
+            );
+
+            const isL = mode === 'login';
+            return (
+                <div className="h-full bg-gray-50 flex flex-col safe-top safe-bottom">
+                    <div className="p-5"><button onClick={() => setMode('welcome')} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active"><div className="w-6 h-6 text-gray-600"><Icons.ChevronLeft /></div></button></div>
+                    <div className="flex-1 px-5 overflow-auto hide-scrollbar">
+                        <div className="flex items-center gap-3 mb-8"><div className="bg-navy-100 p-3 rounded-xl"><HTICLogo size={32} /></div><div><h1 className="text-2xl font-bold text-gray-800">{isL ? VI_TEXT.login : VI_TEXT.register}</h1><p className="text-gray-500 text-sm">HTIC Legal App</p></div></div>
+                        <div className="space-y-4">
+                            <div><label className="text-sm font-medium text-gray-700 mb-2 block">{VI_TEXT.email}</label><div className="relative"><div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Mail /></div><input type="email" placeholder="email@company.com" value={form.email} onChange={e => upd('email', e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" /></div></div>
+                            {!isL && (<>
+                                <div><label className="text-sm font-medium text-gray-700 mb-2 block">{VI_TEXT.phoneNumber}</label><div className="relative"><div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Phone /></div><input type="tel" placeholder="0912 345 678" value={form.phone} onChange={e => upd('phone', e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" /></div></div>
+                                <div><label className="text-sm font-medium text-gray-700 mb-2 block">{VI_TEXT.companyName}</label><div className="relative"><div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Building /></div><input type="text" placeholder="Công ty TNHH ABC" value={form.companyName} onChange={e => upd('companyName', e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" /></div></div>
+                            </>)}
+                            <div><label className="text-sm font-medium text-gray-700 mb-2 block">{VI_TEXT.password}</label><div className="relative"><div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Lock /></div><input type={showPw ? 'text' : 'password'} placeholder="••••••••" value={form.password} onChange={e => upd('password', e.target.value)} className="w-full pl-12 pr-12 py-4 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" /><button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 touch-active"><div className="w-5 h-5 text-gray-400">{showPw ? <Icons.EyeOff /> : <Icons.Eye />}</div></button></div></div>
+                            {!isL && <label className="flex items-start gap-3 cursor-pointer"><div onClick={() => setAgreed(!agreed)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center mt-0.5 flex-shrink-0 touch-active ${agreed ? 'bg-navy-600 border-navy-600' : 'border-gray-300'}`}>{agreed && <div className="w-4 h-4 text-white"><Icons.Check /></div>}</div><span className="text-gray-600">{VI_TEXT.agreeTerms}</span></label>}
+                        </div>
+                    </div>
+                    <div className="p-5 space-y-4">
+                        <button onClick={() => { if (isL) { onLogin({ ...form, isMember: true }); } else { setMode('success'); setTimeout(() => onLogin({ ...form, isMember: true }), 2000); } }} disabled={!isL && !agreed} className={`w-full py-4 rounded-2xl font-semibold text-white touch-active ${(!isL && !agreed) ? 'bg-gray-300' : 'bg-navy-700'}`}>{isL ? VI_TEXT.login : VI_TEXT.register}</button>
+                        <p className="text-center text-gray-500">{isL ? VI_TEXT.noAccount : VI_TEXT.hasAccount} <button onClick={() => setMode(isL ? 'register' : 'login')} className="text-gold-600 font-semibold">{isL ? VI_TEXT.registerNow : VI_TEXT.loginNow}</button></p>
+                    </div>
+                </div>
+            );
+        };
+
+        const DashboardScreen = ({ events, onEventClick, isPro, onShowUpgrade }) => {
+            const today = new Date();
+            const eventsWithDeadline = events.map(e => ({ ...e, deadline: getDeadlineFromEvent(e) }));
+            const overdue = eventsWithDeadline.filter(e => getDaysUntil(e.deadline) < 0 && !e.completed);
+            const upcoming = eventsWithDeadline.filter(e => getDaysUntil(e.deadline) >= 0 && !e.completed);
+            const hasOver = overdue.length > 0;
+
+            return (
+                <div className="h-full bg-gray-50 overflow-auto hide-scrollbar pb-24">
+                    <div className="bg-gradient-to-br from-navy-700 to-navy-800 pt-14 pb-8 px-5 safe-top">
+                        <div className="flex items-center justify-between mb-5">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-white p-2 rounded-xl shadow"><HTICLogo size={32} /></div>
+                                <div><p className="text-white font-bold text-lg">{VI_TEXT.appName}</p><p className="text-navy-300 text-xs">by HTIC LAW</p></div>
+                            </div>
+                            {isPro ? (
+                                <div className="bg-gradient-to-r from-gold-400 to-gold-500 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow"><div className="w-4 h-4 text-white"><Icons.Crown /></div><span className="text-white text-xs font-semibold">PRO</span></div>
+                            ) : (
+                                <button onClick={onShowUpgrade} className="bg-white/20 px-4 py-2 rounded-full touch-active"><span className="text-white text-sm font-medium">{VI_TEXT.upgrade}</span></button>
+                            )}
+                        </div>
+                        <p className="text-navy-200">{today.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                        <h1 className="text-3xl font-bold text-white mt-2">{VI_TEXT.hello} 👋</h1>
+                    </div>
+                    <div className="px-5 -mt-4">
+                        <div className={`rounded-2xl p-5 shadow-lg ${hasOver ? 'bg-red-500' : 'bg-green-500'}`}>
+                            <div className="flex justify-between items-center">
+                                <div><p className="text-white/80 text-sm">{hasOver ? 'Có deadline quá hạn!' : 'Đang tuân thủ tốt'}</p><p className="text-white text-2xl font-bold">{hasOver ? `${overdue.length} việc cần xử lý` : 'Tất cả đúng hạn'}</p></div>
+                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center"><div className="w-6 h-6 text-white">{hasOver ? <Icons.Clock /> : <Icons.CheckCircle />}</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="px-5 py-6">
+                        <h2 className="text-lg font-bold mb-4 text-gray-800">{VI_TEXT.upcomingEvents}</h2>
+                        {events.length === 0 ? (
+                            <div className="text-center py-10 text-gray-500">{VI_TEXT.loading}</div>
+                        ) : (
+                            <div className="space-y-3">
+                                {upcoming.slice(0, 5).map(e => <EventCard key={e.id} event={e} onClick={() => onEventClick(e)} />)}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const CalendarScreen = ({ events, onEventClick, isPro }) => {
+            const today = new Date();
+            const [month, setMonth] = useState(today.getMonth());
+            const [year, setYear] = useState(today.getFullYear());
+            const [sel, setSel] = useState(null);
+            const days = new Date(year, month + 1, 0).getDate();
+            const first = new Date(year, month, 1).getDay();
+            const eventsWithDeadline = events.map(e => ({ ...e, deadline: getDeadlineFromEvent(e) }));
+            const getEv = d => eventsWithDeadline.filter(e => { const dd = new Date(e.deadline); return dd.getDate() === d && dd.getMonth() === month && dd.getFullYear() === year; });
+            const selEv = sel ? getEv(sel) : [];
+
+            return (
+                <div className="h-full bg-gray-50 flex flex-col pb-20">
+                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
+                        <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-navy-700"><Icons.Calendar /></div></div><h1 className="text-2xl font-bold text-gray-800">{VI_TEXT.calendar}</h1></div>
+                    </div>
+                    <div className="bg-white px-5 py-4 flex justify-between items-center border-b">
+                        <button onClick={() => { if (month === 0) { setMonth(11); setYear(year - 1); } else { setMonth(month - 1); } }} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active"><div className="w-6 h-6 text-gray-600"><Icons.ChevronLeft /></div></button>
+                        <h2 className="text-lg font-bold text-gray-800">{monthNames[month]} {year}</h2>
+                        <button onClick={() => { if (month === 11) { setMonth(0); setYear(year + 1); } else { setMonth(month + 1); } }} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active"><div className="w-6 h-6 text-gray-600"><Icons.ChevronRight /></div></button>
+                    </div>
+                    <div className="bg-white px-3 py-3">
+                        <div className="grid grid-cols-7 mb-2">{dayNames.map(d => <div key={d} className="text-center text-sm font-semibold text-gray-500 py-2">{d}</div>)}</div>
+                        <div className="grid grid-cols-7 gap-1">
+                            {Array.from({ length: first }).map((_, i) => <div key={`e-${i}`} />)}
+                            {Array.from({ length: days }).map((_, i) => {
+                                const day = i + 1;
+                                const ev = getEv(day);
+                                const isT = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+                                const isS = day === sel;
+                                return (
+                                    <button key={day} onClick={() => setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all touch-active ${isS ? 'bg-navy-700 shadow-lg' : isT ? 'bg-navy-100' : 'hover:bg-gray-100'}`}>
+                                        <span className={`text-sm font-medium ${isS ? 'text-white' : isT ? 'text-navy-700 font-bold' : 'text-gray-700'}`}>{day}</span>
+                                        {ev.length > 0 && <div className="flex gap-0.5 mt-1">{ev.slice(0, 3).map((e, idx) => <div key={idx} className={`w-1.5 h-1.5 rounded-full ${isS ? 'bg-white' : (categoryConfig[e.category]?.color || 'bg-gray-400')}`} />)}</div>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    <div className="bg-white px-5 py-3 flex flex-wrap gap-4 border-t">
+                        {Object.entries(categoryConfig).map(([k, c]) => <div key={k} className="flex items-center gap-2"><div className={`w-3 h-3 rounded-full ${c.color}`} /><span className="text-xs text-gray-600">{c.label}</span></div>)}
+                    </div>
+                    {sel && (
+                        <div className="flex-1 bg-gray-50 px-5 py-4 overflow-auto hide-scrollbar">
+                            <h3 className="font-semibold mb-3 text-gray-800">{VI_TEXT.day} {sel}/{month + 1}/{year}</h3>
+                            {selEv.length > 0 ? <div className="space-y-3">{selEv.map(e => <EventCard key={e.id} event={e} onClick={() => onEventClick(e)} />)}</div> : <p className="text-gray-500 text-center py-6">{VI_TEXT.noEvents}</p>}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const NewsScreen = ({ isPro, newsData }) => {
+            const [sel, setSel] = useState(null);
+
+            if (sel) return (
+                <div className="h-full bg-gray-50 flex flex-col pb-20">
+                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
+                        <div className="flex items-center gap-3"><button onClick={() => setSel(null)} className="touch-active"><div className="w-7 h-7 text-gray-600"><Icons.ChevronLeft /></div></button><h1 className="text-xl font-bold text-gray-800">{VI_TEXT.newsDetail}</h1></div>
+                    </div>
+                    <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
+                        <div className="flex items-center gap-2 mb-4">
+                            <span className="bg-navy-100 text-navy-700 text-sm px-3 py-1 rounded-full font-medium">{sel.category}</span>
+                            {sel.isHot && <span className="bg-red-100 text-red-600 text-sm px-3 py-1 rounded-full font-medium">🔥 Hot</span>}
+                        </div>
+                        <h2 className="text-2xl font-bold mb-3 text-gray-900">{sel.title}</h2>
+                        <p className="text-gray-500 mb-5">{sel.date}</p>
+                        <p className="text-gray-700 text-lg leading-relaxed">{sel.summary}</p>
+                        {sel.content && <p className="text-gray-700 mt-5 leading-relaxed">{sel.content}</p>}
+                        <div className="flex gap-3 mt-8">
+                            <button className="flex-1 py-3.5 rounded-xl border border-gray-200 flex items-center justify-center gap-2 text-gray-600 touch-active"><div className="w-5 h-5"><Icons.Bookmark /></div>{VI_TEXT.save}</button>
+                            <button className="flex-1 py-3.5 rounded-xl border border-gray-200 flex items-center justify-center gap-2 text-gray-600 touch-active"><div className="w-5 h-5"><Icons.Share /></div>{VI_TEXT.share}</button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="h-full bg-gray-50 flex flex-col pb-20">
+                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
+                        <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-navy-700"><Icons.Newspaper /></div></div><h1 className="text-2xl font-bold text-gray-800">{VI_TEXT.legalNews}</h1></div>
+                    </div>
+                    <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
+                        <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800"><div className="w-6 h-6 text-gold-500"><Icons.TrendingUp /></div>{VI_TEXT.todayNews}</h2>
+                        {newsData.length === 0 ? (
+                            <div className="text-center py-10 text-gray-500">{VI_TEXT.loading}</div>
+                        ) : (
+                            <div className="space-y-4">
+                                {newsData.map(n => (
+                                    <button key={n.id} onClick={() => setSel(n)} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left touch-active transition-all active:scale-[0.98]">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="bg-navy-100 text-navy-700 text-xs px-2.5 py-1 rounded-full font-medium">{n.category}</span>
+                                            {n.isHot && <span className="bg-red-100 text-red-600 text-xs px-2.5 py-1 rounded-full font-medium">🔥 Hot</span>}
+                                        </div>
+                                        <h3 className="font-semibold text-gray-800 mb-2">{n.title}</h3>
+                                        <p className="text-gray-500 text-sm line-clamp-2">{n.summary}</p>
+                                        <p className="text-gray-400 text-xs mt-3">{n.date}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const SupportScreen = ({ isPro, onShowUpgrade, provinces, agencies, businesses }) => {
+            const [tab, setTab] = useState('agencies');
+            const [province, setProvince] = useState(provinces[0]?.id || 'hcm');
+            const [agencyFilter, setAgencyFilter] = useState('all');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [det, setDet] = useState(null);
+            const [businessSubTab, setBusinessSubTab] = useState('browse');
+
+            const filteredAgencies = agencies.filter(a => {
+                const matchProvince = a.provinceId === province;
+                const matchCategory = agencyFilter === 'all' || a.category === agencyFilter;
+                const matchSearch = a.name.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchProvince && matchCategory && matchSearch;
+            });
+
+            const viewP = b => { if (isPro) { setDet(b); } else { onShowUpgrade(); } };
+
+            if (det && isPro) return (
+                <div className="h-full bg-gray-50 flex flex-col pb-20">
+                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
+                        <div className="flex items-center gap-3"><button onClick={() => setDet(null)} className="touch-active"><div className="w-7 h-7 text-gray-600"><Icons.ChevronLeft /></div></button><h1 className="text-xl font-bold text-gray-800">{VI_TEXT.viewProfile}</h1></div>
+                    </div>
+                    <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
+                        <div className="bg-white rounded-2xl p-5 shadow-sm mb-5">
+                            <div className="flex items-center gap-4 mb-5">
+                                <div className="bg-navy-100 p-4 rounded-full"><div className="w-10 h-10 text-navy-700"><Icons.Building /></div></div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2"><h2 className="text-xl font-bold text-gray-800">{det.name}</h2>{det.verified && <div className="w-5 h-5 text-blue-500"><Icons.CheckCircle /></div>}</div>
+                                    <p className="text-gray-500">{det.field}</p>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <div><p className="text-xs text-gray-500 mb-1">{VI_TEXT.intro}</p><p className="text-gray-700">{det.intro}</p></div>
+                                <div><p className="text-xs text-gray-500 mb-1">{VI_TEXT.lookingFor}</p><p className="text-gray-700">{det.lookingFor}</p></div>
+                                <div className="flex gap-6">
+                                    <div><p className="text-xs text-gray-500 mb-1">{VI_TEXT.scale}</p><p className="text-gray-700">{det.employees} {VI_TEXT.employee}</p></div>
+                                    <div><p className="text-xs text-gray-500 mb-1">{VI_TEXT.location}</p><p className="text-gray-700">{det.location}</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <button className="w-full py-4 rounded-2xl bg-navy-700 text-white font-semibold flex items-center justify-center gap-2 touch-active"><div className="w-5 h-5"><Icons.MessageCircle /></div>{VI_TEXT.contactNow}</button>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="h-full bg-gray-50 flex flex-col pb-20">
+                    <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3"><div className="bg-purple-100 p-2.5 rounded-xl"><div className="w-6 h-6 text-purple-700"><Icons.Headphones /></div></div><h1 className="text-2xl font-bold text-gray-800">{VI_TEXT.supportTitle}</h1></div>
+                            {!isPro && <button onClick={onShowUpgrade} className="bg-gradient-to-r from-gold-400 to-gold-500 px-3 py-1.5 rounded-full flex items-center gap-1.5 touch-active"><div className="w-4 h-4 text-white"><Icons.Crown /></div><span className="text-white text-xs font-semibold">PRO</span></button>}
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={() => setTab('agencies')} className={`flex-1 py-3 rounded-xl font-medium transition-all touch-active ${tab === 'agencies' ? 'bg-navy-700 text-white' : 'bg-gray-100 text-gray-600'}`}><div className="flex items-center justify-center gap-2"><div className="w-5 h-5"><Icons.Landmark /></div><span>{VI_TEXT.govAgencies}</span></div></button>
+                            <button onClick={() => setTab('business')} className={`flex-1 py-3 rounded-xl font-medium transition-all touch-active ${tab === 'business' ? 'bg-navy-700 text-white' : 'bg-gray-100 text-gray-600'}`}><div className="flex items-center justify-center gap-2"><div className="w-5 h-5"><Icons.Building /></div><span>Thông tin DN</span></div></button>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-auto hide-scrollbar">
+                        {tab === 'agencies' && (
+                            <div className="px-5 py-5">
+                                <div className="mb-4">
+                                    <label className="text-sm font-medium text-gray-700 mb-2 block">{VI_TEXT.selectProvince}</label>
+                                    <div className="relative">
+                                        <select value={province} onChange={e => setProvince(e.target.value)} className="w-full p-4 rounded-xl border border-gray-200 text-base appearance-none bg-white focus:border-navy-500 focus:outline-none pr-10">
+                                            {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        </select>
+                                        <div className="w-5 h-5 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown /></div>
+                                    </div>
+                                </div>
+                                <div className="mb-4">
+                                    <div className="relative">
+                                        <div className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Search /></div>
+                                        <input type="text" placeholder={VI_TEXT.searchAgency} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 text-base focus:border-navy-500 focus:outline-none" />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 mb-4 overflow-x-auto hide-scrollbar pb-1">
+                                    <button onClick={() => setAgencyFilter('all')} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${agencyFilter === 'all' ? 'bg-navy-700 text-white' : 'bg-gray-100 text-gray-600'}`}>{VI_TEXT.allCategories}</button>
+                                    {Object.entries(agencyCategories).map(([k, v]) => <button key={k} onClick={() => setAgencyFilter(k)} className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap touch-active ${agencyFilter === k ? 'bg-navy-700 text-white' : 'bg-gray-100 text-gray-600'}`}>{v.label}</button>)}
+                                </div>
+                                <div className="space-y-3">
+                                    {filteredAgencies.length === 0 ? (
+                                        <div className="text-center py-10"><div className="w-16 h-16 text-gray-300 mx-auto mb-4"><Icons.Search /></div><p className="text-gray-500">Không tìm thấy cơ quan phù hợp</p></div>
+                                    ) : filteredAgencies.map(agency => {
+                                        const catInfo = agencyCategories[agency.category] || { label: agency.category, color: 'bg-gray-100 text-gray-600' };
+                                        return (
+                                            <div key={agency.id} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`p-2.5 rounded-xl ${catInfo.color} flex-shrink-0`}><div className="w-5 h-5"><Icons.Landmark /></div></div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-semibold text-gray-800 mb-1">{agency.name}</h3>
+                                                        <div className="flex items-center gap-1.5 text-gray-500 text-sm"><div className="w-4 h-4 flex-shrink-0"><Icons.MapPin /></div><span className="truncate">{agency.address}</span></div>
+                                                        <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-1"><div className="w-4 h-4 flex-shrink-0"><Icons.Phone /></div><span>{agency.phone}</span></div>
+                                                        {agency.hours && <div className="flex items-center gap-1.5 text-gray-500 text-sm mt-1"><div className="w-4 h-4 flex-shrink-0"><Icons.Clock /></div><span>{agency.hours}</span></div>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                        {tab === 'business' && (
+                            <div className="px-5 py-5">
+                                <div className="flex gap-2 mb-5">
+                                    <button onClick={() => setBusinessSubTab('browse')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium touch-active ${businessSubTab === 'browse' ? 'bg-navy-100 text-navy-700' : 'bg-gray-100 text-gray-600'}`}>{VI_TEXT.findPartners}</button>
+                                    <button onClick={() => setBusinessSubTab('post')} className={`flex-1 py-2.5 rounded-xl text-sm font-medium touch-active ${businessSubTab === 'post' ? 'bg-navy-100 text-navy-700' : 'bg-gray-100 text-gray-600'}`}>{VI_TEXT.publishIntro}</button>
+                                </div>
+                                {businessSubTab === 'browse' && (
+                                    <div className="space-y-4">
+                                        {businesses.length === 0 ? (
+                                            <div className="text-center py-10 text-gray-500">{VI_TEXT.loading}</div>
+                                        ) : businesses.map(b => (
+                                            <button key={b.id} onClick={() => viewP(b)} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-left touch-active">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="bg-navy-100 p-3 rounded-full flex-shrink-0"><div className="w-6 h-6 text-navy-700"><Icons.Building /></div></div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2"><h3 className="font-semibold text-gray-800">{b.name}</h3>{b.verified && <div className="w-4 h-4 text-blue-500"><Icons.CheckCircle /></div>}</div>
+                                                        <p className="text-sm text-gray-500 mt-1">{b.field} • {b.location}</p>
+                                                        <p className="text-sm text-navy-600 mt-2">{b.lookingFor}</p>
+                                                    </div>
+                                                    {!isPro && <div className="bg-gold-100 p-1.5 rounded-full"><div className="w-4 h-4 text-gold-600"><Icons.Crown /></div></div>}
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                {businessSubTab === 'post' && (
+                                    <div className="bg-white rounded-2xl p-5 shadow-sm">
+                                        <div className="text-center py-8">
+                                            <div className="w-16 h-16 bg-navy-100 rounded-full flex items-center justify-center mx-auto mb-4"><div className="w-8 h-8 text-navy-700"><Icons.Building /></div></div>
+                                            <h3 className="font-bold text-gray-800 mb-2">Đăng giới thiệu doanh nghiệp</h3>
+                                            <p className="text-gray-500 mb-6">Giới thiệu doanh nghiệp của bạn để tìm kiếm đối tác</p>
+                                            {isPro ? (
+                                                <button className="bg-navy-700 text-white px-6 py-3 rounded-xl font-semibold touch-active">Đăng ngay</button>
+                                            ) : (
+                                                <button onClick={onShowUpgrade} className="bg-gradient-to-r from-gold-400 to-gold-500 text-white px-6 py-3 rounded-xl font-semibold touch-active flex items-center gap-2 mx-auto"><div className="w-5 h-5"><Icons.Crown /></div>Nâng cấp Pro để đăng</button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const SettingsScreen = ({ user, isPro, onLogout, onShowUpgrade, onReset }) => {
+            const [notif, setNotif] = useState(true);
+            const Item = ({ icon: I, label, value, toggle, toggleVal, onToggle, onClick, danger }) => (
+                <button onClick={onClick || (toggle ? () => onToggle(!toggleVal) : undefined)} className={`w-full flex items-center gap-4 py-4 border-b border-gray-100 last:border-0 touch-active ${danger ? 'text-red-500' : ''}`}>
+                    <div className={`w-5 h-5 ${danger ? 'text-red-500' : 'text-gray-500'}`}><I /></div>
+                    <span className={`flex-1 text-left ${danger ? 'text-red-500' : 'text-gray-700'}`}>{label}</span>
+                    {value && <span className="text-gray-400">{value}</span>}
+                    {toggle && <div className={`w-12 h-7 rounded-full p-1 transition-colors ${toggleVal ? 'bg-green-500' : 'bg-gray-300'}`}><div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${toggleVal ? 'translate-x-5' : ''}`} /></div>}
+                    {!toggle && !value && <div className="w-5 h-5 text-gray-400"><Icons.ChevronRight /></div>}
+                </button>
+            );
+            return (
+                <div className="h-full bg-gray-50 overflow-auto hide-scrollbar pb-24">
+                    <div className="bg-gradient-to-br from-navy-700 to-navy-800 pt-14 pb-8 px-5 safe-top">
+                        <h1 className="text-2xl font-bold text-white mb-5">{VI_TEXT.settingsTitle}</h1>
+                        <div className="bg-white/10 rounded-2xl p-5">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-white p-2.5 rounded-full shadow"><HTICLogo size={40} /></div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-white font-bold text-lg truncate">{user?.fullName || user?.companyName || 'Người dùng'}</p>
+                                    <p className="text-navy-200 truncate">{user?.email || 'Chưa đăng nhập'}</p>
+                                </div>
+                                {user?.isMember && (isPro ? <div className="bg-gradient-to-r from-gold-400 to-gold-500 px-3 py-1.5 rounded-full flex items-center gap-1.5 flex-shrink-0"><div className="w-4 h-4 text-white"><Icons.Crown /></div><span className="text-white text-xs font-semibold">PRO</span></div> : <span className="text-navy-200 text-sm flex-shrink-0">Free</span>)}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="px-5 py-5">
+                        {!isPro && (
+                            <div className="bg-gradient-to-r from-gold-400 to-gold-500 rounded-2xl p-5 mb-5 shadow-lg">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3"><div className="bg-white/20 p-3 rounded-full"><div className="w-6 h-6 text-white"><Icons.Crown /></div></div><div><p className="text-white font-bold text-lg">{VI_TEXT.upgradeToPro}</p><p className="text-gold-100 text-sm">{VI_TEXT.unlockFeatures}</p></div></div>
+                                    <button onClick={onShowUpgrade} className="bg-white text-gold-600 font-semibold px-5 py-2.5 rounded-xl touch-active">{VI_TEXT.upgrade}</button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="bg-white rounded-2xl px-5 shadow-sm mb-5">
+                            <h3 className="font-bold pt-5 pb-3 text-gray-800">{VI_TEXT.notifications}</h3>
+                            <Item icon={Icons.Bell} label={VI_TEXT.reminderEvent} toggle toggleVal={notif} onToggle={setNotif} />
+                            <Item icon={Icons.Clock} label={VI_TEXT.reminderBefore} value={VI_TEXT.days3} />
+                        </div>
+                        <div className="bg-white rounded-2xl px-5 shadow-sm mb-5">
+                            <h3 className="font-bold pt-5 pb-3 text-gray-800">{VI_TEXT.aboutApp}</h3>
+                            <Item icon={Icons.Info} label={VI_TEXT.version} value="2.0.0" />
+                            <Item icon={Icons.Shield} label={VI_TEXT.privacyPolicy} />
+                            <Item icon={Icons.HelpCircle} label={VI_TEXT.supportContact} />
+                            <Item icon={Icons.Star} label={VI_TEXT.rateApp} />
+                        </div>
+                        <div className="bg-white rounded-2xl p-5 shadow-sm mb-5">
+                            <h3 className="font-bold mb-4 text-gray-800">{VI_TEXT.publisher}</h3>
+                            <div className="flex items-center gap-4"><div className="bg-navy-100 p-3 rounded-xl"><HTICLogo size={28} /></div><div><p className="font-semibold text-gray-800">{COMPANY_INFO.name}</p><p className="text-sm text-gray-500">{COMPANY_INFO.website}</p></div></div>
+                            <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                                <div className="flex items-center gap-3 text-gray-500"><div className="w-5 h-5"><Icons.Phone /></div><span>{COMPANY_INFO.phone}</span></div>
+                                <div className="flex items-center gap-3 text-gray-500"><div className="w-5 h-5"><Icons.Mail /></div><span>{COMPANY_INFO.email}</span></div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-2xl px-5 shadow-sm">
+                            {user?.isMember && <Item icon={Icons.LogOut} label={VI_TEXT.logout} onClick={onLogout} />}
+                            <Item icon={Icons.Trash} label={VI_TEXT.resetData} onClick={onReset} danger />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ============ TAB BAR ============
+        const TabBar = ({ activeTab, onTabChange }) => {
+            const tabs = [
+                { id: 'home', I: Icons.Home, l: VI_TEXT.dashboard },
+                { id: 'calendar', I: Icons.Calendar, l: VI_TEXT.calendar },
+                { id: 'news', I: Icons.Newspaper, l: VI_TEXT.news },
+                { id: 'support', I: Icons.Headphones, l: VI_TEXT.support },
+                { id: 'settings', I: Icons.Settings, l: VI_TEXT.settings }
+            ];
+            return (
+                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex safe-bottom z-40 max-w-lg mx-auto">
+                    {tabs.map(t => (
+                        <button key={t.id} onClick={() => onTabChange(t.id)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-colors touch-active ${activeTab === t.id ? 'text-navy-700' : 'text-gray-400'}`}>
+                            <div className="w-6 h-6"><t.I /></div>
+                            <span className="text-xs font-medium">{t.l}</span>
+                        </button>
+                    ))}
+                </div>
+            );
+        };
+
+        // ============ MAIN APP ============
+        function App() {
+            const [screen, setScreen] = useState('splash');
+            const [tab, setTab] = useState('home');
+            const [user, setUser] = useState(null);
+            const [isPro, setIsPro] = useState(false);
+            const [showUpgrade, setShowUpgrade] = useState(false);
+            const [selEvent, setSelEvent] = useState(null);
+
+            // API DATA STATES
+            const [events, setEvents] = useState([]);
+            const [newsData, setNewsData] = useState([]);
+            const [provinces, setProvinces] = useState([]);
+            const [agencies, setAgencies] = useState([]);
+            const [businesses, setBusinesses] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            // FETCH DATA FROM API
+            useEffect(() => {
+                const fetchData = async () => {
+                    try {
+                        setLoading(true);
+                        
+                        // Fetch events
+                        const evRes = await fetch(API + '/events');
+                        const evData = await evRes.json();
+                        if (evData.success) setEvents(evData.data.map(e => ({ ...e, completed: false })));
+
+                        // Fetch news
+                        const newsRes = await fetch(API + '/news');
+                        const newsDataJson = await newsRes.json();
+                        if (newsDataJson.success) setNewsData(newsDataJson.data);
+
+                        // Fetch provinces
+                        const provRes = await fetch(API + '/provinces');
+                        const provData = await provRes.json();
+                        if (provData.success) setProvinces(provData.data);
+
+                        // Fetch all agencies
+                        const agRes = await fetch(API + '/agencies');
+                        const agData = await agRes.json();
+                        if (agData.success) setAgencies(agData.data);
+
+                        // Fetch businesses
+                        const busRes = await fetch(API + '/businesses');
+                        const busData = await busRes.json();
+                        if (busData.success) setBusinesses(busData.data);
+
+                    } catch (err) {
+                        console.error('Error fetching data:', err);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+                fetchData();
+            }, []);
+
+            const login = u => { setUser(u); setScreen('main'); };
+            const skip = () => { setUser({ isMember: false }); setScreen('main'); };
+            const toggle = id => {
+                setEvents(events.map(e => e.id === id ? { ...e, completed: !e.completed } : e));
+                setSelEvent(p => p && p.id === id ? { ...p, completed: !p.completed } : p);
+            };
+            const reset = () => { setScreen('splash'); setUser(null); setIsPro(false); };
+            const logout = () => { setUser({ isMember: false }); };
+            const upgrade = () => { setIsPro(true); setShowUpgrade(false); };
+
+            return (
+                <div className="h-full w-full max-w-lg mx-auto bg-gray-50 relative overflow-hidden">
+                    {screen === 'splash' && <SplashScreen onFinish={() => setScreen('auth')} />}
+                    {screen === 'auth' && <AuthScreen onLogin={login} onSkip={skip} />}
+                    {screen === 'main' && (
+                        <>
+                            {tab === 'home' && <DashboardScreen events={events} onEventClick={setSelEvent} isPro={isPro} onShowUpgrade={() => setShowUpgrade(true)} />}
+                            {tab === 'calendar' && <CalendarScreen events={events} onEventClick={setSelEvent} isPro={isPro} />}
+                            {tab === 'news' && <NewsScreen isPro={isPro} newsData={newsData} />}
+                            {tab === 'support' && <SupportScreen isPro={isPro} onShowUpgrade={() => setShowUpgrade(true)} provinces={provinces} agencies={agencies} businesses={businesses} />}
+                            {tab === 'settings' && <SettingsScreen user={user} isPro={isPro} onLogout={logout} onShowUpgrade={() => setShowUpgrade(true)} onReset={reset} />}
+                            <TabBar activeTab={tab} onTabChange={setTab} />
+                            {selEvent && <EventDetailModal event={selEvent} onClose={() => setSelEvent(null)} onToggle={toggle} />}
+                            {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUpgrade={upgrade} />}
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
