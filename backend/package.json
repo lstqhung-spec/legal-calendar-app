@@ -1,0 +1,13 @@
+{
+  "name": "htic-legal-app-backend",
+  "version": "1.0.0",
+  "description": "Backend for HTIC Legal Calendar App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "init-db": "node init-database.js"
+  },
+  "keywords": ["legal", "calendar", "htic", "vietnam"],
+  "author": "HTIC Law Company",
+  "license": "ISC"
+}

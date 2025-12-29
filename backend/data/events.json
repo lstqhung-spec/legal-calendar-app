@@ -1,0 +1,203 @@
+[
+  {
+    "id": 1,
+    "title": "Nộp tờ khai thuế GTGT tháng",
+    "category": "tax",
+    "dayOfMonth": 20,
+    "frequency": "monthly",
+    "description": "Nộp tờ khai thuế Giá trị gia tăng hàng tháng cho cơ quan thuế. Áp dụng cho doanh nghiệp kê khai thuế GTGT theo phương pháp khấu trừ.",
+    "legalReference": "Luật Quản lý thuế 2019, Điều 44; Nghị định 126/2020/NĐ-CP",
+    "penalty": "Phạt từ 2.000.000 - 25.000.000 đồng tùy theo số ngày chậm nộp",
+    "checklist": [
+      {"id": 1, "text": "Đăng nhập hệ thống eTax", "link": "https://thuedientu.gdt.gov.vn"},
+      {"id": 2, "text": "Chọn 'Kê khai trực tuyến'", "link": null},
+      {"id": 3, "text": "Chọn mẫu tờ khai 01/GTGT", "link": null},
+      {"id": 4, "text": "Điền thông tin doanh thu, thuế đầu vào/ra", "link": null},
+      {"id": 5, "text": "Kiểm tra và nộp tờ khai", "link": null},
+      {"id": 6, "text": "Lưu mã giao dịch để đối chiếu", "link": null}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "title": "Đóng BHXH, BHYT, BHTN",
+    "category": "insurance",
+    "dayOfMonth": 25,
+    "frequency": "monthly",
+    "description": "Đóng bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm thất nghiệp hàng tháng cho người lao động.",
+    "legalReference": "Luật BHXH 2014, Điều 85-86; Luật BHYT 2008",
+    "penalty": "Phạt từ 12% - 15% số tiền chậm đóng. Ngoài ra còn phải đóng tiền lãi chậm nộp.",
+    "checklist": [
+      {"id": 1, "text": "Đăng nhập BHXH điện tử", "link": "https://dichvucong.baohiemxahoi.gov.vn"},
+      {"id": 2, "text": "Kiểm tra danh sách lao động tham gia", "link": null},
+      {"id": 3, "text": "Cập nhật biến động lao động (nếu có)", "link": null},
+      {"id": 4, "text": "Lập bảng kê hồ sơ đóng BHXH", "link": null},
+      {"id": 5, "text": "Nộp tiền qua ngân hàng liên kết", "link": null},
+      {"id": 6, "text": "Lưu biên lai đóng BHXH", "link": null}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "title": "Nộp tờ khai thuế TNCN",
+    "category": "tax",
+    "dayOfMonth": 20,
+    "frequency": "monthly",
+    "description": "Nộp tờ khai thuế Thu nhập cá nhân khấu trừ tại nguồn cho người lao động trong doanh nghiệp.",
+    "legalReference": "Nghị định 126/2020/NĐ-CP; Thông tư 80/2021/TT-BTC",
+    "penalty": "Phạt từ 2.000.000 - 25.000.000 đồng",
+    "checklist": [
+      {"id": 1, "text": "Tổng hợp thu nhập NLĐ trong tháng", "link": null},
+      {"id": 2, "text": "Tính thuế TNCN phải khấu trừ", "link": null},
+      {"id": 3, "text": "Đăng nhập hệ thống eTax", "link": "https://thuedientu.gdt.gov.vn"},
+      {"id": 4, "text": "Kê khai mẫu 05/KK-TNCN", "link": null},
+      {"id": 5, "text": "Nộp tờ khai và lưu mã giao dịch", "link": null}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "title": "Báo cáo tình hình sử dụng hóa đơn",
+    "category": "report",
+    "dayOfMonth": 30,
+    "frequency": "quarterly",
+    "description": "Báo cáo tình hình sử dụng hóa đơn điện tử trong quý. Áp dụng cho tất cả doanh nghiệp sử dụng hóa đơn.",
+    "legalReference": "Thông tư 78/2021/TT-BTC; Nghị định 123/2020/NĐ-CP",
+    "penalty": "Phạt từ 4.000.000 - 8.000.000 đồng",
+    "checklist": [
+      {"id": 1, "text": "Kiểm tra số hóa đơn đã sử dụng trong quý", "link": null},
+      {"id": 2, "text": "Đối chiếu với sổ sách kế toán", "link": null},
+      {"id": 3, "text": "Đăng nhập hệ thống eTax", "link": "https://thuedientu.gdt.gov.vn"},
+      {"id": 4, "text": "Lập báo cáo mẫu BC26/HĐ", "link": null},
+      {"id": 5, "text": "Nộp báo cáo và lưu xác nhận", "link": null}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 5,
+    "title": "Nộp tờ khai thuế GTGT quý",
+    "category": "tax",
+    "dayOfMonth": 30,
+    "frequency": "quarterly",
+    "description": "Nộp tờ khai thuế GTGT theo quý (áp dụng cho DN có doanh thu dưới 50 tỷ/năm và đăng ký kê khai theo quý).",
+    "legalReference": "Luật Quản lý thuế 2019; Thông tư 80/2021/TT-BTC",
+    "penalty": "Phạt từ 2.000.000 - 25.000.000 đồng",
+    "checklist": [
+      {"id": 1, "text": "Tổng hợp hóa đơn đầu vào trong quý", "link": null},
+      {"id": 2, "text": "Tổng hợp hóa đơn đầu ra trong quý", "link": null},
+      {"id": 3, "text": "Tính thuế GTGT phải nộp", "link": null},
+      {"id": 4, "text": "Đăng nhập eTax, kê khai mẫu 01/GTGT", "link": "https://thuedientu.gdt.gov.vn"},
+      {"id": 5, "text": "Nộp tờ khai và lưu mã giao dịch", "link": null}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "title": "Báo cáo năm về Lao động",
+    "category": "report",
+    "dayOfMonth": 5,
+    "frequency": "yearly",
+    "month": 1,
+    "description": "Báo cáo tình hình sử dụng lao động năm trước gửi Sở Lao động - Thương binh và Xã hội.",
+    "legalReference": "Bộ luật Lao động 2019, Điều 12",
+    "penalty": "Phạt từ 5.000.000 - 10.000.000 đồng",
+    "checklist": [
+      {"id": 1, "text": "Tổng hợp số liệu lao động trong năm", "link": null},
+      {"id": 2, "text": "Thống kê biến động nhân sự", "link": null},
+      {"id": 3, "text": "Lập báo cáo theo mẫu quy định", "link": null},
+      {"id": 4, "text": "Nộp Sở LĐTBXH địa phương", "link": null},
+      {"id": 5, "text": "Lưu biên nhận", "link": null}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 7,
+    "title": "Nộp báo cáo tài chính năm",
+    "category": "report",
+    "dayOfMonth": 30,
+    "frequency": "yearly",
+    "month": 3,
+    "description": "Nộp báo cáo tài chính năm cho cơ quan thuế. Hạn chót 90 ngày kể từ ngày kết thúc năm tài chính.",
+    "legalReference": "Luật Kế toán 2015; Thông tư 200/2014/TT-BTC",
+    "penalty": "Phạt từ 5.000.000 - 10.000.000 đồng",
+    "checklist": [
+      {"id": 1, "text": "Hoàn thành sổ sách kế toán năm", "link": null},
+      {"id": 2, "text": "Lập Bảng cân đối kế toán", "link": null},
+      {"id": 3, "text": "Lập Báo cáo kết quả kinh doanh", "link": null},
+      {"id": 4, "text": "Lập Báo cáo lưu chuyển tiền tệ", "link": null},
+      {"id": 5, "text": "Lập Thuyết minh báo cáo tài chính", "link": null},
+      {"id": 6, "text": "Nộp qua hệ thống eTax", "link": "https://thuedientu.gdt.gov.vn"}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 8,
+    "title": "Quyết toán thuế TNDN năm",
+    "category": "tax",
+    "dayOfMonth": 30,
+    "frequency": "yearly",
+    "month": 3,
+    "description": "Quyết toán thuế Thu nhập doanh nghiệp năm. Hạn chót 90 ngày kể từ ngày kết thúc năm tài chính.",
+    "legalReference": "Luật Thuế TNDN; Thông tư 78/2014/TT-BTC",
+    "penalty": "Phạt từ 2.000.000 - 25.000.000 đồng",
+    "checklist": [
+      {"id": 1, "text": "Tổng hợp doanh thu cả năm", "link": null},
+      {"id": 2, "text": "Tổng hợp chi phí được trừ", "link": null},
+      {"id": 3, "text": "Xác định thu nhập chịu thuế", "link": null},
+      {"id": 4, "text": "Tính thuế TNDN phải nộp", "link": null},
+      {"id": 5, "text": "Lập tờ khai quyết toán 03/TNDN", "link": null},
+      {"id": 6, "text": "Nộp qua eTax", "link": "https://thuedientu.gdt.gov.vn"}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 9,
+    "title": "Quyết toán thuế TNCN năm",
+    "category": "tax",
+    "dayOfMonth": 30,
+    "frequency": "yearly",
+    "month": 3,
+    "description": "Quyết toán thuế Thu nhập cá nhân cho người lao động. Hạn chót 90 ngày kể từ ngày kết thúc năm.",
+    "legalReference": "Luật Thuế TNCN; Thông tư 111/2013/TT-BTC",
+    "penalty": "Phạt từ 2.000.000 - 25.000.000 đồng",
+    "checklist": [
+      {"id": 1, "text": "Tổng hợp thu nhập NLĐ cả năm", "link": null},
+      {"id": 2, "text": "Tính giảm trừ gia cảnh cho NLĐ", "link": null},
+      {"id": 3, "text": "Lập tờ khai quyết toán 05/QTT-TNCN", "link": null},
+      {"id": 4, "text": "Cấp chứng từ khấu trừ thuế cho NLĐ", "link": null},
+      {"id": 5, "text": "Nộp qua eTax", "link": "https://thuedientu.gdt.gov.vn"}
+    ],
+    "isActive": true,
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  },
+  {
+    "id": 10,
+    "title": "Họp Đại hội đồng cổ đông thường niên",
+    "category": "license",
+    "dayOfMonth": 30,
+    "frequency": "yearly",
+    "month": 4,
+    "description": "Tổ chức họp ĐHĐCĐ thường niên trong vòng 4 tháng kể từ ngày kết thúc năm tài chính (áp dụng cho Công ty Cổ phần).",
+    "legalReference": "Luật Doanh nghiệp 2020, Điều 139",
+    "penalty": "Phạt từ 20.000.000 - 30.000.000 đồng",
+    "checklist": [
+      {"id": 1, "text": "Lập danh sách cổ đông có quyền dự họp", "link": null},
+      {"id": 2, "text": "Gửi thông báo mời họp trước 21 ngày", "link": null},
+      {"id": 3, "text": "Chuẩn bị tài liệu họp ĐHĐCĐ", "link": null},
+      {"id": 4, "text": "Tổ chức họp ĐHĐCĐ", "link": null},
+      {"id": 5, "text": "Lập biên bản họp ĐHĐCĐ", "link": null},
+      {"id": 6, "text": "Công bố nghị quyết ĐHĐCĐ", "link": null}
+    ],
+    "isActive": true,
+    "businessTypes": ["joint_stock"],
+    "createdAt": "2025-01-01T00:00:00.000Z"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "id": 1,
+    "title": "Hướng dẫn mới về kê khai thuế GTGT năm 2025",
+    "category": "Thuế",
+    "date": "28/12/2024",
+    "summary": "Tổng cục Thuế ban hành hướng dẫn mới về quy trình kê khai thuế giá trị gia tăng, áp dụng từ 01/01/2025 với nhiều thay đổi quan trọng.",
+    "content": "Theo hướng dẫn mới, các doanh nghiệp cần lưu ý:\n\n1. Thời hạn nộp tờ khai thuế GTGT theo tháng là ngày 20 của tháng sau.\n\n2. Doanh nghiệp có doanh thu dưới 50 tỷ đồng/năm có thể đăng ký kê khai theo quý.\n\n3. Hóa đơn điện tử phải được lưu trữ tối thiểu 10 năm.\n\n4. Các trường hợp được hoàn thuế GTGT được mở rộng.",
+    "image": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&h=400&fit=crop",
+    "isHot": true,
+    "isActive": true
+  },
+  {
+    "id": 2,
+    "title": "Quy định mới về BHXH bắt buộc từ 2025",
+    "category": "BHXH",
+    "date": "27/12/2024",
+    "summary": "Luật Bảo hiểm xã hội sửa đổi có hiệu lực với nhiều quy định mới về đối tượng tham gia, mức đóng và quyền lợi hưởng.",
+    "content": "Những điểm mới quan trọng:\n\n1. Mở rộng đối tượng tham gia BHXH bắt buộc đến hộ kinh doanh cá thể.\n\n2. Tăng mức hỗ trợ đóng BHXH cho người lao động tự do.\n\n3. Giảm thời gian đóng BHXH để hưởng lương hưu.\n\n4. Bổ sung chế độ thai sản cho lao động nam.",
+    "image": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&h=400&fit=crop",
+    "isHot": true,
+    "isActive": true
+  },
+  {
+    "id": 3,
+    "title": "Sửa đổi Luật Doanh nghiệp 2025: Những điều cần biết",
+    "category": "Doanh nghiệp",
+    "date": "26/12/2024",
+    "summary": "Quốc hội thông qua Luật Doanh nghiệp sửa đổi với nhiều quy định mới về thành lập, tổ chức và hoạt động của doanh nghiệp.",
+    "content": "Các thay đổi chính:\n\n1. Đơn giản hóa thủ tục đăng ký kinh doanh.\n\n2. Quy định rõ hơn về trách nhiệm của người đại diện pháp luật.\n\n3. Tăng cường bảo vệ quyền lợi cổ đông thiểu số.\n\n4. Bổ sung quy định về doanh nghiệp xã hội.",
+    "image": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&h=400&fit=crop",
+    "isHot": false,
+    "isActive": true
+  },
+  {
+    "id": 4,
+    "title": "Hướng dẫn quyết toán thuế TNCN năm 2024",
+    "category": "Thuế",
+    "date": "25/12/2024",
+    "summary": "Tổng cục Thuế hướng dẫn chi tiết về quyết toán thuế thu nhập cá nhân năm 2024, hạn chót nộp trước 30/3/2025.",
+    "content": "Lưu ý quan trọng:\n\n1. Người lao động có thu nhập từ 2 nơi trở lên phải tự quyết toán thuế.\n\n2. Mức giảm trừ gia cảnh bản thân: 11 triệu đồng/tháng.\n\n3. Mức giảm trừ người phụ thuộc: 4,4 triệu đồng/người/tháng.\n\n4. Hồ sơ quyết toán nộp qua cổng thuedientu.gdt.gov.vn.",
+    "image": "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=800&h=400&fit=crop",
+    "isHot": false,
+    "isActive": true
+  },
+  {
+    "id": 5,
+    "title": "Nghị định mới về xử phạt vi phạm hành chính trong lĩnh vực thuế",
+    "category": "Thuế",
+    "date": "24/12/2024",
+    "summary": "Chính phủ ban hành Nghị định mới về xử phạt vi phạm hành chính trong lĩnh vực thuế, hóa đơn với mức phạt tăng cao.",
+    "content": "Mức phạt mới:\n\n1. Chậm nộp hồ sơ khai thuế: 2-25 triệu đồng.\n\n2. Khai sai dẫn đến thiếu thuế: 20% số thuế thiếu.\n\n3. Trốn thuế: 1-3 lần số thuế trốn.\n\n4. Vi phạm về hóa đơn điện tử: 4-20 triệu đồng.",
+    "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=400&fit=crop",
+    "isHot": false,
+    "isActive": true
+  }
+]
