@@ -24,11 +24,12 @@
         .touch-active:active{transform:scale(.98);opacity:.9}
         .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+        .calendar-collapse{transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1),opacity 0.3s ease}
     </style>
 </head>
 <body><div id="root"></div>
 <script type="text/babel">
-const{useState,useEffect,useMemo}=React;
+const{useState,useEffect,useMemo,useRef,useCallback}=React;
 const API='/api';
 
 // ============ LOGO COMPONENT ============
@@ -50,13 +51,25 @@ const Logo=({size=40})=>{
 };
 
 const COMPANY_INFO={name:'HTIC LAW FIRM',website:'www.htic.com.vn',phone:'0379 044 299',email:'contact@htic.com.vn'};
-const MEMBERSHIP_PLANS={free:{name:'Miễn phí',price:0,features:['Xem lịch pháp lý','Đọc tin tức','Có quảng cáo']},pro_monthly:{name:'Pro Tháng',price:61000,period:'tháng',features:['Không quảng cáo','Hiển thị DN trong Hỗ trợ','Ưu tiên hỗ trợ']},pro_yearly:{name:'Pro Năm',price:599000,period:'năm',features:['Không quảng cáo','Hiển thị DN trong Hỗ trợ','Ưu tiên hỗ trợ','Tiết kiệm 133k']}};
-const BUSINESS_TYPES=[{id:'tnhh',name:'Công ty TNHH'},{id:'joint_stock',name:'Công ty Cổ phần'},{id:'private',name:'DN tư nhân'},{id:'household',name:'Hộ kinh doanh'}];
-const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'other',name:'Khác'}];
+const MEMBERSHIP_PLANS={free:{name:'Miễn phí',price:0,features:['Xem lịch pháp lý','Đọc tin tức','Có quảng cáo']},pro_monthly:{name:'Pro Tháng',price:61000,period:'tháng',features:['Không quảng cáo','Ưu tiên hỗ trợ','Nhắc nhở qua email']},pro_yearly:{name:'Pro Năm',price:599000,period:'năm',features:['Không quảng cáo','Ưu tiên hỗ trợ','Nhắc nhở qua email','Tiết kiệm 133k']}};
+const USER_TYPES=[{id:'business',name:'Doanh nghiệp'},{id:'individual',name:'Cá nhân'}];
+const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'realestate',name:'Bất động sản'},{id:'other',name:'Khác'}];
 const categoryConfig={tax:{label:'Thuế',color:'bg-red-600',lightColor:'bg-red-50',textColor:'text-red-700',borderColor:'border-red-200'},insurance:{label:'BHXH',color:'bg-blue-600',lightColor:'bg-blue-50',textColor:'text-blue-700',borderColor:'border-blue-200'},report:{label:'Báo cáo',color:'bg-emerald-600',lightColor:'bg-emerald-50',textColor:'text-emerald-700',borderColor:'border-emerald-200'},license:{label:'Giấy phép',color:'bg-amber-600',lightColor:'bg-amber-50',textColor:'text-amber-700',borderColor:'border-amber-200'},news:{label:'Tin tức',color:'bg-purple-600',lightColor:'bg-purple-50',textColor:'text-purple-700',borderColor:'border-purple-200'}};
 const agencyCategories={tax:{label:'Thuế',color:'bg-red-50 text-red-700 border border-red-200'},court:{label:'Tòa án',color:'bg-purple-50 text-purple-700 border border-purple-200'},insurance:{label:'BHXH',color:'bg-emerald-50 text-emerald-700 border border-emerald-200'},labor:{label:'Sở LĐTBXH',color:'bg-teal-50 text-teal-700 border border-teal-200'},business:{label:'Đăng ký KD',color:'bg-indigo-50 text-indigo-700 border border-indigo-200'}};
 const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
 const dayNames=['CN','T2','T3','T4','T5','T6','T7'];
+
+// Thu tuc hanh chinh mau
+const PROCEDURES=[
+    {id:1,name:'Đăng ký thành lập doanh nghiệp',category:'business',agency:'Sở KH&ĐT',time:'3-5 ngày làm việc',fee:'Miễn phí',docs:['CMND/CCCD người đại diện','Điều lệ công ty','Danh sách cổ đông/thành viên','Giấy tờ chứng minh trụ sở']},
+    {id:2,name:'Đăng ký mã số thuế',category:'tax',agency:'Chi cục Thuế',time:'2 ngày làm việc',fee:'Miễn phí',docs:['Giấy CN đăng ký DN','CMND người đại diện','Giấy ủy quyền (nếu có)']},
+    {id:3,name:'Khai báo lao động',category:'labor',agency:'Sở LĐTBXH',time:'10 ngày từ khi tuyển dụng',fee:'Miễn phí',docs:['Hợp đồng lao động','Danh sách lao động','Giấy CN đăng ký DN']},
+    {id:4,name:'Đăng ký BHXH lần đầu',category:'insurance',agency:'BHXH quận/huyện',time:'5-7 ngày làm việc',fee:'Theo quy định',docs:['Hồ sơ DN','Danh sách NLĐ tham gia','CMND người lao động','Hợp đồng lao động']},
+    {id:5,name:'Xin giấy phép kinh doanh có điều kiện',category:'license',agency:'Sở chuyên ngành',time:'15-30 ngày',fee:'Theo quy định',docs:['Đơn đề nghị','Giấy CN đăng ký DN','Hồ sơ theo ngành nghề']},
+    {id:6,name:'Thay đổi nội dung đăng ký DN',category:'business',agency:'Sở KH&ĐT',time:'3 ngày làm việc',fee:'Miễn phí',docs:['Thông báo thay đổi','Quyết định thay đổi','Biên bản họp (nếu có)']},
+    {id:7,name:'Đăng ký hóa đơn điện tử',category:'tax',agency:'Chi cục Thuế',time:'1 ngày làm việc',fee:'Miễn phí',docs:['Quyết định áp dụng HĐĐT','Thông báo phát hành','Mẫu hóa đơn']},
+    {id:8,name:'Báo cáo tình hình sử dụng lao động',category:'labor',agency:'Sở LĐTBXH',time:'Trước 05/6 và 05/12',fee:'Miễn phí',docs:['Báo cáo theo mẫu','Danh sách lao động']},
+];
 
 const Icons={
     Home:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -87,13 +100,12 @@ const Icons={
     Trash:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>,
     ExternalLink:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>,
     AlertTriangle:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>,
-    Plus:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>,
     User:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
     Crown:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>,
     CreditCard:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>,
     Upload:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>,
-    Minimize:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>,
-    Maximize:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>,
+    ClipboardList:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg>,
+    Star:()=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-full h-full"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
 };
 
 const getDeadlineFromEvent=(ev)=>{const now=new Date();const y=now.getFullYear();const m=now.getMonth();let day=ev.dayOfMonth||20;if(ev.frequency==='monthly')return new Date(y,m,day);if(ev.frequency==='quarterly'){const qMonth=Math.floor(m/3)*3+2;return new Date(y,qMonth,day);}if(ev.frequency==='yearly'){const eventMonth=(ev.month||1)-1;return new Date(y,eventMonth,day);}return new Date(y,m,day);};
@@ -102,7 +114,7 @@ const formatPrice=(price)=>new Intl.NumberFormat('vi-VN').format(price)+'đ';
 
 // ============ SPLASH SCREEN ============
 const SplashScreen=({onFinish})=>{
-    useEffect(()=>{const t=setTimeout(onFinish,3000);return()=>clearTimeout(t);},[]);
+    useEffect(()=>{const t=setTimeout(onFinish,2500);return()=>clearTimeout(t);},[]);
     return(
         <div className="h-full bg-gradient-to-br from-navy-600 to-navy-800 flex flex-col items-center justify-center p-8">
             <div className="bg-white p-6 rounded-3xl shadow-2xl mb-8 animate-float"><Logo size={100}/></div>
@@ -120,75 +132,128 @@ const AdBanner=({membership})=>{
     if(membership?.plan!=='free')return null;
     return(
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-3 mx-5 rounded-xl mb-4 shadow-md">
-            <p className="text-white text-sm font-bold text-center">🎁 Nâng cấp Pro để bỏ quảng cáo và hiển thị DN</p>
+            <p className="text-white text-sm font-bold text-center">🎁 Nâng cấp Pro để bỏ quảng cáo</p>
         </div>
     );
 };
 
 // ============ EVENT CARD ============
-const EventCard=({event,onClick,compact=false})=>{
+const EventCard=({event,onClick,compact=false,isHighPriority=false})=>{
     const c=categoryConfig[event.category]||categoryConfig.tax;
     const deadline=event.date?new Date(event.date):getDeadlineFromEvent(event);
     const d=getDaysUntil(deadline);
-    const isOverdue=d<0&&!event.completed;
-    const isUrgent=d>=0&&d<=7&&!event.completed;
     const dateStr=event.date?new Date(event.date).toLocaleDateString('vi-VN'):`Ngày ${event.dayOfMonth||20}`;
+    
     if(compact)return(
-        <button onClick={onClick} className={`w-full bg-white rounded-xl p-3.5 shadow-sm border flex items-center gap-3 text-left touch-active ${c.borderColor}`}>
+        <button onClick={onClick} className={`w-full bg-white rounded-xl p-3.5 shadow-sm border flex items-center gap-3 text-left touch-active ${isHighPriority?'border-amber-400 ring-2 ring-amber-200':c.borderColor}`}>
+            {isHighPriority&&<div className="w-5 h-5 text-amber-500 flex-shrink-0"><Icons.Star/></div>}
             <div className={`w-2 h-12 rounded-full ${c.color} flex-shrink-0`}/>
             <div className="flex-1 min-w-0"><p className="font-semibold text-gray-900 text-sm truncate">{event.title}</p><p className="text-xs text-gray-600 mt-0.5 font-medium">Hạn: {dateStr}</p></div>
-            {isOverdue?<span className="text-xs font-bold text-white bg-red-600 px-2.5 py-1 rounded-lg shadow-sm">-{Math.abs(d)}d</span>:isUrgent?<span className="text-xs font-bold text-white bg-amber-500 px-2.5 py-1 rounded-lg shadow-sm">{d}d</span>:<span className="text-xs font-bold text-gray-700 bg-gray-100 px-2.5 py-1 rounded-lg">{d}d</span>}
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${d<=3?'text-white bg-red-500':d<=7?'text-white bg-amber-500':'text-gray-700 bg-gray-100'}`}>{d} ngày</span>
         </button>
     );
     return(
         <button onClick={onClick} className={`w-full bg-white rounded-2xl p-4 shadow-sm border flex items-center gap-4 text-left touch-active ${c.borderColor}`}>
             <div className={`p-3 rounded-xl ${c.lightColor} flex-shrink-0 border ${c.borderColor}`}><div className={`w-5 h-5 ${c.textColor}`}><Icons.FileText/></div></div>
             <div className="flex-1 min-w-0"><p className="font-semibold text-gray-900 truncate text-sm">{event.title}</p><p className="text-xs text-gray-600 mt-0.5 font-medium">{dateStr}</p></div>
-            {event.completed?<div className="w-7 h-7 text-emerald-600 flex-shrink-0"><Icons.CheckCircle/></div>:isOverdue?<span className="text-xs font-bold text-white bg-red-600 px-3 py-1.5 rounded-full animate-pulse-custom shadow">Quá {Math.abs(d)}d</span>:isUrgent?<span className="text-xs font-bold text-white bg-amber-500 px-3 py-1.5 rounded-full shadow">{d}d</span>:<span className="text-xs font-bold text-navy-700 bg-navy-50 px-3 py-1.5 rounded-full border border-navy-200">{d}d</span>}
+            <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${d<=3?'text-white bg-red-500':d<=7?'text-white bg-amber-500':'text-navy-700 bg-navy-50 border border-navy-200'}`}>{d}d</span>
         </button>
     );
 };
 
 // ============ NEWS CARD ============
-const NewsCard=({news,onClick})=>(
-    <button onClick={onClick} className="w-full bg-white rounded-xl p-3.5 shadow-sm border border-gray-200 flex items-center gap-3 text-left touch-active">
-        {news.image?<img src={news.image} alt="" className="w-20 h-16 object-cover rounded-lg flex-shrink-0 border border-gray-100"/>:<div className="w-20 h-16 bg-navy-50 rounded-lg flex items-center justify-center flex-shrink-0 border border-navy-100"><div className="w-8 h-8 text-navy-400"><Icons.Newspaper/></div></div>}
-        <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-                <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-bold">{news.category}</span>
-                {news.isHot&&<span className="text-orange-500 text-xs font-bold">🔥</span>}
+const NewsCard=({news,onClick,featured=false})=>{
+    if(featured)return(
+        <button onClick={onClick} className="w-full bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 text-left touch-active">
+            {news.image&&<img src={news.image} alt="" className="w-full h-40 object-cover"/>}
+            <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-bold">{news.category}</span>
+                    {news.isHot&&<span className="text-orange-500 text-xs font-bold">🔥 Hot</span>}
+                </div>
+                <p className="font-bold text-gray-900 text-base mb-2">{news.title}</p>
+                <p className="text-gray-600 text-sm line-clamp-2">{news.summary}</p>
+                <p className="text-xs text-gray-400 mt-2 font-medium">{news.date}</p>
             </div>
-            <p className="font-semibold text-gray-900 text-sm line-clamp-2">{news.title}</p>
-            <p className="text-xs text-gray-500 mt-1 font-medium">{news.date}</p>
-        </div>
-        <div className="w-5 h-5 text-gray-400 flex-shrink-0"><Icons.ChevronRight/></div>
-    </button>
-);
+        </button>
+    );
+    return(
+        <button onClick={onClick} className="w-full bg-white rounded-xl p-3.5 shadow-sm border border-gray-200 flex items-center gap-3 text-left touch-active">
+            {news.image?<img src={news.image} alt="" className="w-20 h-16 object-cover rounded-lg flex-shrink-0 border border-gray-100"/>:<div className="w-20 h-16 bg-navy-50 rounded-lg flex items-center justify-center flex-shrink-0 border border-navy-100"><div className="w-8 h-8 text-navy-400"><Icons.Newspaper/></div></div>}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-bold">{news.category}</span>
+                </div>
+                <p className="font-semibold text-gray-900 text-sm line-clamp-2">{news.title}</p>
+                <p className="text-xs text-gray-500 mt-1 font-medium">{news.date}</p>
+            </div>
+            <div className="w-5 h-5 text-gray-400 flex-shrink-0"><Icons.ChevronRight/></div>
+        </button>
+    );
+};
 
-// ============ EVENT DETAIL MODAL ============
-const EventDetailModal=({event,onClose,onToggle,checklistState,onChecklistChange})=>{
+// ============ EVENT DETAIL MODAL - Simplified (no checklist) ============
+const EventDetailModal=({event,onClose})=>{
     if(!event)return null;
     const c=categoryConfig[event.category]||categoryConfig.tax;
     const deadline=event.date?new Date(event.date):getDeadlineFromEvent(event);
     const d=getDaysUntil(deadline);
-    const isOverdue=d<0&&!event.completed;
-    const checklist=event.checklist||[];
-    const completedSteps=checklistState[event.id]||[];
-    const progress=checklist.length>0?Math.round((completedSteps.length/checklist.length)*100):0;
-    const toggleStep=(stepId)=>{const current=completedSteps||[];const newState=current.includes(stepId)?current.filter(id=>id!==stepId):[...current,stepId];onChecklistChange(event.id,newState);};
     const dateStr=event.date?new Date(event.date).toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):`Ngày ${event.dayOfMonth||20} hàng ${event.frequency==='monthly'?'tháng':event.frequency==='quarterly'?'quý':'năm'}`;
+    
     return(
         <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50 fade-in" onClick={onClose}>
             <div className="bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] overflow-auto hide-scrollbar slide-up safe-bottom" onClick={e=>e.stopPropagation()}>
-                <div className="sticky top-0 bg-white px-5 py-4 border-b border-gray-200 flex justify-between items-center z-10"><div className={`px-3 py-1.5 rounded-full ${c.lightColor} ${c.textColor} text-sm font-bold border ${c.borderColor}`}>{c.label}</div><button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"><div className="w-5 h-5 text-gray-700"><Icons.X/></div></button></div>
+                <div className="sticky top-0 bg-white px-5 py-4 border-b border-gray-200 flex justify-between items-center z-10">
+                    <div className={`px-3 py-1.5 rounded-full ${c.lightColor} ${c.textColor} text-sm font-bold border ${c.borderColor}`}>{c.label}</div>
+                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"><div className="w-5 h-5 text-gray-700"><Icons.X/></div></button>
+                </div>
                 <div className="p-5 space-y-5">
                     <h2 className="text-xl font-bold text-gray-900">{event.title}</h2>
-                    <div className={`p-4 rounded-2xl border-2 ${event.completed?'bg-emerald-50 border-emerald-300':isOverdue?'bg-red-50 border-red-300':d<=7?'bg-amber-50 border-amber-300':'bg-sky-50 border-sky-300'}`}><div className="flex items-center gap-3"><div className={`w-11 h-11 rounded-full flex items-center justify-center ${event.completed?'bg-emerald-500':isOverdue?'bg-red-500':d<=7?'bg-amber-500':'bg-sky-500'}`}><div className="w-5 h-5 text-white">{event.completed?<Icons.Check/>:<Icons.Clock/>}</div></div><div><p className="text-sm text-gray-700 font-semibold">{dateStr}</p><p className={`font-bold text-lg ${event.completed?'text-emerald-700':isOverdue?'text-red-700':d<=7?'text-amber-700':'text-sky-700'}`}>{event.completed?'Đã hoàn thành':isOverdue?`Quá hạn ${Math.abs(d)} ngày`:d===0?'Hôm nay là hạn chót!':`Còn ${d} ngày`}</p></div></div></div>
-                    {checklist.length>0&&<div className="bg-gray-50 rounded-2xl p-4 border border-gray-200"><div className="flex items-center justify-between mb-3"><h3 className="font-bold text-gray-900">Các bước thực hiện</h3><span className="text-sm font-bold text-gray-700 bg-white px-2 py-1 rounded-lg border">{completedSteps.length}/{checklist.length}</span></div><div className="w-full bg-gray-200 rounded-full h-2.5 mb-4"><div className="bg-emerald-500 h-2.5 rounded-full transition-all" style={{width:`${progress}%`}}/></div><div className="space-y-2">{checklist.map((step,idx)=><div key={step.id} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-white border border-transparent hover:border-gray-200"><button onClick={()=>toggleStep(step.id)} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${completedSteps.includes(step.id)?'bg-emerald-500 border-emerald-500':'border-gray-400 hover:border-gray-500'}`}>{completedSteps.includes(step.id)&&<div className="w-4 h-4 text-white"><Icons.Check/></div>}</button><div className="flex-1"><p className={`text-sm font-semibold ${completedSteps.includes(step.id)?'text-gray-400 line-through':'text-gray-800'}`}>{idx+1}. {step.text}</p>{step.link&&<a href={step.link} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 flex items-center gap-1 mt-1.5 font-semibold hover:underline"><div className="w-3.5 h-3.5"><Icons.ExternalLink/></div>Mở liên kết</a>}</div></div>)}</div></div>}
-                    {event.description&&<div><h3 className="font-bold mb-2 text-gray-900">Mô tả</h3><p className="text-gray-700 text-sm leading-relaxed font-medium">{event.description}</p></div>}
-                    {event.legalReference&&<div><h3 className="font-bold mb-2 text-gray-900">Căn cứ pháp lý</h3><p className="text-gray-700 text-sm leading-relaxed font-medium">{event.legalReference}</p></div>}
-                    {event.penalty&&<div className="bg-red-50 p-4 rounded-xl border-2 border-red-200"><h3 className="font-bold mb-2 text-red-800 flex items-center gap-2"><div className="w-5 h-5"><Icons.AlertTriangle/></div>Mức phạt</h3><p className="text-red-700 text-sm font-semibold">{event.penalty}</p></div>}
-                    {!event.isFromNews&&<button onClick={()=>onToggle(event.id)} className={`w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm ${event.completed?'bg-gray-200 text-gray-800 hover:bg-gray-300':'bg-emerald-500 text-white hover:bg-emerald-600'}`}><div className="w-5 h-5">{event.completed?<Icons.X/>:<Icons.Check/>}</div>{event.completed?'Bỏ đánh dấu':'Đánh dấu hoàn thành'}</button>}
+                    
+                    {/* Thời gian còn lại */}
+                    <div className={`p-4 rounded-2xl border-2 ${d<=3?'bg-red-50 border-red-300':d<=7?'bg-amber-50 border-amber-300':'bg-sky-50 border-sky-300'}`}>
+                        <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${d<=3?'bg-red-500':d<=7?'bg-amber-500':'bg-sky-500'}`}>
+                                <div className="w-6 h-6 text-white"><Icons.Clock/></div>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-700 font-semibold">{dateStr}</p>
+                                <p className={`font-bold text-xl ${d<=3?'text-red-700':d<=7?'text-amber-700':'text-sky-700'}`}>
+                                    {d===0?'Hôm nay là hạn chót!':d===1?'Còn 1 ngày':`Còn ${d} ngày`}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Mô tả */}
+                    {event.description&&(
+                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                            <h3 className="font-bold mb-2 text-gray-900 flex items-center gap-2">
+                                <div className="w-5 h-5 text-gray-600"><Icons.FileText/></div>Mô tả
+                            </h3>
+                            <p className="text-gray-700 text-sm leading-relaxed">{event.description}</p>
+                        </div>
+                    )}
+                    
+                    {/* Căn cứ pháp lý */}
+                    {event.legalReference&&(
+                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                            <h3 className="font-bold mb-2 text-blue-900 flex items-center gap-2">
+                                <div className="w-5 h-5"><Icons.Shield/></div>Căn cứ pháp lý
+                            </h3>
+                            <p className="text-blue-800 text-sm leading-relaxed">{event.legalReference}</p>
+                        </div>
+                    )}
+                    
+                    {/* Mức phạt hành chính */}
+                    {event.penalty&&(
+                        <div className="bg-red-50 p-4 rounded-xl border-2 border-red-200">
+                            <h3 className="font-bold mb-2 text-red-800 flex items-center gap-2">
+                                <div className="w-5 h-5"><Icons.AlertTriangle/></div>Mức phạt hành chính
+                            </h3>
+                            <p className="text-red-700 text-sm font-semibold">{event.penalty}</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -196,49 +261,96 @@ const EventDetailModal=({event,onClose,onToggle,checklistState,onChecklistChange
 };
 
 // ============ DASHBOARD SCREEN ============
-const DashboardScreen=({events,news,onEventClick,onNewsClick,membership,businessProfile,savedEvents})=>{
+const DashboardScreen=({events,news,onEventClick,onNewsClick,membership,savedEvents})=>{
     const today=new Date();
+    
+    // Chỉ hiển thị sự kiện sắp tới (không quá hạn)
     const allEvents=[...events.map(e=>({...e,deadline:getDeadlineFromEvent(e),daysUntil:getDaysUntil(getDeadlineFromEvent(e))})),...(savedEvents||[]).map(e=>({...e,deadline:new Date(e.date),daysUntil:getDaysUntil(new Date(e.date))}))];
-    const overdue=allEvents.filter(e=>e.daysUntil<0&&!e.completed);
-    const upcoming=allEvents.filter(e=>!e.completed).sort((a,b)=>a.daysUntil-b.daysUntil).slice(0,6);
+    const upcomingEvents=allEvents.filter(e=>e.daysUntil>=0).sort((a,b)=>a.daysUntil-b.daysUntil).slice(0,6);
     const latestNews=news.slice(0,5);
-    const nearestDeadline=upcoming[0];
+    const nearestDeadline=upcomingEvents[0];
+    
     return(
         <div className="h-full bg-slate-100 overflow-auto hide-scrollbar pb-24">
             <div className="bg-gradient-to-br from-navy-600 to-navy-800 pt-14 pb-6 px-5 safe-top">
                 <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3"><div className="bg-white p-2 rounded-xl shadow-lg"><Logo size={32}/></div><div><p className="text-white font-bold text-lg">Lịch Pháp Lý</p><p className="text-sky-200 text-xs font-semibold">by {COMPANY_INFO.name}</p></div></div>
+                    <div className="flex items-center gap-3">
+                        <div className="bg-white p-2 rounded-xl shadow-lg"><Logo size={32}/></div>
+                        <div><p className="text-white font-bold text-lg">Lịch Pháp Lý</p><p className="text-sky-200 text-xs font-semibold">by {COMPANY_INFO.name}</p></div>
+                    </div>
                     {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-amber-500 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
                 </div>
                 <p className="text-sky-100 text-sm font-semibold">{today.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
             </div>
-            {overdue.length>0&&<div className="px-5 -mt-3 mb-3"><div className="bg-red-600 rounded-2xl p-4 shadow-lg animate-pulse-custom border-2 border-red-400"><div className="flex items-center gap-3"><div className="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center"><div className="w-6 h-6 text-white"><Icons.AlertTriangle/></div></div><div><p className="text-white font-bold text-base">⚠️ {overdue.length} việc đã quá hạn!</p><p className="text-red-100 text-sm font-semibold">Vui lòng xử lý ngay</p></div></div></div></div>}
-            {nearestDeadline&&<div className={`px-5 ${overdue.length===0?'-mt-3':''} mb-4`}><div className={`rounded-2xl p-5 shadow-lg border-2 ${nearestDeadline.daysUntil<0?'bg-red-500 border-red-400':nearestDeadline.daysUntil<=7?'bg-amber-500 border-amber-400':'bg-emerald-500 border-emerald-400'}`}><div className="flex justify-between items-start"><div className="flex-1"><p className="text-white/90 text-sm font-semibold mb-1">Deadline gần nhất</p><p className="text-white font-bold text-lg mb-2 line-clamp-2">{nearestDeadline.title}</p><div className="flex items-center gap-2"><div className="w-5 h-5 text-white/90"><Icons.Clock/></div><p className="text-white font-bold text-2xl">{nearestDeadline.daysUntil<0?`Quá hạn ${Math.abs(nearestDeadline.daysUntil)} ngày`:nearestDeadline.daysUntil===0?'Hôm nay!':`Còn ${nearestDeadline.daysUntil} ngày`}</p></div></div><button onClick={()=>onEventClick(nearestDeadline)} className="bg-white/25 p-3 rounded-full touch-active hover:bg-white/35"><div className="w-6 h-6 text-white"><Icons.ChevronRight/></div></button></div></div></div>}
+            
+            {/* Deadline gần nhất - highlight */}
+            {nearestDeadline&&(
+                <div className="px-5 -mt-3 mb-4">
+                    <div className={`rounded-2xl p-5 shadow-lg border-2 ${nearestDeadline.daysUntil<=3?'bg-gradient-to-r from-red-500 to-red-600 border-red-400':nearestDeadline.daysUntil<=7?'bg-gradient-to-r from-amber-500 to-orange-500 border-amber-400':'bg-gradient-to-r from-emerald-500 to-teal-500 border-emerald-400'}`}>
+                        <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-5 h-5 text-white/90"><Icons.Star/></div>
+                                    <p className="text-white/90 text-sm font-semibold">Ưu tiên cao nhất</p>
+                                </div>
+                                <p className="text-white font-bold text-lg mb-2 line-clamp-2">{nearestDeadline.title}</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 text-white/90"><Icons.Clock/></div>
+                                    <p className="text-white font-bold text-2xl">
+                                        {nearestDeadline.daysUntil===0?'Hôm nay!':`Còn ${nearestDeadline.daysUntil} ngày`}
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={()=>onEventClick(nearestDeadline)} className="bg-white/25 p-3 rounded-full touch-active hover:bg-white/35">
+                                <div className="w-6 h-6 text-white"><Icons.ChevronRight/></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
             <AdBanner membership={membership}/>
+            
             <div className="px-5 py-4">
-                <h2 className="text-lg font-bold mb-3 text-gray-900 flex items-center gap-2"><div className="w-6 h-6 text-navy-600"><Icons.Calendar/></div>Sự kiện sắp tới</h2>
-                <div className="space-y-2.5">{upcoming.length===0?<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện nào</p></div>:upcoming.map((e,i)=><EventCard key={e.id||i} event={e} onClick={()=>onEventClick(e)} compact/>)}</div>
+                <h2 className="text-lg font-bold mb-3 text-gray-900 flex items-center gap-2">
+                    <div className="w-6 h-6 text-navy-600"><Icons.Calendar/></div>Sự kiện sắp tới
+                </h2>
+                <div className="space-y-2.5">
+                    {upcomingEvents.length===0?
+                        <div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện sắp tới</p></div>
+                        :upcomingEvents.map((e,i)=><EventCard key={e.id||i} event={e} onClick={()=>onEventClick(e)} compact isHighPriority={i===0}/>)
+                    }
+                </div>
             </div>
+            
             <div className="px-5 pb-4">
-                <h2 className="text-lg font-bold mb-3 text-gray-900 flex items-center gap-2"><div className="w-6 h-6 text-amber-500"><Icons.Newspaper/></div>Tin pháp lý mới</h2>
-                <div className="space-y-2.5">{latestNews.length===0?<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>:latestNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>onNewsClick(n)}/>)}</div>
+                <h2 className="text-lg font-bold mb-3 text-gray-900 flex items-center gap-2">
+                    <div className="w-6 h-6 text-amber-500"><Icons.Newspaper/></div>Tin pháp lý mới
+                </h2>
+                <div className="space-y-2.5">
+                    {latestNews.length===0?
+                        <div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>
+                        :latestNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>onNewsClick(n)}/>)
+                    }
+                </div>
             </div>
         </div>
     );
 };
 
-// ============ CALENDAR SCREEN - SIMPLIFIED & SMOOTH ============
+// ============ CALENDAR SCREEN - Smooth collapse on scroll ============
 const CalendarScreen=({events,onEventClick,savedEvents})=>{
     const today=new Date();
     const[month,setMonth]=useState(today.getMonth());
     const[year,setYear]=useState(today.getFullYear());
     const[sel,setSel]=useState(null);
-    const[viewMode,setViewMode]=useState('month'); // 'month' or 'week'
+    const[isCollapsed,setIsCollapsed]=useState(false);
+    const scrollRef=useRef(null);
+    const lastScrollY=useRef(0);
     
     const days=new Date(year,month+1,0).getDate();
     const firstDayOfWeek=new Date(year,month,1).getDay();
     
-    // Combine events
     const allEvents=useMemo(()=>{
         const systemEv=events.map(e=>({...e,deadline:getDeadlineFromEvent(e)}));
         const savedEv=(savedEvents||[]).map(e=>({...e,deadline:new Date(e.date),isFromNews:true}));
@@ -252,24 +364,23 @@ const CalendarScreen=({events,onEventClick,savedEvents})=>{
     
     const selectedDayEvents=sel?getEventsForDay(sel):[];
     
-    // Get current week days
-    const getWeekDays=()=>{
+    // Get current week
+    const getWeekDays=useCallback(()=>{
         const targetDay=sel||(month===today.getMonth()&&year===today.getFullYear()?today.getDate():1);
-        const targetDate=new Date(year,month,Math.min(targetDay,days));
+        const safeDay=Math.min(targetDay,days);
+        const targetDate=new Date(year,month,safeDay);
         const dayOfWeek=targetDate.getDay();
-        const weekStart=targetDay-dayOfWeek;
-        
+        const weekStart=safeDay-dayOfWeek;
         const result=[];
         for(let i=0;i<7;i++){
             const d=weekStart+i;
             result.push(d>=1&&d<=days?d:null);
         }
         return result;
-    };
+    },[sel,month,year,days,today]);
     
     const weekDays=getWeekDays();
     
-    // Month events sorted
     const monthEvents=useMemo(()=>
         allEvents.filter(e=>{
             const dd=new Date(e.deadline);
@@ -277,26 +388,29 @@ const CalendarScreen=({events,onEventClick,savedEvents})=>{
         }).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))
     ,[allEvents,month,year]);
 
-    const prevMonth=()=>{
-        if(month===0){setMonth(11);setYear(y=>y-1);}
-        else setMonth(m=>m-1);
-        setSel(null);
-    };
-    
-    const nextMonth=()=>{
-        if(month===11){setMonth(0);setYear(y=>y+1);}
-        else setMonth(m=>m+1);
-        setSel(null);
-    };
+    // Smooth scroll handler
+    const handleScroll=useCallback((e)=>{
+        const scrollTop=e.target.scrollTop;
+        const diff=scrollTop-lastScrollY.current;
+        
+        if(diff>10&&scrollTop>30&&!isCollapsed){
+            setIsCollapsed(true);
+        }else if(scrollTop<10&&isCollapsed){
+            setIsCollapsed(false);
+        }
+        lastScrollY.current=scrollTop;
+    },[isCollapsed]);
 
-    // Render calendar day
-    const renderDay=(day,isWeekView=false)=>{
+    const prevMonth=()=>{if(month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1);setSel(null);setIsCollapsed(false);};
+    const nextMonth=()=>{if(month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1);setSel(null);setIsCollapsed(false);};
+
+    const renderDay=(day)=>{
         if(day===null)return <div key={Math.random()} className="aspect-square"/>;
         const ev=getEventsForDay(day);
         const isToday=day===today.getDate()&&month===today.getMonth()&&year===today.getFullYear();
         const isSelected=day===sel;
         return(
-            <button key={day} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl ${isSelected?'bg-navy-600 shadow-lg':isToday?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
+            <button key={day} onClick={()=>setSel(day)} className={`aspect-square flex flex-col items-center justify-center rounded-xl transition-all ${isSelected?'bg-navy-600 shadow-lg':isToday?'bg-navy-100 border-2 border-navy-300':'hover:bg-gray-100'}`}>
                 <span className={`text-sm font-bold ${isSelected?'text-white':isToday?'text-navy-700':'text-gray-800'}`}>{day}</span>
                 {ev.length>0&&<div className="flex gap-0.5 mt-1">{ev.slice(0,3).map((e,idx)=><div key={idx} className={`w-1.5 h-1.5 rounded-full ${isSelected?'bg-white':(categoryConfig[e.category]?.color||'bg-purple-500')}`}/>)}</div>}
             </button>
@@ -305,83 +419,65 @@ const CalendarScreen=({events,onEventClick,savedEvents})=>{
 
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            {/* Header */}
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                    <div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200">
-                        <div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div>
-                    </div>
+                    <div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div></div>
                     <h1 className="text-2xl font-bold text-gray-900">Lịch pháp lý</h1>
                 </div>
             </div>
             
-            {/* Month navigation + Toggle button */}
             <div className="bg-white px-5 py-3 flex justify-between items-center border-b border-gray-200">
                 <button onClick={prevMonth} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200">
                     <div className="w-6 h-6 text-gray-700"><Icons.ChevronLeft/></div>
                 </button>
                 <div className="flex items-center gap-2">
                     <h2 className="text-lg font-bold text-gray-900">{monthNames[month]} {year}</h2>
-                    <button onClick={()=>setViewMode(v=>v==='month'?'week':'month')} className="bg-navy-100 text-navy-700 p-2 rounded-lg border border-navy-200 hover:bg-navy-200">
-                        <div className="w-4 h-4">{viewMode==='month'?<Icons.Minimize/>:<Icons.Maximize/>}</div>
-                    </button>
+                    {isCollapsed&&<button onClick={()=>setIsCollapsed(false)} className="bg-navy-100 text-navy-700 text-xs font-bold px-2 py-1 rounded-full border border-navy-200">Mở rộng</button>}
                 </div>
                 <button onClick={nextMonth} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200">
                     <div className="w-6 h-6 text-gray-700"><Icons.ChevronRight/></div>
                 </button>
             </div>
             
-            {/* Calendar grid - NO scroll animation, just toggle */}
-            <div className="bg-white border-b border-gray-200">
-                {/* Day names */}
+            <div className="bg-white border-b border-gray-200 overflow-hidden">
                 <div className="grid grid-cols-7 px-3 pt-2">
                     {dayNames.map(d=><div key={d} className="text-center text-xs font-bold text-gray-500 py-1">{d}</div>)}
                 </div>
-                
-                {/* Calendar days */}
-                <div className="px-3 pb-3">
-                    {viewMode==='week'?(
-                        // Week view - 1 row
-                        <div className="grid grid-cols-7 gap-1">
-                            {weekDays.map((day,i)=>renderDay(day,true))}
-                        </div>
+                <div className={`px-3 pb-3 calendar-collapse ${isCollapsed?'max-h-12 opacity-100':'max-h-72 opacity-100'}`}>
+                    {isCollapsed?(
+                        <div className="grid grid-cols-7 gap-1">{weekDays.map((day,i)=>renderDay(day))}</div>
                     ):(
-                        // Month view - full calendar
                         <div className="grid grid-cols-7 gap-1">
-                            {Array.from({length:firstDayOfWeek}).map((_,i)=><div key={`empty-${i}`} className="aspect-square"/>)}
+                            {Array.from({length:firstDayOfWeek}).map((_,i)=><div key={`e-${i}`} className="aspect-square"/>)}
                             {Array.from({length:days}).map((_,i)=>renderDay(i+1))}
                         </div>
                     )}
                 </div>
             </div>
             
-            {/* Legend */}
             <div className="bg-white px-5 py-2.5 flex flex-wrap gap-3 border-b border-gray-200 text-xs">
                 {Object.entries(categoryConfig).slice(0,5).map(([k,c])=><div key={k} className="flex items-center gap-1.5"><div className={`w-2.5 h-2.5 rounded-full ${c.color}`}/><span className="text-gray-700 font-semibold">{c.label}</span></div>)}
             </div>
             
-            {/* Events list */}
-            <div className="flex-1 bg-slate-100 px-5 py-4 overflow-auto hide-scrollbar">
+            <div ref={scrollRef} onScroll={handleScroll} className="flex-1 bg-slate-100 px-5 py-4 overflow-auto hide-scrollbar">
                 {sel?(
                     <>
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="font-bold text-gray-900">Ngày {sel}/{month+1}/{year}</h3>
                             <button onClick={()=>setSel(null)} className="text-navy-600 text-sm font-semibold">Xem tất cả</button>
                         </div>
-                        {selectedDayEvents.length>0?(
+                        {selectedDayEvents.length>0?
                             <div className="space-y-2">{selectedDayEvents.map((e,idx)=><EventCard key={e.id||idx} event={e} onClick={()=>onEventClick(e)} compact/>)}</div>
-                        ):(
-                            <div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện</p></div>
-                        )}
+                            :<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện</p></div>
+                        }
                     </>
                 ):(
                     <>
                         <h3 className="font-bold mb-3 text-gray-900">Tất cả sự kiện tháng {month+1}</h3>
-                        {monthEvents.length>0?(
+                        {monthEvents.length>0?
                             <div className="space-y-2">{monthEvents.map((e,idx)=><EventCard key={e.id||idx} event={e} onClick={()=>onEventClick(e)} compact/>)}</div>
-                        ):(
-                            <div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện trong tháng</p></div>
-                        )}
+                            :<div className="bg-white rounded-xl p-6 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không có sự kiện trong tháng</p></div>
+                        }
                     </>
                 )}
             </div>
@@ -395,14 +491,7 @@ const NewsDetailModal=({news,onClose,onAddToCalendar})=>{
     const[selectedDate,setSelectedDate]=useState(new Date().toISOString().split('T')[0]);
     
     const handleAddToCalendar=()=>{
-        onAddToCalendar({
-            id:'news-'+news.id+'-'+Date.now(),
-            title:news.title,
-            category:'news',
-            date:selectedDate,
-            description:news.summary,
-            isFromNews:true
-        });
+        onAddToCalendar({id:'news-'+news.id+'-'+Date.now(),title:news.title,category:'news',date:selectedDate,description:news.summary,isFromNews:true});
         setShowDatePicker(false);
         alert('✅ Đã thêm vào lịch!');
     };
@@ -414,26 +503,22 @@ const NewsDetailModal=({news,onClose,onAddToCalendar})=>{
                     <span className="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full text-sm font-bold border border-purple-200">{news.category}</span>
                     <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"><div className="w-5 h-5 text-gray-700"><Icons.X/></div></button>
                 </div>
-                
                 {news.image&&<img src={news.image} alt="" className="w-full h-56 object-cover"/>}
-                
                 <div className="p-5 space-y-4">
                     <div className="flex items-center gap-2">
                         {news.isHot&&<span className="bg-red-100 text-red-700 text-sm px-3 py-1 rounded-full font-bold border border-red-200">🔥 Tin nổi bật</span>}
                         <span className="text-gray-500 text-sm font-medium">{news.date}</span>
                     </div>
-                    
                     <h2 className="text-xl font-bold text-gray-900">{news.title}</h2>
                     <p className="text-gray-700 leading-relaxed font-medium">{news.summary}</p>
                     {news.content&&<p className="text-gray-700 leading-relaxed whitespace-pre-line">{news.content}</p>}
                     
                     <div className="bg-purple-50 rounded-2xl p-4 border-2 border-purple-200">
                         <p className="text-purple-800 font-bold mb-3 flex items-center gap-2"><div className="w-5 h-5"><Icons.CalendarPlus/></div>Thêm vào lịch để nhắc nhở</p>
-                        
                         {showDatePicker?(
                             <div className="space-y-3">
                                 <div>
-                                    <label className="text-sm font-semibold text-gray-700 mb-2 block">Chọn ngày nhắc nhở:</label>
+                                    <label className="text-sm font-semibold text-gray-700 mb-2 block">Chọn ngày:</label>
                                     <input type="date" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)} className="w-full p-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:outline-none text-gray-900 font-medium"/>
                                 </div>
                                 <div className="flex gap-2">
@@ -451,9 +536,12 @@ const NewsDetailModal=({news,onClose,onAddToCalendar})=>{
     );
 };
 
-// ============ NEWS SCREEN ============
+// ============ NEWS SCREEN - 3 featured news ============
 const NewsScreen=({newsData,onAddToCalendar})=>{
     const[sel,setSel]=useState(null);
+    const featuredNews=newsData.slice(0,3);
+    const otherNews=newsData.slice(3);
+    
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
@@ -463,39 +551,165 @@ const NewsScreen=({newsData,onAddToCalendar})=>{
                 </div>
             </div>
             <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900"><div className="w-6 h-6 text-amber-500"><Icons.TrendingUp/></div>Tin mới nhất</h2>
-                {newsData.length===0?<div className="bg-white rounded-xl p-8 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>:<div className="space-y-3">{newsData.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSel(n)}/>)}</div>}
+                {/* 3 tin mới nhất - hiển thị đầy đủ hơn */}
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900">
+                    <div className="w-6 h-6 text-amber-500"><Icons.TrendingUp/></div>Tin nổi bật
+                </h2>
+                {featuredNews.length===0?
+                    <div className="bg-white rounded-xl p-8 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>
+                    :<div className="space-y-4 mb-6">{featuredNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSel(n)} featured/>)}</div>
+                }
+                
+                {/* Các tin khác */}
+                {otherNews.length>0&&(
+                    <>
+                        <h2 className="text-lg font-bold mb-3 text-gray-900">Tin khác</h2>
+                        <div className="space-y-3">{otherNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSel(n)}/>)}</div>
+                    </>
+                )}
             </div>
             {sel&&<NewsDetailModal news={sel} onClose={()=>setSel(null)} onAddToCalendar={onAddToCalendar}/>}
         </div>
     );
 };
 
-// ============ SUPPORT SCREEN ============
-const SupportScreen=({provinces,agencies,businesses,membership})=>{
+// ============ PROCEDURE DETAIL MODAL ============
+const ProcedureDetailModal=({procedure,onClose})=>{
+    if(!procedure)return null;
+    return(
+        <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50 fade-in" onClick={onClose}>
+            <div className="bg-white w-full max-w-lg rounded-t-3xl max-h-[90vh] overflow-auto hide-scrollbar slide-up safe-bottom" onClick={e=>e.stopPropagation()}>
+                <div className="sticky top-0 bg-white px-5 py-4 border-b border-gray-200 flex justify-between items-center z-10">
+                    <span className="bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full text-sm font-bold border border-indigo-200">Thủ tục HC</span>
+                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200"><div className="w-5 h-5 text-gray-700"><Icons.X/></div></button>
+                </div>
+                <div className="p-5 space-y-4">
+                    <h2 className="text-xl font-bold text-gray-900">{procedure.name}</h2>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                            <p className="text-xs text-gray-500 mb-1">Cơ quan thực hiện</p>
+                            <p className="font-semibold text-gray-900">{procedure.agency}</p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+                            <p className="text-xs text-gray-500 mb-1">Thời gian</p>
+                            <p className="font-semibold text-gray-900">{procedure.time}</p>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                        <p className="text-emerald-800 font-bold mb-1">Lệ phí</p>
+                        <p className="text-emerald-700 font-semibold">{procedure.fee}</p>
+                    </div>
+                    
+                    <div>
+                        <h3 className="font-bold mb-3 text-gray-900 flex items-center gap-2">
+                            <div className="w-5 h-5 text-indigo-600"><Icons.ClipboardList/></div>Hồ sơ cần thiết
+                        </h3>
+                        <ul className="space-y-2">
+                            {procedure.docs.map((doc,i)=>(
+                                <li key={i} className="flex items-start gap-2 bg-white p-3 rounded-lg border border-gray-200">
+                                    <div className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5"><Icons.Check/></div>
+                                    <span className="text-gray-700 font-medium">{doc}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============ SUPPORT SCREEN - with Procedures tab ============
+const SupportScreen=({provinces,agencies})=>{
     const[tab,setTab]=useState('agencies');
     const[province,setProvince]=useState(provinces[0]?.id||'');
     const[searchQuery,setSearchQuery]=useState('');
+    const[selProcedure,setSelProcedure]=useState(null);
+    
     const filteredAgencies=agencies.filter(a=>a.provinceId===province&&a.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    const proBiz=(businesses||[]).filter(b=>b.isPro);
+    const filteredProcedures=PROCEDURES.filter(p=>p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Headphones/></div></div><h1 className="text-2xl font-bold text-gray-900">Hỗ trợ</h1></div></div>
+            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                    <div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Headphones/></div></div>
+                    <h1 className="text-2xl font-bold text-gray-900">Hỗ trợ</h1>
+                </div>
+            </div>
             <div className="bg-white px-5 py-3 flex gap-2 border-b border-gray-200">
-                <button onClick={()=>setTab('agencies')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab==='agencies'?'bg-navy-600 text-white shadow':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}><div className="flex items-center justify-center gap-2"><div className="w-4 h-4"><Icons.Landmark/></div>Cơ quan NN</div></button>
-                <button onClick={()=>setTab('businesses')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab==='businesses'?'bg-navy-600 text-white shadow':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}><div className="flex items-center justify-center gap-2"><div className="w-4 h-4"><Icons.Building/></div>Doanh nghiệp</div></button>
+                <button onClick={()=>setTab('agencies')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab==='agencies'?'bg-navy-600 text-white shadow':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                    <div className="flex items-center justify-center gap-2"><div className="w-4 h-4"><Icons.Landmark/></div>Cơ quan NN</div>
+                </button>
+                <button onClick={()=>setTab('procedures')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab==='procedures'?'bg-navy-600 text-white shadow':'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                    <div className="flex items-center justify-center gap-2"><div className="w-4 h-4"><Icons.ClipboardList/></div>Thủ tục HC</div>
+                </button>
             </div>
             <div className="flex-1 overflow-auto hide-scrollbar">
-                {tab==='agencies'&&<div className="px-5 py-4">
-                    <div className="mb-4"><label className="text-sm font-bold text-gray-800 mb-2 block">Chọn tỉnh/thành phố</label><div className="relative"><select value={province} onChange={e=>setProvince(e.target.value)} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none appearance-none pr-10 text-gray-900 font-semibold">{provinces.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select><div className="w-5 h-5 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown/></div></div></div>
-                    <div className="mb-4 relative"><div className="w-5 h-5 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Search/></div><input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Tìm cơ quan..." className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
-                    <div className="space-y-3">{filteredAgencies.length===0?<div className="bg-white rounded-xl p-8 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không tìm thấy</p></div>:filteredAgencies.map(agency=>{const catInfo=agencyCategories[agency.category]||{label:agency.category,color:'bg-gray-100 text-gray-700 border border-gray-200'};return<div key={agency.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200"><div className="flex items-start gap-3"><div className={`p-2.5 rounded-xl ${catInfo.color} flex-shrink-0`}><div className="w-5 h-5"><Icons.Landmark/></div></div><div className="flex-1 min-w-0"><h3 className="font-bold text-gray-900 mb-1">{agency.name}</h3><div className="flex items-center gap-1.5 text-gray-600 text-sm"><div className="w-4 h-4 flex-shrink-0"><Icons.MapPin/></div><span className="truncate font-medium">{agency.address}</span></div><div className="flex items-center gap-1.5 text-gray-700 text-sm mt-1"><div className="w-4 h-4 flex-shrink-0"><Icons.Phone/></div><span className="font-bold">{agency.phone}</span></div></div></div></div>;})}</div>
-                </div>}
-                {tab==='businesses'&&<div className="px-5 py-4">
-                    <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-4"><p className="text-amber-800 text-sm font-bold">💼 Các doanh nghiệp Pro được hiển thị tại đây</p></div>
-                    {proBiz.length===0?<div className="bg-white rounded-xl p-10 text-center border border-gray-200"><div className="w-16 h-16 text-gray-300 mx-auto mb-4"><Icons.Building/></div><p className="text-gray-500 font-semibold">Chưa có doanh nghiệp Pro nào</p></div>:<div className="space-y-3">{proBiz.map(biz=><div key={biz.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200"><div className="flex items-start gap-3">{biz.logo?<img src={biz.logo} alt="" className="w-14 h-14 rounded-xl object-cover border border-gray-200"/>:<div className="w-14 h-14 bg-navy-50 rounded-xl flex items-center justify-center border border-navy-100"><div className="w-8 h-8 text-navy-500"><Icons.Building/></div></div>}<div className="flex-1 min-w-0"><div className="flex items-center gap-2"><h3 className="font-bold text-gray-900">{biz.name}</h3><div className="bg-amber-500 px-1.5 py-0.5 rounded text-white text-xs font-bold shadow-sm">PRO</div></div><p className="text-sm text-gray-600 font-semibold">{INDUSTRIES.find(i=>i.id===biz.industry)?.name}</p>{biz.phone&&<p className="text-sm text-gray-700 mt-1 font-medium">📞 {biz.phone}</p>}{biz.address&&<p className="text-sm text-gray-600 font-medium">📍 {biz.address}</p>}</div></div></div>)}</div>}
-                </div>}
+                {tab==='agencies'&&(
+                    <div className="px-5 py-4">
+                        <div className="mb-4">
+                            <label className="text-sm font-bold text-gray-800 mb-2 block">Chọn tỉnh/thành phố</label>
+                            <div className="relative">
+                                <select value={province} onChange={e=>setProvince(e.target.value)} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none appearance-none pr-10 text-gray-900 font-semibold">
+                                    {provinces.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                                <div className="w-5 h-5 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><Icons.ChevronDown/></div>
+                            </div>
+                        </div>
+                        <div className="mb-4 relative">
+                            <div className="w-5 h-5 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Search/></div>
+                            <input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Tìm cơ quan..." className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/>
+                        </div>
+                        <div className="space-y-3">
+                            {filteredAgencies.length===0?
+                                <div className="bg-white rounded-xl p-8 text-center border border-gray-200"><p className="text-gray-500 font-medium">Không tìm thấy</p></div>
+                                :filteredAgencies.map(agency=>{
+                                    const catInfo=agencyCategories[agency.category]||{label:agency.category,color:'bg-gray-100 text-gray-700 border border-gray-200'};
+                                    return(
+                                        <div key={agency.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
+                                            <div className="flex items-start gap-3">
+                                                <div className={`p-2.5 rounded-xl ${catInfo.color} flex-shrink-0`}><div className="w-5 h-5"><Icons.Landmark/></div></div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-bold text-gray-900 mb-1">{agency.name}</h3>
+                                                    <div className="flex items-center gap-1.5 text-gray-600 text-sm"><div className="w-4 h-4 flex-shrink-0"><Icons.MapPin/></div><span className="truncate font-medium">{agency.address}</span></div>
+                                                    <div className="flex items-center gap-1.5 text-gray-700 text-sm mt-1"><div className="w-4 h-4 flex-shrink-0"><Icons.Phone/></div><span className="font-bold">{agency.phone}</span></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            }
+                        </div>
+                    </div>
+                )}
+                {tab==='procedures'&&(
+                    <div className="px-5 py-4">
+                        <div className="mb-4 relative">
+                            <div className="w-5 h-5 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Search/></div>
+                            <input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Tìm thủ tục..." className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/>
+                        </div>
+                        <div className="space-y-3">
+                            {filteredProcedures.map(proc=>(
+                                <button key={proc.id} onClick={()=>setSelProcedure(proc)} className="w-full bg-white rounded-xl p-4 shadow-sm border border-gray-200 text-left touch-active">
+                                    <div className="flex items-start gap-3">
+                                        <div className="bg-indigo-100 p-2.5 rounded-xl border border-indigo-200 flex-shrink-0"><div className="w-5 h-5 text-indigo-700"><Icons.ClipboardList/></div></div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-gray-900 mb-1">{proc.name}</h3>
+                                            <p className="text-sm text-gray-600 font-medium">📍 {proc.agency}</p>
+                                            <p className="text-sm text-gray-500 mt-1">⏱️ {proc.time}</p>
+                                        </div>
+                                        <div className="w-5 h-5 text-gray-400 flex-shrink-0"><Icons.ChevronRight/></div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
+            {selProcedure&&<ProcedureDetailModal procedure={selProcedure} onClose={()=>setSelProcedure(null)}/>}
         </div>
     );
 };
@@ -553,35 +767,63 @@ const PaymentModal=({plan,onClose,onSuccess})=>{
     );
 };
 
-// ============ SETTINGS SCREEN ============
-const SettingsScreen=({onReset,businessProfile,onUpdateProfile,membership,onUpgradeMembership})=>{
+// ============ SETTINGS SCREEN - User Profile (Business/Individual) ============
+const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeMembership})=>{
     const[showProfileForm,setShowProfileForm]=useState(false);
-    const[profile,setProfile]=useState(businessProfile||{});
+    const[profile,setProfile]=useState(userProfile||{userType:'business'});
     const[showMembership,setShowMembership]=useState(false);
     const[selectedPlan,setSelectedPlan]=useState(null);
+    
     const saveProfile=()=>{onUpdateProfile(profile);setShowProfileForm(false);};
-    const handleLogoUpload=(e)=>{const file=e.target.files[0];if(file){const reader=new FileReader();reader.onloadend=()=>{setProfile({...profile,logo:reader.result});};reader.readAsDataURL(file);}};
+    const handleLogoUpload=(e)=>{const file=e.target.files[0];if(file){const reader=new FileReader();reader.onloadend=()=>{setProfile({...profile,avatar:reader.result});};reader.readAsDataURL(file);}};
     const handleSelectPlan=(plan)=>{setShowMembership(false);setSelectedPlan(plan);};
     const handlePaymentSuccess=(plan)=>{onUpgradeMembership(plan);setSelectedPlan(null);};
 
     if(showProfileForm)return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><button onClick={()=>setShowProfileForm(false)} className="touch-active"><div className="w-7 h-7 text-gray-700"><Icons.ChevronLeft/></div></button><h1 className="text-xl font-bold text-gray-900">Hồ sơ doanh nghiệp</h1></div></div>
+            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                    <button onClick={()=>setShowProfileForm(false)} className="touch-active"><div className="w-7 h-7 text-gray-700"><Icons.ChevronLeft/></div></button>
+                    <h1 className="text-xl font-bold text-gray-900">Hồ sơ người dùng</h1>
+                </div>
+            </div>
             <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
                 <div className="flex flex-col items-center mb-6">
                     <div className="relative">
-                        {profile.logo?<img src={profile.logo} alt="Logo" className="w-24 h-24 rounded-2xl object-cover border-2 border-gray-300 shadow"/>:<div className="w-24 h-24 bg-navy-50 rounded-2xl flex items-center justify-center border-2 border-navy-200"><div className="w-12 h-12 text-navy-400"><Icons.Building/></div></div>}
+                        {profile.avatar?<img src={profile.avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-2 border-gray-300 shadow"/>:<div className="w-24 h-24 bg-navy-50 rounded-full flex items-center justify-center border-2 border-navy-200"><div className="w-12 h-12 text-navy-400"><Icons.User/></div></div>}
                         <label className="absolute -bottom-2 -right-2 bg-navy-600 p-2.5 rounded-full cursor-pointer shadow-lg hover:bg-navy-700"><div className="w-5 h-5 text-white"><Icons.Upload/></div><input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden"/></label>
                     </div>
-                    <p className="text-sm text-gray-600 mt-3 font-semibold">Nhấn để upload logo</p>
                 </div>
+                
+                {/* Loại người dùng */}
+                <div className="mb-4">
+                    <label className="text-sm font-bold text-gray-800 mb-2 block">Loại người dùng</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {USER_TYPES.map(t=>(
+                            <button key={t.id} onClick={()=>setProfile({...profile,userType:t.id})} className={`p-3 rounded-xl border-2 font-semibold transition-all ${profile.userType===t.id?'border-navy-500 bg-navy-50 text-navy-700':'border-gray-200 text-gray-700'}`}>{t.name}</button>
+                        ))}
+                    </div>
+                </div>
+                
                 <div className="space-y-4">
-                    <div><label className="text-sm font-bold text-gray-800 mb-2 block">Tên công ty *</label><input type="text" value={profile.companyName||''} onChange={e=>setProfile({...profile,companyName:e.target.value})} placeholder="Công ty TNHH ABC" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
-                    <div><label className="text-sm font-bold text-gray-800 mb-2 block">Mã số thuế</label><input type="text" value={profile.taxCode||''} onChange={e=>setProfile({...profile,taxCode:e.target.value})} placeholder="0123456789" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
+                    <div><label className="text-sm font-bold text-gray-800 mb-2 block">{profile.userType==='business'?'Tên công ty *':'Họ và tên *'}</label><input type="text" value={profile.name||''} onChange={e=>setProfile({...profile,name:e.target.value})} placeholder={profile.userType==='business'?'Công ty TNHH ABC':'Nguyễn Văn A'} className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
+                    
+                    {profile.userType==='business'?(
+                        <>
+                            <div><label className="text-sm font-bold text-gray-800 mb-2 block">Mã số thuế</label><input type="text" value={profile.taxCode||''} onChange={e=>setProfile({...profile,taxCode:e.target.value})} placeholder="0123456789" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
+                            <div><label className="text-sm font-bold text-gray-800 mb-2 block">Ngành nghề hoạt động</label><select value={profile.industry||''} onChange={e=>setProfile({...profile,industry:e.target.value})} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"><option value="">-- Chọn ngành --</option>{INDUSTRIES.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
+                            <div><label className="text-sm font-bold text-gray-800 mb-2 block">Mô tả hoạt động</label><textarea value={profile.businessDesc||''} onChange={e=>setProfile({...profile,businessDesc:e.target.value})} placeholder="Mô tả ngắn về lĩnh vực hoạt động của doanh nghiệp..." rows={3} className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium resize-none"/></div>
+                        </>
+                    ):(
+                        <>
+                            <div><label className="text-sm font-bold text-gray-800 mb-2 block">Công việc hiện tại</label><input type="text" value={profile.job||''} onChange={e=>setProfile({...profile,job:e.target.value})} placeholder="Kế toán, Luật sư, Giám đốc..." className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
+                            <div><label className="text-sm font-bold text-gray-800 mb-2 block">Đơn vị công tác</label><input type="text" value={profile.company||''} onChange={e=>setProfile({...profile,company:e.target.value})} placeholder="Tên công ty/tổ chức" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
+                        </>
+                    )}
+                    
                     <div><label className="text-sm font-bold text-gray-800 mb-2 block">Số điện thoại</label><input type="tel" value={profile.phone||''} onChange={e=>setProfile({...profile,phone:e.target.value})} placeholder="0912 345 678" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
-                    <div><label className="text-sm font-bold text-gray-800 mb-2 block">Địa chỉ</label><input type="text" value={profile.address||''} onChange={e=>setProfile({...profile,address:e.target.value})} placeholder="123 Đường ABC" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
-                    <div><label className="text-sm font-bold text-gray-800 mb-2 block">Loại hình</label><select value={profile.businessType||''} onChange={e=>setProfile({...profile,businessType:e.target.value})} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"><option value="">-- Chọn --</option>{BUSINESS_TYPES.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
-                    <div><label className="text-sm font-bold text-gray-800 mb-2 block">Ngành nghề</label><select value={profile.industry||''} onChange={e=>setProfile({...profile,industry:e.target.value})} className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"><option value="">-- Chọn --</option>{INDUSTRIES.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
+                    <div><label className="text-sm font-bold text-gray-800 mb-2 block">Email</label><input type="email" value={profile.email||''} onChange={e=>setProfile({...profile,email:e.target.value})} placeholder="email@example.com" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
+                    <div><label className="text-sm font-bold text-gray-800 mb-2 block">Địa chỉ</label><input type="text" value={profile.address||''} onChange={e=>setProfile({...profile,address:e.target.value})} placeholder="Số nhà, đường, quận/huyện, tỉnh/TP" className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/></div>
                 </div>
             </div>
             <div className="p-5 bg-white border-t border-gray-200"><button onClick={saveProfile} className="w-full py-4 rounded-2xl bg-navy-600 text-white font-bold shadow-md hover:bg-navy-700">Lưu thông tin</button></div>
@@ -594,31 +836,54 @@ const SettingsScreen=({onReset,businessProfile,onUpdateProfile,membership,onUpgr
                 <h1 className="text-2xl font-bold text-white mb-5">Cài đặt</h1>
                 <div className="bg-white/15 rounded-2xl p-5 border border-white/20">
                     <div className="flex items-center gap-4">
-                        {businessProfile?.logo?<img src={businessProfile.logo} alt="" className="w-14 h-14 rounded-xl object-cover border-2 border-white/30"/>:<div className="bg-white p-2.5 rounded-xl shadow-lg"><Logo size={36}/></div>}
-                        <div className="flex-1 min-w-0"><p className="text-white font-bold text-lg truncate">{businessProfile?.companyName||'Doanh nghiệp'}</p><p className="text-sky-200 truncate font-semibold">{businessProfile?.taxCode?`MST: ${businessProfile.taxCode}`:'Chưa thiết lập'}</p></div>
+                        {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-14 h-14 rounded-full object-cover border-2 border-white/30"/>:<div className="bg-white p-2.5 rounded-xl shadow-lg"><Logo size={36}/></div>}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-white font-bold text-lg truncate">{userProfile?.name||'Người dùng'}</p>
+                            <p className="text-sky-200 truncate font-semibold">{userProfile?.userType==='business'?(userProfile?.taxCode?`MST: ${userProfile.taxCode}`:'Doanh nghiệp'):(userProfile?.job||'Cá nhân')}</p>
+                        </div>
                         {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-amber-500 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
                     </div>
                 </div>
             </div>
             <div className="px-5 py-5">
                 <div className="bg-white rounded-2xl p-5 shadow-sm mb-5 border border-gray-200">
-                    <div className="flex items-center justify-between mb-4"><h3 className="font-bold text-gray-900 flex items-center gap-2"><div className="w-5 h-5 text-navy-600"><Icons.Building/></div>Hồ sơ doanh nghiệp</h3><button onClick={()=>setShowProfileForm(true)} className="text-navy-600 text-sm font-bold hover:underline">Chỉnh sửa</button></div>
-                    {businessProfile?.companyName?<div className="space-y-2 text-sm"><p><span className="text-gray-500">Tên:</span> <span className="text-gray-900 font-semibold">{businessProfile.companyName}</span></p>{businessProfile.taxCode&&<p><span className="text-gray-500">MST:</span> <span className="text-gray-900 font-semibold">{businessProfile.taxCode}</span></p>}{businessProfile.businessType&&<p><span className="text-gray-500">Loại hình:</span> <span className="text-gray-900 font-semibold">{BUSINESS_TYPES.find(t=>t.id===businessProfile.businessType)?.name}</span></p>}</div>:<p className="text-gray-500 text-sm font-semibold">Chưa thiết lập hồ sơ.</p>}
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2"><div className="w-5 h-5 text-navy-600"><Icons.User/></div>Hồ sơ người dùng</h3>
+                        <button onClick={()=>setShowProfileForm(true)} className="text-navy-600 text-sm font-bold hover:underline">Chỉnh sửa</button>
+                    </div>
+                    {userProfile?.name?(
+                        <div className="space-y-2 text-sm">
+                            <p><span className="text-gray-500">Loại:</span> <span className="text-gray-900 font-semibold">{userProfile.userType==='business'?'Doanh nghiệp':'Cá nhân'}</span></p>
+                            <p><span className="text-gray-500">{userProfile.userType==='business'?'Công ty':'Họ tên'}:</span> <span className="text-gray-900 font-semibold">{userProfile.name}</span></p>
+                            {userProfile.phone&&<p><span className="text-gray-500">SĐT:</span> <span className="text-gray-900 font-semibold">{userProfile.phone}</span></p>}
+                            {userProfile.email&&<p><span className="text-gray-500">Email:</span> <span className="text-gray-900 font-semibold">{userProfile.email}</span></p>}
+                        </div>
+                    ):<p className="text-gray-500 text-sm font-semibold">Chưa thiết lập hồ sơ.</p>}
                 </div>
+                
                 <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-5 shadow-lg mb-5 border border-amber-400">
-                    <div className="flex items-center justify-between"><div><h3 className="font-bold text-white flex items-center gap-2"><div className="w-5 h-5"><Icons.Crown/></div>Gói thành viên</h3><p className="text-amber-100 text-sm mt-1 font-semibold">{membership?.plan==='free'?'Miễn phí (có quảng cáo)':membership?.plan==='pro_monthly'?'Pro Tháng':'Pro Năm'}</p></div><button onClick={()=>setShowMembership(true)} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow">{membership?.plan==='free'?'Nâng cấp':'Quản lý'}</button></div>
+                    <div className="flex items-center justify-between">
+                        <div><h3 className="font-bold text-white flex items-center gap-2"><div className="w-5 h-5"><Icons.Crown/></div>Gói thành viên</h3><p className="text-amber-100 text-sm mt-1 font-semibold">{membership?.plan==='free'?'Miễn phí':membership?.plan==='pro_monthly'?'Pro Tháng':'Pro Năm'}</p></div>
+                        <button onClick={()=>setShowMembership(true)} className="bg-white text-amber-600 px-4 py-2 rounded-xl font-bold text-sm shadow">{membership?.plan==='free'?'Nâng cấp':'Quản lý'}</button>
+                    </div>
                 </div>
+                
                 <div className="bg-white rounded-2xl px-5 shadow-sm mb-5 border border-gray-200">
                     <h3 className="font-bold pt-5 pb-3 text-gray-900">Về ứng dụng</h3>
-                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.2.0</span></div>
+                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.3.0</span></div>
                     <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Shield/></div><span className="flex-1 text-gray-800 font-semibold">Chính sách bảo mật</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                     <div className="py-4 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.HelpCircle/></div><span className="flex-1 text-gray-800 font-semibold">Liên hệ hỗ trợ</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                 </div>
+                
                 <div className="bg-white rounded-2xl p-5 shadow-sm mb-5 border border-gray-200">
                     <h3 className="font-bold mb-4 text-gray-900">Nhà phát hành</h3>
                     <div className="flex items-center gap-4"><div className="bg-navy-50 p-3 rounded-xl border border-navy-100"><Logo size={28}/></div><div><p className="font-bold text-gray-900">{COMPANY_INFO.name}</p><p className="text-sm text-gray-600 font-medium">{COMPANY_INFO.website}</p></div></div>
-                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-3"><div className="flex items-center gap-3 text-gray-700"><div className="w-5 h-5"><Icons.Phone/></div><span className="font-semibold">{COMPANY_INFO.phone}</span></div><div className="flex items-center gap-3 text-gray-700"><div className="w-5 h-5"><Icons.Mail/></div><span className="font-semibold">{COMPANY_INFO.email}</span></div></div>
+                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                        <div className="flex items-center gap-3 text-gray-700"><div className="w-5 h-5"><Icons.Phone/></div><span className="font-semibold">{COMPANY_INFO.phone}</span></div>
+                        <div className="flex items-center gap-3 text-gray-700"><div className="w-5 h-5"><Icons.Mail/></div><span className="font-semibold">{COMPANY_INFO.email}</span></div>
+                    </div>
                 </div>
+                
                 <div className="bg-white rounded-2xl px-5 shadow-sm border border-gray-200"><button onClick={onReset} className="w-full py-4 flex items-center gap-4 touch-active"><div className="w-5 h-5 text-red-500"><Icons.Trash/></div><span className="text-red-600 font-bold">Đặt lại dữ liệu</span></button></div>
             </div>
             {showMembership&&<MembershipModal onClose={()=>setShowMembership(false)} onSelectPlan={handleSelectPlan} currentPlan={membership?.plan}/>}
@@ -642,49 +907,43 @@ function App(){
     const[newsData,setNewsData]=useState([]);
     const[provinces,setProvinces]=useState([]);
     const[agencies,setAgencies]=useState([]);
-    const[businesses,setBusinesses]=useState([]);
-    const[checklistState,setChecklistState]=useState(()=>{const s=localStorage.getItem('checklistState');return s?JSON.parse(s):{};});
-    const[businessProfile,setBusinessProfile]=useState(()=>{const s=localStorage.getItem('businessProfile');return s?JSON.parse(s):{};});
+    const[userProfile,setUserProfile]=useState(()=>{const s=localStorage.getItem('userProfile');return s?JSON.parse(s):{userType:'business'};});
     const[membership,setMembership]=useState(()=>{const s=localStorage.getItem('membership');return s?JSON.parse(s):{plan:'free'};});
     const[savedEvents,setSavedEvents]=useState(()=>{const s=localStorage.getItem('savedEvents');return s?JSON.parse(s):[];});
 
-    useEffect(()=>{localStorage.setItem('checklistState',JSON.stringify(checklistState));},[checklistState]);
-    useEffect(()=>{localStorage.setItem('businessProfile',JSON.stringify(businessProfile));},[businessProfile]);
+    useEffect(()=>{localStorage.setItem('userProfile',JSON.stringify(userProfile));},[userProfile]);
     useEffect(()=>{localStorage.setItem('membership',JSON.stringify(membership));},[membership]);
     useEffect(()=>{localStorage.setItem('savedEvents',JSON.stringify(savedEvents));},[savedEvents]);
 
     useEffect(()=>{
         const fetchData=async()=>{
             try{
-                const[evRes,newsRes,provRes,agRes,bizRes]=await Promise.all([fetch(API+'/events'),fetch(API+'/news'),fetch(API+'/provinces'),fetch(API+'/agencies'),fetch(API+'/businesses').catch(()=>({json:()=>({success:true,data:[]})}))]);
-                const evData=await evRes.json();const newsDataJson=await newsRes.json();const provData=await provRes.json();const agData=await agRes.json();const bizData=await bizRes.json();
-                if(evData.success)setEvents(evData.data.map(e=>({...e,completed:false})));
+                const[evRes,newsRes,provRes,agRes]=await Promise.all([fetch(API+'/events'),fetch(API+'/news'),fetch(API+'/provinces'),fetch(API+'/agencies')]);
+                const evData=await evRes.json();const newsDataJson=await newsRes.json();const provData=await provRes.json();const agData=await agRes.json();
+                if(evData.success)setEvents(evData.data);
                 if(newsDataJson.success)setNewsData(newsDataJson.data);
                 if(provData.success)setProvinces(provData.data);
                 if(agData.success)setAgencies(agData.data);
-                if(bizData.success)setBusinesses(bizData.data);
             }catch(err){console.error('Error:',err);}
         };
         fetchData();
     },[]);
 
-    const toggleEvent=id=>{setEvents(events.map(e=>e.id===id?{...e,completed:!e.completed}:e));setSelEvent(p=>p&&p.id===id?{...p,completed:!p.completed}:p);};
-    const handleChecklistChange=(eventId,completedSteps)=>{setChecklistState(prev=>({...prev,[eventId]:completedSteps}));};
     const reset=()=>{localStorage.clear();window.location.reload();};
-    const handleUpgradeMembership=(plan)=>{setMembership({plan});if(plan!=='free'&&businessProfile?.companyName){setBusinesses(prev=>[...prev.filter(b=>b.id!==businessProfile.id),{...businessProfile,id:businessProfile.id||Date.now(),isPro:true}]);}};
+    const handleUpgradeMembership=(plan)=>{setMembership({plan});};
     const addToCalendarFromNews=(event)=>{setSavedEvents(prev=>[...prev,event]);};
 
     return(
         <div className="h-full w-full max-w-lg mx-auto bg-slate-100 relative overflow-hidden">
             {screen==='splash'&&<SplashScreen onFinish={()=>setScreen('main')}/>}
             {screen==='main'&&<>
-                {tab==='home'&&<DashboardScreen events={events} news={newsData} onEventClick={setSelEvent} onNewsClick={()=>setTab('news')} membership={membership} businessProfile={businessProfile} savedEvents={savedEvents}/>}
+                {tab==='home'&&<DashboardScreen events={events} news={newsData} onEventClick={setSelEvent} onNewsClick={()=>setTab('news')} membership={membership} savedEvents={savedEvents}/>}
                 {tab==='calendar'&&<CalendarScreen events={events} onEventClick={setSelEvent} savedEvents={savedEvents}/>}
                 {tab==='news'&&<NewsScreen newsData={newsData} onAddToCalendar={addToCalendarFromNews}/>}
-                {tab==='support'&&<SupportScreen provinces={provinces} agencies={agencies} businesses={businesses} membership={membership}/>}
-                {tab==='settings'&&<SettingsScreen onReset={reset} businessProfile={businessProfile} onUpdateProfile={setBusinessProfile} membership={membership} onUpgradeMembership={handleUpgradeMembership}/>}
+                {tab==='support'&&<SupportScreen provinces={provinces} agencies={agencies}/>}
+                {tab==='settings'&&<SettingsScreen onReset={reset} userProfile={userProfile} onUpdateProfile={setUserProfile} membership={membership} onUpgradeMembership={handleUpgradeMembership}/>}
                 <TabBar activeTab={tab} onTabChange={setTab}/>
-                {selEvent&&<EventDetailModal event={selEvent} onClose={()=>setSelEvent(null)} onToggle={toggleEvent} checklistState={checklistState} onChecklistChange={handleChecklistChange}/>}
+                {selEvent&&<EventDetailModal event={selEvent} onClose={()=>setSelEvent(null)}/>}
             </>}
         </div>
     );
