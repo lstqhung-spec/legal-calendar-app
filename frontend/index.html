@@ -24,7 +24,6 @@
         .touch-active:active{transform:scale(.98);opacity:.9}
         .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
         .line-clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-        .calendar-collapse{transition:max-height 0.4s cubic-bezier(0.4,0,0.2,1),opacity 0.3s ease}
         .toggle-switch{position:relative;width:50px;height:28px;background:#ccc;border-radius:14px;cursor:pointer;transition:background .3s}
         .toggle-switch.active{background:#1e3a5f}
         .toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:24px;height:24px;background:white;border-radius:50%;transition:transform .3s}
@@ -34,6 +33,9 @@
         .category-card{transition:all 0.2s ease;border:2px solid transparent}
         .category-card:hover{transform:translateY(-2px)}
         .category-card.active{border-color:#1e3a5f;background:linear-gradient(135deg,#e8eef5,#f1f5f9)}
+        /* Smooth scroll for calendar */
+        .smooth-scroll{-webkit-overflow-scrolling:touch;scroll-behavior:smooth;overscroll-behavior:contain}
+        .calendar-grid{transition:all 0.3s ease-out}
     </style>
 </head>
 <body><div id="root"></div>
@@ -66,12 +68,12 @@ const USER_TYPES=[{id:'business',name:'Doanh nghiệp'},{id:'individual',name:'C
 const INDUSTRIES=[{id:'trade',name:'Thương mại'},{id:'manufacturing',name:'Sản xuất'},{id:'service',name:'Dịch vụ'},{id:'construction',name:'Xây dựng'},{id:'it',name:'CNTT'},{id:'legal',name:'Pháp lý'},{id:'accounting',name:'Kế toán'},{id:'realestate',name:'Bất động sản'},{id:'other',name:'Khác'}];
 const categoryConfig={tax:{label:'Thuế',color:'bg-red-600',lightColor:'bg-red-50',textColor:'text-red-700',borderColor:'border-red-200'},insurance:{label:'BHXH',color:'bg-blue-600',lightColor:'bg-blue-50',textColor:'text-blue-700',borderColor:'border-blue-200'},report:{label:'Báo cáo',color:'bg-emerald-600',lightColor:'bg-emerald-50',textColor:'text-emerald-700',borderColor:'border-emerald-200'},license:{label:'Giấy phép',color:'bg-amber-600',lightColor:'bg-amber-50',textColor:'text-amber-700',borderColor:'border-amber-200'},news:{label:'Tin tức',color:'bg-purple-600',lightColor:'bg-purple-50',textColor:'text-purple-700',borderColor:'border-purple-200'},personal:{label:'Cá nhân',color:'bg-pink-600',lightColor:'bg-pink-50',textColor:'text-pink-700',borderColor:'border-pink-200'}};
 
-// 4 Danh mục cơ quan mới
+// 4 Danh mục tổ chức pháp lý - không icon
 const agencyCategories=[
-    {id:'government',name:'Cơ quan Nhà nước',icon:'🏛️',color:'bg-blue-500',lightColor:'bg-blue-50',desc:'Thuế, BHXH, Sở KH&ĐT...'},
-    {id:'lawfirm',name:'VP Luật sư / Công ty Luật',icon:'⚖️',color:'bg-navy-600',lightColor:'bg-navy-50',desc:'Tư vấn pháp lý, tranh tụng'},
-    {id:'notary',name:'Văn phòng Công chứng',icon:'📜',color:'bg-emerald-500',lightColor:'bg-emerald-50',desc:'Công chứng hợp đồng, giấy tờ'},
-    {id:'bailiff',name:'VP Thừa phát lại',icon:'📋',color:'bg-amber-500',lightColor:'bg-amber-50',desc:'Thi hành án, lập vi bằng'}
+    {id:'government',name:'Cơ quan Nhà nước',color:'bg-blue-500',lightColor:'bg-blue-50',desc:'Thuế, BHXH, Sở KH&ĐT...'},
+    {id:'lawfirm',name:'VP Luật sư / Công ty Luật',color:'bg-navy-600',lightColor:'bg-navy-50',desc:'Tư vấn pháp lý, tranh tụng'},
+    {id:'notary',name:'Văn phòng Công chứng',color:'bg-emerald-500',lightColor:'bg-emerald-50',desc:'Công chứng hợp đồng, giấy tờ'},
+    {id:'bailiff',name:'VP Thừa phát lại',color:'bg-amber-500',lightColor:'bg-amber-50',desc:'Thi hành án, lập vi bằng'}
 ];
 
 const monthNames=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
@@ -334,17 +336,15 @@ const AddPersonalEventModal=({onClose,onAdd})=>{
     );
 };
 
-// ============ CALENDAR SCREEN ============
+// ============ CALENDAR SCREEN - Fixed smooth scroll ============
 const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPersonalEvent,onDeletePersonalEvent})=>{
     const today=new Date();
     const[month,setMonth]=useState(today.getMonth());
     const[year,setYear]=useState(today.getFullYear());
     const[sel,setSel]=useState(null);
-    const[isCollapsed,setIsCollapsed]=useState(false);
+    const[calendarMode,setCalendarMode]=useState('full'); // 'full' or 'week'
     const[showAddModal,setShowAddModal]=useState(false);
     const[viewMode,setViewMode]=useState('all');
-    const scrollRef=useRef(null);
-    const lastScrollY=useRef(0);
     
     const days=new Date(year,month+1,0).getDate();
     const firstDayOfWeek=new Date(year,month,1).getDay();
@@ -373,17 +373,11 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
     
     const weekDays=getWeekDays();
     const monthEvents=useMemo(()=>allEvents.filter(e=>{const dd=new Date(e.deadline);return dd.getMonth()===month&&dd.getFullYear()===year;}).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline)),[allEvents,month,year]);
-    
-    const handleScroll=useCallback((e)=>{
-        const scrollTop=e.target.scrollTop;
-        const diff=scrollTop-lastScrollY.current;
-        if(diff>10&&scrollTop>30&&!isCollapsed)setIsCollapsed(true);
-        else if(scrollTop<10&&isCollapsed)setIsCollapsed(false);
-        lastScrollY.current=scrollTop;
-    },[isCollapsed]);
 
-    const prevMonth=()=>{if(month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1);setSel(null);setIsCollapsed(false);};
-    const nextMonth=()=>{if(month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1);setSel(null);setIsCollapsed(false);};
+    const prevMonth=()=>{if(month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1);setSel(null);setCalendarMode('full');};
+    const nextMonth=()=>{if(month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1);setSel(null);setCalendarMode('full');};
+    
+    const toggleCalendarMode=()=>{setCalendarMode(m=>m==='full'?'week':'full');};
 
     const renderDay=(day)=>{
         if(day===null)return <div key={Math.random()} className="aspect-square"/>;
@@ -400,37 +394,52 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
 
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
-            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
+            {/* Fixed Header */}
+            <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div></div><h1 className="text-2xl font-bold text-gray-900">Lịch pháp lý</h1></div>
                     <button onClick={()=>setShowAddModal(true)} className="bg-navy-600 text-white p-2.5 rounded-xl shadow-md hover:bg-navy-700"><div className="w-5 h-5"><Icons.Plus/></div></button>
                 </div>
             </div>
             
-            <div className="bg-white px-5 py-2.5 flex gap-2 border-b border-gray-200">
+            {/* View Mode Toggle */}
+            <div className="bg-white px-5 py-2.5 flex gap-2 border-b border-gray-200 flex-shrink-0">
                 <button onClick={()=>setViewMode('all')} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${viewMode==='all'?'bg-navy-600 text-white':'bg-gray-100 text-gray-700'}`}>📅 Tất cả</button>
                 <button onClick={()=>setViewMode('personal')} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${viewMode==='personal'?'bg-pink-500 text-white':'bg-gray-100 text-gray-700'}`}>👤 Lịch của bạn</button>
             </div>
             
-            <div className="bg-white px-5 py-3 flex justify-between items-center border-b border-gray-200">
+            {/* Month Navigation */}
+            <div className="bg-white px-5 py-3 flex justify-between items-center border-b border-gray-200 flex-shrink-0">
                 <button onClick={prevMonth} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200"><div className="w-6 h-6 text-gray-700"><Icons.ChevronLeft/></div></button>
-                <div className="flex items-center gap-2"><h2 className="text-lg font-bold text-gray-900">{monthNames[month]} {year}</h2>{isCollapsed&&<button onClick={()=>setIsCollapsed(false)} className="bg-navy-100 text-navy-700 text-xs font-bold px-2 py-1 rounded-full border border-navy-200">Mở rộng</button>}</div>
+                <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-gray-900">{monthNames[month]} {year}</h2>
+                    <button onClick={toggleCalendarMode} className="bg-navy-100 text-navy-700 text-xs font-bold px-2.5 py-1 rounded-full border border-navy-200">
+                        {calendarMode==='full'?'Thu gọn':'Mở rộng'}
+                    </button>
+                </div>
                 <button onClick={nextMonth} className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 touch-active hover:bg-gray-200"><div className="w-6 h-6 text-gray-700"><Icons.ChevronRight/></div></button>
             </div>
             
-            <div className="bg-white border-b border-gray-200 overflow-hidden">
+            {/* Calendar Grid - Fixed height, no scroll trigger */}
+            <div className="bg-white border-b border-gray-200 flex-shrink-0">
                 <div className="grid grid-cols-7 px-3 pt-2">{dayNames.map(d=><div key={d} className="text-center text-xs font-bold text-gray-500 py-1">{d}</div>)}</div>
-                <div className={`px-3 pb-3 calendar-collapse ${isCollapsed?'max-h-12 opacity-100':'max-h-72 opacity-100'}`}>
-                    {isCollapsed?<div className="grid grid-cols-7 gap-1">{weekDays.map((day,i)=>renderDay(day))}</div>:<div className="grid grid-cols-7 gap-1">{Array.from({length:firstDayOfWeek}).map((_,i)=><div key={`e-${i}`} className="aspect-square"/>)}{Array.from({length:days}).map((_,i)=>renderDay(i+1))}</div>}
+                <div className="px-3 pb-3 calendar-grid">
+                    {calendarMode==='week'?(
+                        <div className="grid grid-cols-7 gap-1">{weekDays.map((day,i)=>renderDay(day))}</div>
+                    ):(
+                        <div className="grid grid-cols-7 gap-1">{Array.from({length:firstDayOfWeek}).map((_,i)=><div key={`e-${i}`} className="aspect-square"/>)}{Array.from({length:days}).map((_,i)=>renderDay(i+1))}</div>
+                    )}
                 </div>
             </div>
             
-            <div className="bg-white px-5 py-2.5 flex flex-wrap gap-3 border-b border-gray-200 text-xs">
+            {/* Legend */}
+            <div className="bg-white px-5 py-2.5 flex flex-wrap gap-3 border-b border-gray-200 text-xs flex-shrink-0">
                 {Object.entries(categoryConfig).slice(0,4).map(([k,c])=><div key={k} className="flex items-center gap-1.5"><div className={`w-2.5 h-2.5 rounded-full ${c.color}`}/><span className="text-gray-700 font-semibold">{c.label}</span></div>)}
                 <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-pink-500"/><span className="text-gray-700 font-semibold">Cá nhân</span></div>
             </div>
             
-            <div ref={scrollRef} onScroll={handleScroll} className="flex-1 bg-slate-100 px-5 py-4 overflow-auto hide-scrollbar">
+            {/* Events List - Scrollable area */}
+            <div className="flex-1 bg-slate-100 px-5 py-4 overflow-auto smooth-scroll hide-scrollbar">
                 {sel?(
                     <>
                         <div className="flex items-center justify-between mb-3"><h3 className="font-bold text-gray-900">Ngày {sel}/{month+1}/{year}</h3><button onClick={()=>setSel(null)} className="text-navy-600 text-sm font-semibold">Xem tất cả</button></div>
@@ -468,7 +477,7 @@ const NewsScreen=({newsData,onAddToCalendar})=>{
     return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Newspaper/></div></div><h1 className="text-2xl font-bold text-gray-900">Tin tức pháp luật</h1></div></div>
-            <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
+            <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar smooth-scroll">
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900"><div className="w-6 h-6 text-amber-500"><Icons.TrendingUp/></div>Tin mới nhất</h2>
                 {featuredNews.length===0?<div className="bg-white rounded-xl p-8 text-center border border-gray-200"><p className="text-gray-500 font-medium">Đang tải...</p></div>:<div className="space-y-4 mb-6">{featuredNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSel(n)} featured/>)}</div>}
                 {otherNews.length>0&&(<><h2 className="text-lg font-bold mb-3 text-gray-900">Tin khác</h2><div className="space-y-3">{otherNews.map(n=><NewsCard key={n.id} news={n} onClick={()=>setSel(n)}/>)}</div></>)}
@@ -478,7 +487,7 @@ const NewsScreen=({newsData,onAddToCalendar})=>{
     );
 };
 
-// ============ SUPPORT SCREEN - 4 Categories with Beautiful Cards ============
+// ============ SUPPORT SCREEN - Updated title, no icons in cards ============
 const SupportScreen=({provinces,agencies})=>{
     const[province,setProvince]=useState(provinces[0]?.id||'');
     const[searchQuery,setSearchQuery]=useState('');
@@ -497,21 +506,23 @@ const SupportScreen=({provinces,agencies})=>{
         <div className="h-full bg-slate-100 flex flex-col pb-20">
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Headphones/></div></div>
-                    <h1 className="text-2xl font-bold text-gray-900">Hỗ trợ</h1>
+                    <div className="bg-purple-100 p-2.5 rounded-xl border border-purple-200"><div className="w-6 h-6 text-purple-700"><Icons.Search/></div></div>
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-900">Hỗ trợ</h1>
+                        <p className="text-sm text-gray-500 font-medium">Tìm kiếm tổ chức pháp lý</p>
+                    </div>
                 </div>
             </div>
-            <div className="flex-1 overflow-auto hide-scrollbar">
+            <div className="flex-1 overflow-auto hide-scrollbar smooth-scroll">
                 <div className="px-5 py-4">
-                    {/* 4 Category Cards - Grid 2x2 */}
+                    {/* 4 Category Cards - Grid 2x2 - No icons */}
                     <div className="mb-5">
-                        <p className="text-sm font-bold text-gray-800 mb-3">Chọn loại hình dịch vụ</p>
+                        <p className="text-sm font-bold text-gray-800 mb-3">Chọn loại hình tổ chức</p>
                         <div className="grid grid-cols-2 gap-3">
                             {agencyCategories.map(cat=>(
                                 <button key={cat.id} onClick={()=>setSelectedCategory(cat.id)} className={`category-card p-4 rounded-2xl bg-white shadow-sm text-left ${selectedCategory===cat.id?'active':''}`}>
-                                    <div className={`w-12 h-12 ${cat.lightColor} rounded-xl flex items-center justify-center text-2xl mb-3`}>{cat.icon}</div>
                                     <p className="font-bold text-gray-900 text-sm mb-1">{cat.name}</p>
-                                    <p className="text-xs text-gray-500 line-clamp-2">{cat.desc}</p>
+                                    <p className="text-xs text-gray-500">{cat.desc}</p>
                                 </button>
                             ))}
                         </div>
@@ -526,36 +537,29 @@ const SupportScreen=({provinces,agencies})=>{
                     {/* Search */}
                     <div className="mb-4 relative">
                         <div className="w-5 h-5 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2"><Icons.Search/></div>
-                        <input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder={`Tìm ${currentCat?.name?.toLowerCase() || 'cơ quan'}...`} className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/>
+                        <input type="text" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder={`Tìm ${currentCat?.name?.toLowerCase() || 'tổ chức'}...`} className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-gray-200 bg-white focus:border-navy-500 focus:outline-none text-gray-900 font-medium"/>
                     </div>
                     
                     {/* Results Header */}
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="text-2xl">{currentCat?.icon}</span>
                         <h2 className="font-bold text-gray-900">{currentCat?.name}</h2>
-                        <span className="text-sm text-gray-500 font-medium">({filteredAgencies.length})</span>
+                        <span className="text-sm text-gray-500 font-medium">({filteredAgencies.length} kết quả)</span>
                     </div>
                     
-                    {/* Results */}
+                    {/* Results - No icons in cards */}
                     <div className="space-y-3">
                         {filteredAgencies.length===0?(
                             <div className="bg-white rounded-xl p-8 text-center border border-gray-200">
-                                <div className="text-4xl mb-3">{currentCat?.icon}</div>
                                 <p className="text-gray-500 font-medium">Chưa có dữ liệu {currentCat?.name?.toLowerCase()}</p>
                                 <p className="text-gray-400 text-sm mt-1">Vui lòng liên hệ Admin để cập nhật</p>
                             </div>
                         ):filteredAgencies.map(agency=>(
                             <div key={agency.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200">
-                                <div className="flex items-start gap-3">
-                                    <div className={`w-12 h-12 ${currentCat?.lightColor||'bg-gray-100'} rounded-xl flex items-center justify-center text-2xl flex-shrink-0`}>{currentCat?.icon}</div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-gray-900 mb-2">{agency.name}</h3>
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-start gap-2 text-gray-600 text-sm"><div className="w-4 h-4 flex-shrink-0 mt-0.5"><Icons.MapPin/></div><span className="font-medium">{agency.address}</span></div>
-                                            {agency.phone&&<div className="flex items-center gap-2 text-sm"><div className="w-4 h-4 flex-shrink-0 text-gray-500"><Icons.Phone/></div><a href={`tel:${agency.phone}`} className="font-bold text-navy-600">{agency.phone}</a></div>}
-                                            {agency.website&&<div className="flex items-center gap-2 text-sm"><div className="w-4 h-4 flex-shrink-0 text-gray-500"><Icons.Globe/></div><a href={agency.website} target="_blank" className="font-semibold text-blue-600 hover:underline">{agency.website}</a></div>}
-                                        </div>
-                                    </div>
+                                <h3 className="font-bold text-gray-900 mb-3">{agency.name}</h3>
+                                <div className="space-y-2">
+                                    <div className="flex items-start gap-2 text-gray-600 text-sm"><div className="w-4 h-4 flex-shrink-0 mt-0.5"><Icons.MapPin/></div><span className="font-medium">{agency.address}</span></div>
+                                    {agency.phone&&<div className="flex items-center gap-2 text-sm"><div className="w-4 h-4 flex-shrink-0 text-gray-500"><Icons.Phone/></div><a href={`tel:${agency.phone}`} className="font-bold text-navy-600">{agency.phone}</a></div>}
+                                    {agency.website&&<div className="flex items-center gap-2 text-sm"><div className="w-4 h-4 flex-shrink-0 text-gray-500"><Icons.Globe/></div><a href={`https://${agency.website}`} target="_blank" className="font-semibold text-blue-600 hover:underline">{agency.website}</a></div>}
                                 </div>
                             </div>
                         ))}
@@ -620,7 +624,7 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
     if(showProfileForm)return(
         <div className="h-full bg-slate-100 flex flex-col pb-20">
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200"><div className="flex items-center gap-3"><button onClick={()=>setShowProfileForm(false)} className="touch-active"><div className="w-7 h-7 text-gray-700"><Icons.ChevronLeft/></div></button><h1 className="text-xl font-bold text-gray-900">Hồ sơ người dùng</h1></div></div>
-            <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar">
+            <div className="flex-1 px-5 py-5 overflow-auto hide-scrollbar smooth-scroll">
                 <div className="flex flex-col items-center mb-6"><div className="relative">{profile.avatar?<img src={profile.avatar} alt="Avatar" className="w-24 h-24 rounded-full object-cover border-2 border-gray-300 shadow"/>:<div className="w-24 h-24 bg-navy-50 rounded-full flex items-center justify-center border-2 border-navy-200"><div className="w-12 h-12 text-navy-400"><Icons.User/></div></div>}<label className="absolute -bottom-2 -right-2 bg-navy-600 p-2.5 rounded-full cursor-pointer shadow-lg hover:bg-navy-700"><div className="w-5 h-5 text-white"><Icons.Upload/></div><input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden"/></label></div></div>
                 <div className="mb-4"><label className="text-sm font-bold text-gray-800 mb-2 block">Loại người dùng</label><div className="grid grid-cols-2 gap-2">{USER_TYPES.map(t=>(<button key={t.id} onClick={()=>setProfile({...profile,userType:t.id})} className={`p-3 rounded-xl border-2 font-semibold transition-all ${profile.userType===t.id?'border-navy-500 bg-navy-50 text-navy-700':'border-gray-200 text-gray-700'}`}>{t.name}</button>))}</div></div>
                 <div className="space-y-4">
@@ -636,7 +640,7 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
     );
 
     return(
-        <div className="h-full bg-slate-100 overflow-auto hide-scrollbar pb-24">
+        <div className="h-full bg-slate-100 overflow-auto hide-scrollbar smooth-scroll pb-24">
             <div className="header-gradient header-pattern pt-14 pb-8 px-5 safe-top border-b border-gray-200">
                 <h1 className="text-2xl font-bold text-gray-900 mb-5">Cài đặt</h1>
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
@@ -675,7 +679,7 @@ const SettingsScreen=({onReset,userProfile,onUpdateProfile,membership,onUpgradeM
                 
                 <div className="bg-white rounded-2xl px-5 shadow-sm mb-5 border border-gray-200">
                     <h3 className="font-bold pt-5 pb-3 text-gray-900">Về ứng dụng</h3>
-                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.6.0</span></div>
+                    <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Info/></div><span className="flex-1 text-gray-800 font-semibold">Phiên bản</span><span className="text-gray-600 font-bold">8.7.0</span></div>
                     <div className="py-4 border-b border-gray-100 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.Shield/></div><span className="flex-1 text-gray-800 font-semibold">Chính sách bảo mật</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                     <div className="py-4 flex items-center gap-4"><div className="w-5 h-5 text-gray-500"><Icons.HelpCircle/></div><span className="flex-1 text-gray-800 font-semibold">Liên hệ hỗ trợ</span><div className="w-5 h-5 text-gray-400"><Icons.ChevronRight/></div></div>
                 </div>
