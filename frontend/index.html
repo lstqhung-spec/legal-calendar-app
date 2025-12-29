@@ -125,7 +125,7 @@ const SplashScreen=({onFinish})=>{
             <div className="bg-white p-6 rounded-3xl shadow-2xl mb-8 animate-float"><Logo size={100}/></div>
             <h1 className="text-4xl font-bold text-white mb-3">HTIC Legal</h1>
             <p className="text-white text-center text-lg mb-2 font-semibold">Lịch Pháp Lý Doanh Nghiệp</p>
-            <p className="text-sky-200 text-center text-sm font-medium">Lịch pháp lý doanh nghiệp 2026</p>
+            <p className="text-sky-200 text-center text-sm font-medium">Nắm lịch pháp lý - tránh bị phạt khi trễ hạn</p>
             <div className="mt-12 flex gap-2">{[0,1,2].map(i=><div key={i} className="w-3 h-3 bg-white rounded-full animate-pulse" style={{animationDelay:`${i*.2}s`}}/>)}</div>
             <p className="mt-8 text-sky-300 text-sm font-semibold">by {COMPANY_INFO.name}</p>
         </div>
@@ -267,18 +267,30 @@ const DashboardScreen=({events,news,onEventClick,membership,savedEvents,personal
     
     return(
         <div className="h-full bg-slate-100 overflow-auto hide-scrollbar pb-24">
-            <div className="header-gradient header-pattern pt-14 pb-6 px-5 safe-top border-b border-gray-200">
+            {/* Banner with Logo and App Title */}
+            <div className="bg-gradient-to-r from-navy-700 to-navy-600 pt-14 pb-4 px-5 safe-top">
                 <div className="flex items-center gap-4">
-                    {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-lg"/>:<div className="bg-white p-3 rounded-2xl shadow-lg border border-gray-200"><Logo size={40}/></div>}
+                    <div className="bg-white p-2 rounded-xl shadow-lg"><Logo size={48}/></div>
+                    <div>
+                        <h1 className="text-white font-bold text-2xl tracking-wide">LỊCH PHÁP LÝ</h1>
+                        <p className="text-sky-200 text-sm font-medium">Nắm lịch pháp lý - tránh bị phạt khi trễ hạn</p>
+                    </div>
+                </div>
+            </div>
+            
+            {/* User Info Section */}
+            <div className="header-gradient header-pattern py-4 px-5 border-b border-gray-200">
+                <div className="flex items-center gap-4">
+                    {userProfile?.avatar?<img src={userProfile.avatar} alt="" className="w-14 h-14 rounded-2xl object-cover border-2 border-white shadow-lg"/>:<div className="w-14 h-14 bg-navy-100 rounded-2xl flex items-center justify-center border-2 border-navy-200"><div className="w-7 h-7 text-navy-600"><Icons.User/></div></div>}
                     <div className="flex-1 min-w-0">
                         <p className="text-gray-500 text-sm font-medium">Xin chào,</p>
-                        <p className="text-navy-700 font-bold text-xl truncate">{userName}</p>
-                        {userProfile?.userType==='business'&&userProfile?.taxCode&&<p className="text-gray-500 text-sm font-medium">MST: {userProfile.taxCode}</p>}
-                        {userProfile?.userType==='individual'&&userProfile?.job&&<p className="text-gray-500 text-sm font-medium">{userProfile.job}</p>}
+                        <p className="text-navy-700 font-bold text-lg truncate">{userName}</p>
+                        {userProfile?.userType==='business'&&userProfile?.taxCode&&<p className="text-gray-500 text-xs font-medium">MST: {userProfile.taxCode}</p>}
+                        {userProfile?.userType==='individual'&&userProfile?.job&&<p className="text-gray-500 text-xs font-medium">{userProfile.job}</p>}
                     </div>
                     {(membership?.plan==='pro_monthly'||membership?.plan==='pro_yearly')&&<div className="bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg"><div className="w-4 h-4 text-white"><Icons.Crown/></div><span className="text-white text-xs font-bold">PRO</span></div>}
                 </div>
-                <p className="text-gray-600 text-sm font-semibold mt-3">{today.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+                <p className="text-gray-600 text-sm font-semibold mt-2">{today.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
             </div>
             
             {nearestDeadline&&(
@@ -339,8 +351,8 @@ const AddPersonalEventModal=({onClose,onAdd})=>{
 // ============ CALENDAR SCREEN - Fixed smooth scroll ============
 const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPersonalEvent,onDeletePersonalEvent})=>{
     const today=new Date();
-    const[month,setMonth]=useState(0);
-    const[year,setYear]=useState(2026);
+    const[month,setMonth]=useState(today.getMonth());
+    const[year,setYear]=useState(today.getFullYear());
     const[sel,setSel]=useState(null);
     const[calendarMode,setCalendarMode]=useState('full'); // 'full' or 'week'
     const[showAddModal,setShowAddModal]=useState(false);
@@ -397,7 +409,7 @@ const CalendarScreen=({events,onEventClick,savedEvents,personalEvents,onAddPerso
             {/* Fixed Header */}
             <div className="bg-white pt-14 pb-4 px-5 shadow-sm safe-top border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div></div><h1 className="text-2xl font-bold text-gray-900">Lịch pháp lý 2026</h1></div>
+                    <div className="flex items-center gap-3"><div className="bg-navy-100 p-2.5 rounded-xl border border-navy-200"><div className="w-6 h-6 text-navy-700"><Icons.Calendar/></div></div><h1 className="text-2xl font-bold text-gray-900">Lịch pháp lý</h1></div>
                     <button onClick={()=>setShowAddModal(true)} className="bg-navy-600 text-white p-2.5 rounded-xl shadow-md hover:bg-navy-700"><div className="w-5 h-5"><Icons.Plus/></div></button>
                 </div>
             </div>
