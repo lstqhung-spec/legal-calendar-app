@@ -8,12 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Inter', sans-serif; }
-        .sidebar { transition: transform 0.3s ease; }
-        .sidebar-item.active { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; }
-        .sidebar-item:hover:not(.active) { background: #F3F4F6; }
+        .sidebar { background: linear-gradient(180deg, #1E3A5F 0%, #152A45 100%); }
+        .sidebar-item.active { background: rgba(255,255,255,0.15); border-left: 3px solid #C9A227; }
+        .sidebar-item:hover:not(.active) { background: rgba(255,255,255,0.08); }
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .btn-primary { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); }
-        .btn-primary:hover { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); }
+        .btn-primary { background: linear-gradient(135deg, #1E3A5F 0%, #152A45 100%); }
+        .btn-primary:hover { background: linear-gradient(135deg, #152A45 0%, #0F1E30 100%); }
+        .btn-gold { background: linear-gradient(135deg, #C9A227 0%, #B8860B 100%); }
         .btn-danger { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); }
         .table-row:hover { background: #F9FAFB; }
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
@@ -21,30 +22,30 @@
         .badge-warning { background: #FEF3C7; color: #92400E; }
         .badge-danger { background: #FEE2E2; color: #991B1B; }
         .badge-info { background: #DBEAFE; color: #1E40AF; }
+        .badge-gold { background: #FEF3C7; color: #B8860B; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
         .modal.active { display: flex; align-items: center; justify-content: center; }
         .modal-content { background: white; border-radius: 20px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
         .input-field { border: 2px solid #E5E7EB; border-radius: 12px; padding: 12px 16px; transition: all 0.2s; }
-        .input-field:focus { border-color: #3B82F6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .input-field:focus { border-color: #1E3A5F; outline: none; box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1); }
         .toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: 12px; color: white; z-index: 2000; animation: slideIn 0.3s ease; }
         .toast-success { background: #10B981; }
         .toast-error { background: #EF4444; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .stat-card { background: linear-gradient(135deg, var(--from) 0%, var(--to) 100%); }
-        .logo-preview { width: 120px; height: 120px; border: 3px dashed #E5E7EB; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .logo-preview { width: 120px; height: 120px; border: 3px dashed #E5E7EB; border-radius: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .gold-text { color: #C9A227; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100">
     <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-content-center bg-gradient-to-br from-blue-500 to-blue-700">
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center" style="background: linear-gradient(135deg, #1E3A5F 0%, #152A45 100%);">
         <div class="w-full max-w-md mx-auto p-6">
             <div class="card p-8">
                 <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
+                    <div class="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background: linear-gradient(135deg, #1E3A5F 0%, #152A45 100%);">
+                        <span class="text-3xl font-bold text-white">H</span>
                     </div>
                     <h1 class="text-2xl font-bold text-gray-800">HTIC Legal Calendar</h1>
                     <p class="text-gray-500 mt-2">Đăng nhập trang quản trị</p>
@@ -70,60 +71,60 @@
     <!-- ADMIN PANEL -->
     <div id="adminPanel" class="hidden">
         <!-- Sidebar -->
-        <aside class="sidebar fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-50">
-            <div class="p-6 border-b border-gray-200">
+        <aside class="sidebar fixed left-0 top-0 h-full w-64 z-50">
+            <div class="p-6 border-b border-white border-opacity-10">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
                         <span class="text-white font-bold text-lg">H</span>
                     </div>
                     <div>
-                        <h2 class="font-bold text-gray-800">HTIC Legal</h2>
-                        <p class="text-xs text-gray-500">Trang quản trị</p>
+                        <h2 class="font-bold text-white">HTIC Legal</h2>
+                        <p class="text-xs text-gray-300">Admin Panel v2.0</p>
                     </div>
                 </div>
             </div>
             <nav class="p-4">
                 <ul class="space-y-2">
                     <li>
-                        <a href="#" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-xl" data-page="dashboard">
+                        <a href="#" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-xl text-white" data-page="dashboard">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                             <span>Tổng quan</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600" data-page="events">
+                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="events">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             <span>Lịch pháp lý</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600" data-page="news">
+                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="news">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
                             <span>Tin tức</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600" data-page="agencies">
+                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="agencies">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                             <span>Cơ quan</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600" data-page="customers">
+                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="customers">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             <span>Khách hàng</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-600" data-page="settings">
+                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="settings">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             <span>Cài đặt</span>
                         </a>
                     </li>
                 </ul>
             </nav>
-            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-                <button onclick="logout()" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 w-full">
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white border-opacity-10">
+                <button onclick="logout()" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-300 hover:bg-red-500 hover:bg-opacity-20 w-full transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                     <span>Đăng xuất</span>
                 </button>
@@ -131,7 +132,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="ml-64 p-8">
+        <main class="ml-64 p-8 min-h-screen">
             <!-- Header -->
             <header class="flex items-center justify-between mb-8">
                 <div>
@@ -140,8 +141,8 @@
                 </div>
                 <div class="flex items-center gap-4">
                     <span class="text-sm text-gray-500" id="currentDate"></span>
-                    <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <span class="text-blue-600 font-semibold">A</span>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #1E3A5F 0%, #152A45 100%);">
+                        <span class="text-white font-semibold">A</span>
                     </div>
                 </div>
             </header>
@@ -178,12 +179,10 @@
 
         // =============== INIT ===============
         document.addEventListener('DOMContentLoaded', () => {
-            // Check login
             if (localStorage.getItem('adminToken')) {
                 showAdminPanel();
             }
 
-            // Login form
             document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const username = document.getElementById('username').value;
@@ -209,7 +208,6 @@
                 }
             });
 
-            // Sidebar navigation
             document.querySelectorAll('.sidebar-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -218,7 +216,6 @@
                 });
             });
 
-            // Current date
             const now = new Date();
             document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', {
                 weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -242,35 +239,32 @@
         function navigateTo(page) {
             currentPage = page;
             
-            // Update sidebar
             document.querySelectorAll('.sidebar-item').forEach(item => {
                 item.classList.remove('active');
-                item.classList.add('text-gray-600');
+                item.classList.add('text-gray-300');
+                item.classList.remove('text-white');
                 if (item.dataset.page === page) {
                     item.classList.add('active');
-                    item.classList.remove('text-gray-600');
+                    item.classList.remove('text-gray-300');
+                    item.classList.add('text-white');
                 }
             });
 
-            // Update header
             const titles = {
                 dashboard: ['Tổng quan', 'Thống kê dữ liệu hệ thống'],
                 events: ['Lịch pháp lý', 'Quản lý các mốc thời gian báo cáo'],
-                news: ['Tin tức pháp luật', 'Quản lý tin tức (mới nhất hiện trước)'],
+                news: ['Tin tức pháp luật', 'Quản lý tin tức - Tin mới nhất hiển thị đầu tiên'],
                 agencies: ['Cơ quan pháp lý', 'Quản lý danh sách cơ quan, văn phòng'],
-                customers: ['Khách hàng', 'Danh sách khách hàng đăng ký'],
-                settings: ['Cài đặt', 'Cấu hình ứng dụng']
+                customers: ['Khách hàng', 'Danh sách khách hàng đăng ký từ ứng dụng'],
+                settings: ['Cài đặt', 'Cấu hình ứng dụng và thông tin công ty']
             };
             document.getElementById('pageTitle').textContent = titles[page][0];
             document.getElementById('pageSubtitle').textContent = titles[page][1];
 
-            // Load page content
             loadPage(page);
         }
 
         async function loadPage(page) {
-            const content = document.getElementById('pageContent');
-            
             switch(page) {
                 case 'dashboard': await loadDashboard(); break;
                 case 'events': await loadEvents(); break;
@@ -290,12 +284,12 @@
 
                 document.getElementById('pageContent').innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div class="stat-card p-6 rounded-2xl text-white" style="--from: #3B82F6; --to: #2563EB;">
+                        <div class="stat-card p-6 rounded-2xl text-white" style="--from: #1E3A5F; --to: #152A45;">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-blue-100">Lịch pháp lý</p>
-                                    <p class="text-3xl font-bold mt-2">${stats.events.total}</p>
-                                    <p class="text-sm text-blue-100 mt-1">${stats.events.active} đang hoạt động</p>
+                                    <p class="text-blue-200">Lịch pháp lý</p>
+                                    <p class="text-3xl font-bold mt-2">${stats.events?.total || 0}</p>
+                                    <p class="text-sm text-blue-200 mt-1">${stats.events?.active || 0} đang hoạt động</p>
                                 </div>
                                 <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
                                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -306,8 +300,8 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-green-100">Tin tức</p>
-                                    <p class="text-3xl font-bold mt-2">${stats.news.total}</p>
-                                    <p class="text-sm text-green-100 mt-1">${stats.news.hot} tin nổi bật</p>
+                                    <p class="text-3xl font-bold mt-2">${stats.news?.total || 0}</p>
+                                    <p class="text-sm text-green-100 mt-1">${stats.news?.hot || 0} tin nổi bật</p>
                                 </div>
                                 <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
                                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
@@ -318,7 +312,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-yellow-100">Cơ quan</p>
-                                    <p class="text-3xl font-bold mt-2">${stats.agencies.total}</p>
+                                    <p class="text-3xl font-bold mt-2">${stats.agencies?.total || 0}</p>
                                     <p class="text-sm text-yellow-100 mt-1">đơn vị</p>
                                 </div>
                                 <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
@@ -330,8 +324,8 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-purple-100">Khách hàng</p>
-                                    <p class="text-3xl font-bold mt-2">${stats.customers.total}</p>
-                                    <p class="text-sm text-purple-100 mt-1">${stats.customers.pro} gói Pro</p>
+                                    <p class="text-3xl font-bold mt-2">${stats.customers?.total || 0}</p>
+                                    <p class="text-sm text-purple-100 mt-1">${stats.customers?.pro || 0} gói Pro</p>
                                 </div>
                                 <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
                                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -342,28 +336,28 @@
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="card p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">Hướng dẫn nhanh</h3>
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">📌 Hướng dẫn nhanh</h3>
                             <div class="space-y-3">
-                                <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl">
-                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold">1</div>
-                                    <p class="text-gray-700">Thêm/sửa <strong>Lịch pháp lý</strong> để cập nhật deadline</p>
+                                <div class="flex items-center gap-3 p-3 rounded-xl" style="background: rgba(30, 58, 95, 0.05);">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold" style="background: #1E3A5F;">1</div>
+                                    <p class="text-gray-700">Thêm/sửa <strong>Lịch pháp lý</strong> để cập nhật deadline báo cáo</p>
                                 </div>
                                 <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
-                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center text-green-600 font-bold">2</div>
+                                    <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold">2</div>
                                     <p class="text-gray-700">Đăng <strong>Tin tức</strong> mới - tin mới nhất tự động lên đầu</p>
                                 </div>
                                 <div class="flex items-center gap-3 p-3 bg-yellow-50 rounded-xl">
-                                    <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center text-yellow-600 font-bold">3</div>
+                                    <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center text-white font-bold">3</div>
                                     <p class="text-gray-700">Quản lý <strong>Cơ quan</strong> và thông tin liên hệ</p>
                                 </div>
                                 <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
-                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 font-bold">4</div>
-                                    <p class="text-gray-700">Xem danh sách <strong>Khách hàng</strong> đã đăng ký</p>
+                                    <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center text-white font-bold">4</div>
+                                    <p class="text-gray-700">Xem danh sách <strong>Khách hàng</strong> đã đăng ký từ app</p>
                                 </div>
                             </div>
                         </div>
                         <div class="card p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">Thông tin hệ thống</h3>
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">ℹ️ Thông tin hệ thống</h3>
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                                     <span class="text-gray-600">Phiên bản</span>
@@ -376,6 +370,10 @@
                                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                                     <span class="text-gray-600">Cập nhật cuối</span>
                                     <span class="font-semibold text-gray-800">${new Date().toLocaleDateString('vi-VN')}</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                                    <span class="text-gray-600">Ngôn ngữ</span>
+                                    <span class="font-semibold text-gray-800">🇻🇳 Tiếng Việt</span>
                                 </div>
                             </div>
                         </div>
@@ -395,13 +393,17 @@
 
                 const categoryLabels = {
                     tax: 'Thuế', insurance: 'Bảo hiểm', report: 'Báo cáo', 
-                    labor: 'Lao động', license: 'Giấy phép', other: 'Khác'
+                    labor: 'Lao động', license: 'Giấy phép', safety: 'An toàn',
+                    environment: 'Môi trường', investment: 'Đầu tư', other: 'Khác'
+                };
+                const frequencyLabels = {
+                    monthly: 'Hàng tháng', quarterly: 'Hàng quý', yearly: 'Hàng năm', once: 'Một lần'
                 };
 
                 document.getElementById('pageContent').innerHTML = `
                     <div class="card">
                         <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-                            <h3 class="text-lg font-bold text-gray-800">Danh sách lịch (${events.length})</h3>
+                            <h3 class="text-lg font-bold text-gray-800">📅 Danh sách lịch pháp lý (${events.length})</h3>
                             <button onclick="openEventModal()" class="btn-primary px-4 py-2 text-white rounded-xl flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Thêm lịch mới
@@ -414,7 +416,7 @@
                                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Tiêu đề</th>
                                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Danh mục</th>
                                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Tần suất</th>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Ngày</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Hạn nộp</th>
                                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Trạng thái</th>
                                         <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Thao tác</th>
                                     </tr>
@@ -423,17 +425,17 @@
                                     ${events.map(e => `
                                         <tr class="table-row">
                                             <td class="px-6 py-4">
-                                                <div class="font-medium text-gray-800">${e.title}</div>
-                                                <div class="text-sm text-gray-500">${e.description || ''}</div>
+                                                <div class="font-medium text-gray-800">${e.title || ''}</div>
+                                                <div class="text-sm text-gray-500 truncate max-w-xs">${e.description || ''}</div>
                                             </td>
-                                            <td class="px-6 py-4"><span class="badge badge-info">${categoryLabels[e.category] || e.category}</span></td>
-                                            <td class="px-6 py-4 text-gray-600">${e.frequency === 'monthly' ? 'Hàng tháng' : e.frequency === 'quarterly' ? 'Hàng quý' : 'Hàng năm'}</td>
-                                            <td class="px-6 py-4 text-gray-600">Ngày ${e.dayOfMonth}${e.month ? '/' + e.month : ''}</td>
+                                            <td class="px-6 py-4"><span class="badge badge-info">${categoryLabels[e.category] || e.category || 'Khác'}</span></td>
+                                            <td class="px-6 py-4 text-gray-600">${frequencyLabels[e.frequency] || e.frequency || ''}</td>
+                                            <td class="px-6 py-4 text-gray-600">Ngày ${e.dayOfMonth || e.day || ''}${e.month ? '/' + e.month : ''}</td>
                                             <td class="px-6 py-4">
                                                 <span class="badge ${e.isActive !== false ? 'badge-success' : 'badge-danger'}">${e.isActive !== false ? 'Hoạt động' : 'Tắt'}</span>
                                             </td>
                                             <td class="px-6 py-4 text-right">
-                                                <button onclick='openEventModal(${JSON.stringify(e)})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
+                                                <button onclick='openEventModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
                                                 <button onclick="deleteEvent(${e.id})" class="text-red-600 hover:text-red-800">Xóa</button>
                                             </td>
                                         </tr>
@@ -465,6 +467,9 @@
                                 <option value="insurance" ${event?.category === 'insurance' ? 'selected' : ''}>Bảo hiểm</option>
                                 <option value="report" ${event?.category === 'report' ? 'selected' : ''}>Báo cáo</option>
                                 <option value="labor" ${event?.category === 'labor' ? 'selected' : ''}>Lao động</option>
+                                <option value="safety" ${event?.category === 'safety' ? 'selected' : ''}>An toàn</option>
+                                <option value="environment" ${event?.category === 'environment' ? 'selected' : ''}>Môi trường</option>
+                                <option value="investment" ${event?.category === 'investment' ? 'selected' : ''}>Đầu tư</option>
                                 <option value="license" ${event?.category === 'license' ? 'selected' : ''}>Giấy phép</option>
                             </select>
                         </div>
@@ -474,13 +479,14 @@
                                 <option value="monthly" ${event?.frequency === 'monthly' ? 'selected' : ''}>Hàng tháng</option>
                                 <option value="quarterly" ${event?.frequency === 'quarterly' ? 'selected' : ''}>Hàng quý</option>
                                 <option value="yearly" ${event?.frequency === 'yearly' ? 'selected' : ''}>Hàng năm</option>
+                                <option value="once" ${event?.frequency === 'once' ? 'selected' : ''}>Một lần</option>
                             </select>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Ngày trong tháng</label>
-                            <input type="number" name="dayOfMonth" value="${event?.dayOfMonth || 20}" min="1" max="31" class="input-field w-full">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Ngày hạn nộp</label>
+                            <input type="number" name="dayOfMonth" value="${event?.dayOfMonth || event?.day || 20}" min="1" max="31" class="input-field w-full">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Tháng (nếu hàng năm)</label>
@@ -493,7 +499,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Căn cứ pháp lý</label>
-                        <input type="text" name="legalReference" value="${event?.legalReference || ''}" class="input-field w-full">
+                        <input type="text" name="legalBasis" value="${event?.legalBasis || event?.legalReference || ''}" class="input-field w-full">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Mức phạt vi phạm</label>
@@ -521,9 +527,10 @@
                 category: form.category.value,
                 frequency: form.frequency.value,
                 dayOfMonth: parseInt(form.dayOfMonth.value),
+                day: parseInt(form.dayOfMonth.value),
                 month: form.month.value ? parseInt(form.month.value) : null,
                 description: form.description.value,
-                legalReference: form.legalReference.value,
+                legalBasis: form.legalBasis.value,
                 penalty: form.penalty.value,
                 isActive: form.isActive.checked
             };
@@ -538,11 +545,11 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showToast(result.message, 'success');
+                    showToast(result.message || 'Thành công', 'success');
                     closeModal();
                     loadEvents();
                 } else {
-                    showToast(result.message, 'error');
+                    showToast(result.message || 'Lỗi', 'error');
                 }
             } catch (err) {
                 showToast('Lỗi lưu dữ liệu', 'error');
@@ -557,8 +564,6 @@
                 if (result.success) {
                     showToast('Đã xóa thành công', 'success');
                     loadEvents();
-                } else {
-                    showToast(result.message, 'error');
                 }
             } catch (err) {
                 showToast('Lỗi xóa dữ liệu', 'error');
@@ -576,8 +581,8 @@
                     <div class="card">
                         <div class="p-6 border-b border-gray-200 flex items-center justify-between">
                             <div>
-                                <h3 class="text-lg font-bold text-gray-800">Danh sách tin tức (${news.length})</h3>
-                                <p class="text-sm text-gray-500">Tin mới nhất hiển thị đầu tiên</p>
+                                <h3 class="text-lg font-bold text-gray-800">📰 Danh sách tin tức (${news.length})</h3>
+                                <p class="text-sm text-green-600">✓ Tin mới nhất tự động hiển thị đầu tiên</p>
                             </div>
                             <button onclick="openNewsModal()" class="btn-primary px-4 py-2 text-white rounded-xl flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -585,25 +590,27 @@
                             </button>
                         </div>
                         <div class="divide-y divide-gray-200">
-                            ${news.map((n, index) => `
+                            ${news.length === 0 ? `
+                                <div class="p-12 text-center text-gray-500">Chưa có tin tức nào</div>
+                            ` : news.map((n, index) => `
                                 <div class="p-6 table-row flex items-start gap-4">
-                                    <div class="flex-shrink-0">
+                                    <div class="flex-shrink-0 w-16 text-center">
                                         ${index === 0 ? '<span class="badge badge-success">MỚI NHẤT</span>' : `<span class="text-gray-400 font-medium">#${index + 1}</span>`}
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2 mb-1">
-                                            <h4 class="font-semibold text-gray-800">${n.title}</h4>
+                                            <h4 class="font-semibold text-gray-800">${n.title || ''}</h4>
                                             ${n.isHot ? '<span class="badge badge-danger">HOT</span>' : ''}
                                         </div>
-                                        <p class="text-sm text-gray-500 mb-2">${n.summary || ''}</p>
+                                        <p class="text-sm text-gray-500 mb-2 line-clamp-2">${n.summary || ''}</p>
                                         <div class="flex items-center gap-4 text-xs text-gray-400">
                                             <span class="badge badge-info">${n.category || 'Chung'}</span>
-                                            <span>📅 ${n.date}</span>
+                                            <span>📅 ${n.date || ''}</span>
                                             ${n.source ? `<span>📰 ${n.source}</span>` : ''}
                                         </div>
                                     </div>
                                     <div class="flex-shrink-0">
-                                        <button onclick='openNewsModal(${JSON.stringify(n).replace(/'/g, "\\'")})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
+                                        <button onclick='openNewsModal(${JSON.stringify(n).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
                                         <button onclick="deleteNews(${n.id})" class="text-red-600 hover:text-red-800">Xóa</button>
                                     </div>
                                 </div>
@@ -629,11 +636,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
                             <select name="category" class="input-field w-full">
-                                <option value="tax" ${news?.category === 'tax' ? 'selected' : ''}>Thuế</option>
-                                <option value="insurance" ${news?.category === 'insurance' ? 'selected' : ''}>Bảo hiểm</option>
-                                <option value="labor" ${news?.category === 'labor' ? 'selected' : ''}>Lao động</option>
-                                <option value="enterprise" ${news?.category === 'enterprise' ? 'selected' : ''}>Doanh nghiệp</option>
-                                <option value="general" ${news?.category === 'general' ? 'selected' : ''}>Chung</option>
+                                <option value="Thuế" ${news?.category === 'Thuế' ? 'selected' : ''}>Thuế</option>
+                                <option value="BHXH" ${news?.category === 'BHXH' ? 'selected' : ''}>Bảo hiểm XH</option>
+                                <option value="Lao động" ${news?.category === 'Lao động' ? 'selected' : ''}>Lao động</option>
+                                <option value="Doanh nghiệp" ${news?.category === 'Doanh nghiệp' ? 'selected' : ''}>Doanh nghiệp</option>
+                                <option value="Đầu tư" ${news?.category === 'Đầu tư' ? 'selected' : ''}>Đầu tư</option>
+                                <option value="Chung" ${news?.category === 'Chung' || !news?.category ? 'selected' : ''}>Chung</option>
                             </select>
                         </div>
                         <div>
@@ -665,7 +673,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" name="isHot" id="isHot" ${news?.isHot ? 'checked' : ''}>
-                        <label for="isHot" class="text-sm text-gray-700">Đánh dấu tin nổi bật (HOT)</label>
+                        <label for="isHot" class="text-sm text-gray-700">🔥 Đánh dấu tin nổi bật (HOT)</label>
                     </div>
                     <div class="flex gap-3 pt-4">
                         <button type="button" onclick="closeModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50">Hủy</button>
@@ -702,11 +710,9 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showToast(result.message, 'success');
+                    showToast(result.message || 'Thành công', 'success');
                     closeModal();
                     loadNews();
-                } else {
-                    showToast(result.message, 'error');
                 }
             } catch (err) {
                 showToast('Lỗi lưu dữ liệu', 'error');
@@ -721,8 +727,6 @@
                 if (result.success) {
                     showToast('Đã xóa thành công', 'success');
                     loadNews();
-                } else {
-                    showToast(result.message, 'error');
                 }
             } catch (err) {
                 showToast('Lỗi xóa dữ liệu', 'error');
@@ -737,13 +741,14 @@
                 const agencies = data.data || [];
 
                 const typeLabels = {
-                    government: 'Cơ quan NN', law_firm: 'VP Luật', notary: 'Công chứng', bailiff: 'Thừa phát lại'
+                    government: 'Cơ quan NN', law_firm: 'VP Luật sư', lawfirm: 'VP Luật sư',
+                    notary: 'Công chứng', bailiff: 'Thừa phát lại'
                 };
 
                 document.getElementById('pageContent').innerHTML = `
                     <div class="card">
                         <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-                            <h3 class="text-lg font-bold text-gray-800">Danh sách cơ quan (${agencies.length})</h3>
+                            <h3 class="text-lg font-bold text-gray-800">🏛️ Danh sách cơ quan (${agencies.length})</h3>
                             <button onclick="openAgencyModal()" class="btn-primary px-4 py-2 text-white rounded-xl flex items-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Thêm cơ quan
@@ -763,12 +768,12 @@
                                 <tbody class="divide-y divide-gray-200">
                                     ${agencies.map(a => `
                                         <tr class="table-row">
-                                            <td class="px-6 py-4 font-medium text-gray-800">${a.name}</td>
-                                            <td class="px-6 py-4"><span class="badge badge-info">${typeLabels[a.type] || a.type}</span></td>
-                                            <td class="px-6 py-4 text-gray-600">${a.address || ''}</td>
+                                            <td class="px-6 py-4 font-medium text-gray-800">${a.name || ''}</td>
+                                            <td class="px-6 py-4"><span class="badge badge-info">${typeLabels[a.type] || typeLabels[a.category] || a.type || ''}</span></td>
+                                            <td class="px-6 py-4 text-gray-600 max-w-xs truncate">${a.address || ''}</td>
                                             <td class="px-6 py-4 text-gray-600">${a.phone || ''}</td>
                                             <td class="px-6 py-4 text-right">
-                                                <button onclick='openAgencyModal(${JSON.stringify(a).replace(/'/g, "\\'")})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
+                                                <button onclick='openAgencyModal(${JSON.stringify(a).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
                                                 <button onclick="deleteAgency(${a.id})" class="text-red-600 hover:text-red-800">Xóa</button>
                                             </td>
                                         </tr>
@@ -795,10 +800,10 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Loại cơ quan</label>
                         <select name="type" class="input-field w-full">
-                            <option value="government" ${agency?.type === 'government' ? 'selected' : ''}>Cơ quan Nhà nước</option>
-                            <option value="law_firm" ${agency?.type === 'law_firm' ? 'selected' : ''}>Văn phòng Luật sư</option>
-                            <option value="notary" ${agency?.type === 'notary' ? 'selected' : ''}>Văn phòng Công chứng</option>
-                            <option value="bailiff" ${agency?.type === 'bailiff' ? 'selected' : ''}>Văn phòng Thừa phát lại</option>
+                            <option value="government" ${agency?.type === 'government' || agency?.category === 'government' ? 'selected' : ''}>Cơ quan Nhà nước</option>
+                            <option value="law_firm" ${agency?.type === 'law_firm' || agency?.type === 'lawfirm' || agency?.category === 'lawfirm' ? 'selected' : ''}>Văn phòng Luật sư</option>
+                            <option value="notary" ${agency?.type === 'notary' || agency?.category === 'notary' ? 'selected' : ''}>Văn phòng Công chứng</option>
+                            <option value="bailiff" ${agency?.type === 'bailiff' || agency?.category === 'bailiff' ? 'selected' : ''}>Văn phòng Thừa phát lại</option>
                         </select>
                     </div>
                     <div>
@@ -851,11 +856,9 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showToast(result.message, 'success');
+                    showToast(result.message || 'Thành công', 'success');
                     closeModal();
                     loadAgencies();
-                } else {
-                    showToast(result.message, 'error');
                 }
             } catch (err) {
                 showToast('Lỗi lưu dữ liệu', 'error');
@@ -870,8 +873,6 @@
                 if (result.success) {
                     showToast('Đã xóa thành công', 'success');
                     loadAgencies();
-                } else {
-                    showToast(result.message, 'error');
                 }
             } catch (err) {
                 showToast('Lỗi xóa dữ liệu', 'error');
@@ -888,13 +889,16 @@
                 document.getElementById('pageContent').innerHTML = `
                     <div class="card">
                         <div class="p-6 border-b border-gray-200">
-                            <h3 class="text-lg font-bold text-gray-800">Danh sách khách hàng đăng ký (${customers.length})</h3>
-                            <p class="text-sm text-gray-500">Khách hàng mới đăng ký hiển thị đầu tiên</p>
+                            <h3 class="text-lg font-bold text-gray-800">👥 Danh sách khách hàng đăng ký (${customers.length})</h3>
+                            <p class="text-sm text-gray-500">Khách hàng mới đăng ký từ ứng dụng hiển thị đầu tiên</p>
                         </div>
                         ${customers.length === 0 ? `
                             <div class="p-12 text-center">
-                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                <p class="text-gray-500">Chưa có khách hàng nào đăng ký</p>
+                                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                                <p class="text-gray-500 text-lg">Chưa có khách hàng nào đăng ký</p>
+                                <p class="text-gray-400 text-sm mt-2">Khách hàng đăng ký qua ứng dụng sẽ hiển thị tại đây</p>
                             </div>
                         ` : `
                             <div class="overflow-x-auto">
@@ -921,9 +925,9 @@
                                                     <div class="text-sm text-gray-500">${c.phone || ''}</div>
                                                 </td>
                                                 <td class="px-6 py-4 text-gray-600">${c.company || '-'}</td>
-                                                <td class="px-6 py-4 text-gray-600">${new Date(c.createdAt).toLocaleDateString('vi-VN')}</td>
+                                                <td class="px-6 py-4 text-gray-600">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : '-'}</td>
                                                 <td class="px-6 py-4">
-                                                    <span class="badge ${c.isPro ? 'badge-warning' : 'badge-info'}">${c.isPro ? 'PRO' : 'Miễn phí'}</span>
+                                                    <span class="badge ${c.isPro ? 'badge-gold' : 'badge-info'}">${c.isPro ? '⭐ PRO' : 'Miễn phí'}</span>
                                                 </td>
                                                 <td class="px-6 py-4 text-right">
                                                     <button onclick="toggleProCustomer(${c.id}, ${!c.isPro})" class="text-blue-600 hover:text-blue-800 mr-3">${c.isPro ? 'Hủy Pro' : 'Nâng Pro'}</button>
@@ -951,7 +955,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showToast(isPro ? 'Đã nâng cấp Pro' : 'Đã hủy Pro', 'success');
+                    showToast(isPro ? 'Đã nâng cấp lên Pro' : 'Đã hủy gói Pro', 'success');
                     loadCustomers();
                 }
             } catch (err) {
@@ -984,10 +988,10 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Logo -->
                         <div class="card p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">Logo ứng dụng</h3>
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">🖼️ Logo ứng dụng</h3>
                             <div class="flex items-start gap-6">
                                 <div class="logo-preview" id="logoPreview">
-                                    ${settings.logo ? `<img src="${settings.logo}" alt="Logo">` : '<span class="text-gray-400">Chưa có logo</span>'}
+                                    ${settings.logo ? `<img src="${settings.logo}" alt="Logo">` : '<span class="text-gray-400 text-center text-sm">Chưa có<br>logo</span>'}
                                 </div>
                                 <div class="flex-1">
                                     <input type="url" id="logoUrl" value="${settings.logo || ''}" placeholder="Nhập URL hình ảnh logo" class="input-field w-full mb-3">
@@ -995,14 +999,14 @@
                                         <button onclick="saveLogo()" class="btn-primary px-4 py-2 text-white rounded-xl">Lưu logo</button>
                                         <button onclick="deleteLogo()" class="px-4 py-2 border border-red-300 text-red-600 rounded-xl hover:bg-red-50">Xóa</button>
                                     </div>
-                                    <p class="text-sm text-gray-500 mt-2">Khuyến nghị: 200x200px, định dạng PNG/SVG</p>
+                                    <p class="text-sm text-gray-500 mt-3">💡 Khuyến nghị: Ảnh vuông 200x200px, định dạng PNG hoặc SVG</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Thông tin công ty -->
                         <div class="card p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">Thông tin công ty</h3>
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">🏢 Thông tin công ty</h3>
                             <form id="settingsForm" class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Tên ứng dụng</label>
@@ -1034,7 +1038,7 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Giá gói Pro (VNĐ/tháng)</label>
                                     <input type="number" name="proPrice" value="${settings.proPrice || 99000}" class="input-field w-full">
                                 </div>
-                                <button type="submit" class="btn-primary w-full py-3 text-white rounded-xl">Lưu cài đặt</button>
+                                <button type="submit" class="btn-primary w-full py-3 text-white rounded-xl">💾 Lưu cài đặt</button>
                             </form>
                         </div>
                     </div>
@@ -1044,13 +1048,12 @@
                 document.getElementById('logoUrl').addEventListener('input', (e) => {
                     const preview = document.getElementById('logoPreview');
                     if (e.target.value) {
-                        preview.innerHTML = `<img src="${e.target.value}" alt="Logo" onerror="this.parentElement.innerHTML='<span class=\\'text-red-400\\'>URL không hợp lệ</span>'">`;
+                        preview.innerHTML = `<img src="${e.target.value}" alt="Logo" onerror="this.parentElement.innerHTML='<span class=\\'text-red-400 text-center text-sm\\'>URL không<br>hợp lệ</span>'">`;
                     } else {
-                        preview.innerHTML = '<span class="text-gray-400">Chưa có logo</span>';
+                        preview.innerHTML = '<span class="text-gray-400 text-center text-sm">Chưa có<br>logo</span>';
                     }
                 });
 
-                // Save settings form
                 document.getElementById('settingsForm').addEventListener('submit', saveSettings);
             } catch (err) {
                 showToast('Lỗi tải dữ liệu', 'error');
@@ -1067,7 +1070,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showToast('Đã lưu logo', 'success');
+                    showToast('Đã lưu logo thành công', 'success');
                 }
             } catch (err) {
                 showToast('Lỗi lưu logo', 'error');
@@ -1080,7 +1083,7 @@
                 const result = await res.json();
                 if (result.success) {
                     document.getElementById('logoUrl').value = '';
-                    document.getElementById('logoPreview').innerHTML = '<span class="text-gray-400">Chưa có logo</span>';
+                    document.getElementById('logoPreview').innerHTML = '<span class="text-gray-400 text-center text-sm">Chưa có<br>logo</span>';
                     showToast('Đã xóa logo', 'success');
                 }
             } catch (err) {
@@ -1109,7 +1112,7 @@
                 });
                 const result = await res.json();
                 if (result.success) {
-                    showToast('Đã lưu cài đặt', 'success');
+                    showToast('Đã lưu cài đặt thành công', 'success');
                 }
             } catch (err) {
                 showToast('Lỗi lưu cài đặt', 'error');
@@ -1126,7 +1129,6 @@
             editingId = null;
         }
 
-        // Close modal on outside click
         document.getElementById('modal').addEventListener('click', (e) => {
             if (e.target.id === 'modal') closeModal();
         });
