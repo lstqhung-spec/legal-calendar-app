@@ -11,6 +11,7 @@ const PROVINCES_FILE = path.join(__dirname, 'provinces.json');
 const AGENCIES_FILE = path.join(__dirname, 'agencies.json');
 const SETTINGS_FILE = path.join(__dirname, 'settings.json');
 const CUSTOMERS_FILE = path.join(__dirname, 'customers.json');
+const CATEGORIES_FILE = path.join(__dirname, 'categories.json');
 
 // =============== HELPER FUNCTIONS ===============
 
@@ -100,58 +101,13 @@ function serveStatic(res, filePath) {
 // =============== KHỞI TẠO DỮ LIỆU MẪU ===============
 
 function initializeData() {
-    // Events mẫu
-    if (!fs.existsSync(EVENTS_FILE)) {
-        const defaultEvents = [
-            { id: 1, title: 'Nộp tờ khai thuế GTGT tháng', category: 'tax', frequency: 'monthly', dayOfMonth: 20, description: 'Nộp tờ khai thuế GTGT tháng trước', legalReference: 'Theo Điều 44 Luật Quản lý thuế 2019', penalty: 'Phạt 2-5 triệu đồng nếu nộp chậm', isActive: true, createdAt: new Date().toISOString() },
-            { id: 2, title: 'Đóng BHXH, BHYT, BHTN', category: 'insurance', frequency: 'monthly', dayOfMonth: 25, description: 'Đóng bảo hiểm xã hội, y tế, thất nghiệp hàng tháng', legalReference: 'Luật Bảo hiểm xã hội 2014', penalty: 'Phạt 12-15% số tiền chậm đóng', isActive: true, createdAt: new Date().toISOString() },
-            { id: 3, title: 'Nộp tờ khai thuế TNCN', category: 'tax', frequency: 'monthly', dayOfMonth: 20, description: 'Nộp tờ khai thuế thu nhập cá nhân', legalReference: 'Thông tư 111/2013/TT-BTC', penalty: 'Phạt 2-5 triệu đồng', isActive: true, createdAt: new Date().toISOString() },
-            { id: 4, title: 'Báo cáo tình hình sử dụng hóa đơn', category: 'report', frequency: 'quarterly', dayOfMonth: 30, description: 'Báo cáo tình hình sử dụng hóa đơn hàng quý', legalReference: 'Nghị định 123/2020/NĐ-CP', penalty: 'Phạt 4-8 triệu đồng', isActive: true, createdAt: new Date().toISOString() },
-            { id: 5, title: 'Nộp tờ khai thuế GTGT quý', category: 'tax', frequency: 'quarterly', dayOfMonth: 30, description: 'Nộp tờ khai thuế GTGT theo quý', legalReference: 'Luật Thuế GTGT', penalty: 'Phạt 2-5 triệu đồng', isActive: true, createdAt: new Date().toISOString() },
-        ];
-        writeJSON(EVENTS_FILE, defaultEvents);
-        console.log('✓ Đã tạo dữ liệu mẫu: events.json');
+    // Customers mẫu (nếu chưa có)
+    if (!fs.existsSync(CUSTOMERS_FILE)) {
+        writeJSON(CUSTOMERS_FILE, []);
+        console.log('✓ Đã tạo file: customers.json');
     }
 
-    // News mẫu
-    if (!fs.existsSync(NEWS_FILE)) {
-        const defaultNews = [
-            { id: 1, title: 'Nghị định mới về quản lý thuế 2025', category: 'tax', date: '2024-12-30', summary: 'Chính phủ ban hành Nghị định mới về quản lý thuế, có hiệu lực từ 01/01/2025...', content: '<p>Nội dung chi tiết nghị định về quản lý thuế năm 2025...</p>', image: '', isHot: true, createdAt: new Date().toISOString() },
-            { id: 2, title: 'Hướng dẫn mới về BHXH từ 2025', category: 'insurance', date: '2024-12-29', summary: 'Bộ Lao động ban hành thông tư hướng dẫn thực hiện Luật BHXH sửa đổi...', content: '<p>Chi tiết hướng dẫn về bảo hiểm xã hội...</p>', image: '', isHot: true, createdAt: new Date().toISOString() },
-            { id: 3, title: 'Tăng mức lương cơ sở từ 01/7/2024', category: 'labor', date: '2024-12-28', summary: 'Mức lương cơ sở mới áp dụng từ ngày 01/7/2024 là 2.340.000 đồng/tháng...', content: '<p>Chi tiết về tăng lương cơ sở...</p>', image: '', isHot: false, createdAt: new Date().toISOString() },
-        ];
-        writeJSON(NEWS_FILE, defaultNews);
-        console.log('✓ Đã tạo dữ liệu mẫu: news.json');
-    }
-
-    // Provinces mẫu
-    if (!fs.existsSync(PROVINCES_FILE)) {
-        const defaultProvinces = [
-            { id: 'hcm', name: 'TP. Hồ Chí Minh' },
-            { id: 'hanoi', name: 'Hà Nội' },
-            { id: 'danang', name: 'Đà Nẵng' },
-            { id: 'cantho', name: 'Cần Thơ' },
-            { id: 'haiphong', name: 'Hải Phòng' },
-            { id: 'binhduong', name: 'Bình Dương' },
-            { id: 'dongnai', name: 'Đồng Nai' },
-        ];
-        writeJSON(PROVINCES_FILE, defaultProvinces);
-        console.log('✓ Đã tạo dữ liệu mẫu: provinces.json');
-    }
-
-    // Agencies mẫu
-    if (!fs.existsSync(AGENCIES_FILE)) {
-        const defaultAgencies = [
-            { id: 1, name: 'Cục Thuế TP. Hồ Chí Minh', type: 'government', provinceId: 'hcm', address: '140 Nguyễn Thị Minh Khai, Quận 3, TP.HCM', phone: '028 3930 1999', email: 'cucthue@hcm.gov.vn', website: 'https://hcmtax.gov.vn', createdAt: new Date().toISOString() },
-            { id: 2, name: 'BHXH TP. Hồ Chí Minh', type: 'government', provinceId: 'hcm', address: '1 Nguyễn Thị Minh Khai, Quận 1, TP.HCM', phone: '028 3829 7959', email: 'bhxh@hcm.gov.vn', website: 'https://bhxhhcm.gov.vn', createdAt: new Date().toISOString() },
-            { id: 3, name: 'Văn phòng Luật sư HTIC', type: 'law_firm', provinceId: 'hcm', address: 'Quận Bình Thạnh, TP.HCM', phone: '028 1234 5678', email: 'contact@hticlaw.com', website: 'https://hticlaw.com', createdAt: new Date().toISOString() },
-            { id: 4, name: 'VP Công chứng Số 1', type: 'notary', provinceId: 'hcm', address: 'Quận 1, TP.HCM', phone: '028 3823 4567', email: 'congchung1@email.com', website: '', createdAt: new Date().toISOString() },
-        ];
-        writeJSON(AGENCIES_FILE, defaultAgencies);
-        console.log('✓ Đã tạo dữ liệu mẫu: agencies.json');
-    }
-
-    // Settings mẫu
+    // Settings mẫu (nếu chưa có)
     if (!fs.existsSync(SETTINGS_FILE)) {
         const defaultSettings = {
             appName: 'HTIC Legal Calendar',
@@ -161,19 +117,12 @@ function initializeData() {
             companyPhone: '028 1234 5678',
             companyEmail: 'contact@hticlaw.com',
             companyWebsite: 'https://hticlaw.com',
-            primaryColor: '#3B82F6',
+            primaryColor: '#1E3A5F',
             proPrice: 99000,
             updatedAt: new Date().toISOString()
         };
         writeJSON(SETTINGS_FILE, defaultSettings);
-        console.log('✓ Đã tạo dữ liệu mẫu: settings.json');
-    }
-
-    // Customers mẫu
-    if (!fs.existsSync(CUSTOMERS_FILE)) {
-        const defaultCustomers = [];
-        writeJSON(CUSTOMERS_FILE, defaultCustomers);
-        console.log('✓ Đã tạo dữ liệu mẫu: customers.json');
+        console.log('✓ Đã tạo file: settings.json');
     }
 }
 
@@ -209,8 +158,12 @@ const server = http.createServer(async (req, res) => {
     // --- NEWS (Tin tức) - Sắp xếp mới nhất lên đầu ---
     if (pathname === '/api/news' && method === 'GET') {
         const news = readJSON(NEWS_FILE);
-        // Sắp xếp theo createdAt giảm dần (mới nhất lên đầu)
-        news.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+        // Sắp xếp theo createdAt hoặc date giảm dần (mới nhất lên đầu)
+        news.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.date || 0);
+            const dateB = new Date(b.createdAt || b.date || 0);
+            return dateB - dateA;
+        });
         return sendJSON(res, { success: true, data: news });
     }
 
@@ -226,13 +179,19 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, { success: true, data: provinces });
     }
 
+    // --- CATEGORIES (Danh mục) ---
+    if (pathname === '/api/categories' && method === 'GET') {
+        const categories = readJSON(CATEGORIES_FILE);
+        return sendJSON(res, { success: true, data: categories });
+    }
+
     // --- SETTINGS (Cài đặt công khai) ---
     if (pathname === '/api/settings' && method === 'GET') {
         const settings = readJSON(SETTINGS_FILE) || {};
         return sendJSON(res, { success: true, data: settings });
     }
 
-    // --- CUSTOMER REGISTER (Đăng ký khách hàng) ---
+    // --- CUSTOMER REGISTER (Đăng ký khách hàng từ app) ---
     if (pathname === '/api/customers/register' && method === 'POST') {
         const body = await parseBody(req);
         const customers = readJSON(CUSTOMERS_FILE);
@@ -284,6 +243,7 @@ const server = http.createServer(async (req, res) => {
         const news = readJSON(NEWS_FILE);
         const agencies = readJSON(AGENCIES_FILE);
         const customers = readJSON(CUSTOMERS_FILE);
+        const categories = readJSON(CATEGORIES_FILE);
         
         return sendJSON(res, {
             success: true,
@@ -291,7 +251,8 @@ const server = http.createServer(async (req, res) => {
                 events: { total: events.length, active: events.filter(e => e.isActive !== false).length },
                 news: { total: news.length, hot: news.filter(n => n.isHot).length },
                 agencies: { total: agencies.length },
-                customers: { total: customers.length, pro: customers.filter(c => c.isPro).length }
+                customers: { total: customers.length, pro: customers.filter(c => c.isPro).length },
+                categories: { total: categories.length }
             }
         });
     }
@@ -348,7 +309,11 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/admin/news' && method === 'GET') {
         const news = readJSON(NEWS_FILE);
         // Sắp xếp mới nhất lên đầu
-        news.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+        news.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.date || 0);
+            const dateB = new Date(b.createdAt || b.date || 0);
+            return dateB - dateA;
+        });
         return sendJSON(res, { success: true, data: news });
     }
 
@@ -468,11 +433,31 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, { success: false, message: 'Lỗi lưu dữ liệu' }, 500);
     }
 
+    // --- ADMIN CATEGORIES ---
+    if (pathname === '/api/admin/categories' && method === 'GET') {
+        const categories = readJSON(CATEGORIES_FILE);
+        return sendJSON(res, { success: true, data: categories });
+    }
+
+    if (pathname === '/api/admin/categories' && method === 'POST') {
+        const body = await parseBody(req);
+        const categories = readJSON(CATEGORIES_FILE);
+        const newCategory = {
+            id: body.id || 'cat_' + Date.now(),
+            ...body
+        };
+        categories.push(newCategory);
+        if (writeJSON(CATEGORIES_FILE, categories)) {
+            return sendJSON(res, { success: true, data: newCategory, message: 'Thêm danh mục thành công' });
+        }
+        return sendJSON(res, { success: false, message: 'Lỗi lưu dữ liệu' }, 500);
+    }
+
     // --- ADMIN CUSTOMERS ---
     if (pathname === '/api/admin/customers' && method === 'GET') {
         const customers = readJSON(CUSTOMERS_FILE);
         // Sắp xếp mới nhất lên đầu
-        customers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        customers.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         return sendJSON(res, { success: true, data: customers });
     }
 
@@ -542,9 +527,12 @@ const server = http.createServer(async (req, res) => {
 
     // =============== STATIC FILES ===============
 
+    // Frontend directory
+    const frontendDir = path.join(__dirname, '..', 'frontend');
+
     // Serve admin.html
     if (pathname === '/admin' || pathname === '/admin.html') {
-        const adminPath = path.join(__dirname, 'admin.html');
+        const adminPath = path.join(frontendDir, 'admin.html');
         if (fs.existsSync(adminPath)) {
             return serveStatic(res, adminPath);
         }
@@ -552,7 +540,7 @@ const server = http.createServer(async (req, res) => {
 
     // Serve index.html
     if (pathname === '/' || pathname === '/index.html') {
-        const indexPath = path.join(__dirname, 'index.html');
+        const indexPath = path.join(frontendDir, 'index.html');
         if (fs.existsSync(indexPath)) {
             return serveStatic(res, indexPath);
         }
@@ -572,8 +560,8 @@ const server = http.createServer(async (req, res) => {
         });
     }
 
-    // Serve other static files
-    const staticPath = path.join(__dirname, pathname);
+    // Serve other static files from frontend
+    const staticPath = path.join(frontendDir, pathname);
     if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
         return serveStatic(res, staticPath);
     }
@@ -585,7 +573,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════════════════════════╗
-║           HTIC Legal Calendar - Admin Server               ║
+║           HTIC Legal Calendar - Admin Server v2.0          ║
 ╠════════════════════════════════════════════════════════════╣
 ║  🌐 Server đang chạy tại: http://localhost:${PORT}            ║
 ║  👤 Trang Admin: http://localhost:${PORT}/admin               ║
@@ -595,7 +583,7 @@ server.listen(PORT, () => {
 ║     GET  /api/events      - Lấy danh sách lịch             ║
 ║     GET  /api/news        - Lấy tin tức (mới nhất đầu)     ║
 ║     GET  /api/agencies    - Lấy danh sách cơ quan          ║
-║     GET  /api/settings    - Lấy cài đặt                    ║
+║     GET  /api/settings    - Lấy cài đặt (logo, thông tin)  ║
 ║     POST /api/customers/register - Đăng ký khách hàng      ║
 ╚════════════════════════════════════════════════════════════╝
     `);
