@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTIC Legal - Admin Panel v2.0</title>
+    <title>HTIC Legal - Admin Panel v2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,7 +15,76 @@
         .card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         .modal { display: none; }
         .modal.active { display: flex; }
-        .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        
+        /* Rich Text Editor Styles */
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+        }
+        .editor-toolbar button {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .editor-toolbar button:hover {
+            background: #e2e8f0;
+        }
+        .editor-toolbar button.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .editor-toolbar input[type="color"] {
+            width: 36px;
+            height: 36px;
+            padding: 2px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .editor-content {
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 0 0 12px 12px;
+            outline: none;
+            overflow-y: auto;
+        }
+        .editor-content:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Subscription Cards */
+        .subscription-card {
+            position: relative;
+            transition: all 0.3s;
+        }
+        .subscription-card:hover {
+            transform: translateY(-4px);
+        }
+        .subscription-card.popular {
+            border: 2px solid #3b82f6;
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -57,7 +126,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-gray-800">HTIC Legal</h1>
-                        <p class="text-xs text-gray-500">Admin Panel v2.0</p>
+                        <p class="text-xs text-gray-500">Admin Panel v2.1</p>
                     </div>
                 </div>
             </div>
@@ -148,9 +217,44 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Subscription Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="card bg-gradient-to-r from-gray-500 to-gray-600 rounded-2xl p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-200 text-sm">Gói Miễn phí</p>
+                                <p id="stat-free" class="text-3xl font-bold mt-1">0</p>
+                                <p class="text-gray-200 text-xs mt-1">người dùng</p>
+                            </div>
+                            <i class="fas fa-user text-3xl text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="card bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-200 text-sm">Gói Pro</p>
+                                <p id="stat-pro" class="text-3xl font-bold mt-1">0</p>
+                                <p class="text-blue-200 text-xs mt-1">người dùng</p>
+                            </div>
+                            <i class="fas fa-crown text-3xl text-blue-300"></i>
+                        </div>
+                    </div>
+                    <div class="card bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-200 text-sm">Gói Doanh nghiệp</p>
+                                <p id="stat-enterprise" class="text-3xl font-bold mt-1">0</p>
+                                <p class="text-purple-200 text-xs mt-1">người dùng</p>
+                            </div>
+                            <i class="fas fa-building text-3xl text-purple-300"></i>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-white rounded-2xl p-6 border border-gray-100">
                     <h3 class="font-semibold text-gray-800 mb-4">API Endpoints</h3>
-                    <div class="space-y-2 text-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                         <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                             <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">GET</span>
                             <code class="text-gray-600">/api/events</code>
@@ -170,10 +274,6 @@
                         <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                             <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">GET</span>
                             <code class="text-gray-600">/api/company</code>
-                        </div>
-                        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">POST</span>
-                            <code class="text-gray-600">/api/auth/register</code>
                         </div>
                         <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                             <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">POST</span>
@@ -271,15 +371,26 @@
                     <h2 class="text-2xl font-bold text-gray-800">Người dùng</h2>
                     <p class="text-gray-500">Danh sách người dùng đã đăng ký</p>
                 </div>
+                
+                <!-- Filter by subscription -->
+                <div class="flex gap-2 mb-6">
+                    <button onclick="filterUsers('all')" class="user-filter active px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium" data-filter="all">Tất cả</button>
+                    <button onclick="filterUsers('free')" class="user-filter px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200" data-filter="free">Miễn phí</button>
+                    <button onclick="filterUsers('pro')" class="user-filter px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200" data-filter="pro">Pro</button>
+                    <button onclick="filterUsers('enterprise')" class="user-filter px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200" data-filter="enterprise">Doanh nghiệp</button>
+                </div>
+                
                 <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                     <table class="w-full">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Email</th>
                                 <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Công ty</th>
+                                <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Mã số thuế</th>
                                 <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Gói dịch vụ</th>
                                 <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Ngày đăng ký</th>
                                 <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">Trạng thái</th>
+                                <th class="text-right px-6 py-4 text-sm font-semibold text-gray-600">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="usersTable" class="divide-y divide-gray-100"></tbody>
@@ -289,11 +400,27 @@
 
             <!-- Subscriptions Section -->
             <section id="section-subscriptions" class="section hidden">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800">Gói dịch vụ</h2>
-                    <p class="text-gray-500">Quản lý các gói dịch vụ</p>
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Gói dịch vụ</h2>
+                        <p class="text-gray-500">Quản lý các gói dịch vụ và theo dõi khách hàng</p>
+                    </div>
+                    <button onclick="openSubscriptionModal()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Thêm gói mới
+                    </button>
                 </div>
-                <div id="subscriptionsList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                
+                <!-- Subscription Cards -->
+                <div id="subscriptionsList" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"></div>
+                
+                <!-- Users by Subscription Table -->
+                <div class="bg-white rounded-2xl border border-gray-100 p-6">
+                    <h3 class="font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-users mr-2 text-blue-600"></i>
+                        Khách hàng theo gói dịch vụ
+                    </h3>
+                    <div id="subscriptionUsersTable"></div>
+                </div>
             </section>
 
             <!-- Company Section -->
@@ -340,14 +467,6 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">Website</label>
                             <input type="url" id="companyWebsite" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Giờ làm việc</label>
-                            <input type="text" id="companyWorkingHours" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Mã số thuế</label>
-                            <input type="text" id="companyTaxCode" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
-                        </div>
                     </div>
                     <div class="mt-6 flex justify-end">
                         <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition">
@@ -379,7 +498,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
-                            <input type="url" id="settingLogo" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="https://example.com/logo.png">
+                            <input type="url" id="settingLogo" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end">
@@ -392,13 +511,14 @@
         </main>
     </div>
 
-    <!-- Event Modal -->
-    <div id="eventModal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50">
-        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-100">
+    <!-- Event Modal with Rich Text Editor -->
+    <div id="eventModal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50 overflow-y-auto py-8">
+        <div class="bg-white rounded-2xl w-full max-w-3xl mx-4">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                 <h3 id="eventModalTitle" class="text-xl font-bold text-gray-800">Thêm sự kiện mới</h3>
+                <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <form id="eventForm" class="p-6 space-y-4">
+            <form id="eventForm" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <input type="hidden" id="eventId">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề *</label>
@@ -422,7 +542,16 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-                    <textarea id="eventDescription" rows="3" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+                    <div class="editor-toolbar">
+                        <button type="button" onclick="execCmd('eventDescEditor', 'bold')" title="In đậm"><i class="fas fa-bold"></i></button>
+                        <button type="button" onclick="execCmd('eventDescEditor', 'italic')" title="In nghiêng"><i class="fas fa-italic"></i></button>
+                        <button type="button" onclick="execCmd('eventDescEditor', 'underline')" title="Gạch chân"><i class="fas fa-underline"></i></button>
+                        <button type="button" onclick="execCmd('eventDescEditor', 'strikeThrough')" title="Gạch ngang"><i class="fas fa-strikethrough"></i></button>
+                        <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                        <input type="color" id="eventTextColor" value="#000000" onchange="execCmdColor('eventDescEditor', this.value)" title="Màu chữ">
+                        <button type="button" onclick="execCmd('eventDescEditor', 'removeFormat')" title="Xóa định dạng"><i class="fas fa-eraser"></i></button>
+                    </div>
+                    <div id="eventDescEditor" class="editor-content" contenteditable="true"></div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Căn cứ pháp lý</label>
@@ -444,13 +573,14 @@
         </div>
     </div>
 
-    <!-- News Modal -->
-    <div id="newsModal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50">
-        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-100">
+    <!-- News Modal with Rich Text Editor -->
+    <div id="newsModal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50 overflow-y-auto py-8">
+        <div class="bg-white rounded-2xl w-full max-w-3xl mx-4">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                 <h3 id="newsModalTitle" class="text-xl font-bold text-gray-800">Thêm tin tức mới</h3>
+                <button onclick="closeNewsModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <form id="newsForm" class="p-6 space-y-4">
+            <form id="newsForm" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                 <input type="hidden" id="newsId">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề *</label>
@@ -474,6 +604,9 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">URL Hình ảnh</label>
                     <input type="url" id="newsImageUrl" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="https://example.com/image.jpg">
+                    <div id="newsImagePreview" class="mt-2 hidden">
+                        <img src="" alt="Preview" class="h-32 object-cover rounded-lg">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Tóm tắt *</label>
@@ -481,7 +614,19 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung *</label>
-                    <textarea id="newsContent" rows="5" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+                    <div class="editor-toolbar">
+                        <button type="button" onclick="execCmd('newsContentEditor', 'bold')" title="In đậm"><i class="fas fa-bold"></i></button>
+                        <button type="button" onclick="execCmd('newsContentEditor', 'italic')" title="In nghiêng"><i class="fas fa-italic"></i></button>
+                        <button type="button" onclick="execCmd('newsContentEditor', 'underline')" title="Gạch chân"><i class="fas fa-underline"></i></button>
+                        <button type="button" onclick="execCmd('newsContentEditor', 'strikeThrough')" title="Gạch ngang"><i class="fas fa-strikethrough"></i></button>
+                        <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                        <button type="button" onclick="execCmd('newsContentEditor', 'insertUnorderedList')" title="Danh sách"><i class="fas fa-list-ul"></i></button>
+                        <button type="button" onclick="execCmd('newsContentEditor', 'insertOrderedList')" title="Danh sách số"><i class="fas fa-list-ol"></i></button>
+                        <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                        <input type="color" id="newsTextColor" value="#000000" onchange="execCmdColor('newsContentEditor', this.value)" title="Màu chữ">
+                        <button type="button" onclick="execCmd('newsContentEditor', 'removeFormat')" title="Xóa định dạng"><i class="fas fa-eraser"></i></button>
+                    </div>
+                    <div id="newsContentEditor" class="editor-content" contenteditable="true" style="min-height: 200px;"></div>
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="newsIsHot" class="w-5 h-5 rounded border-gray-300">
@@ -497,9 +642,10 @@
 
     <!-- Agency Modal -->
     <div id="agencyModal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50">
-        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-100">
+        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
                 <h3 id="agencyModalTitle" class="text-xl font-bold text-gray-800">Thêm cơ quan mới</h3>
+                <button onclick="closeAgencyModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
             </div>
             <form id="agencyForm" class="p-6 space-y-4">
                 <input type="hidden" id="agencyId">
@@ -553,9 +699,89 @@
         </div>
     </div>
 
+    <!-- Subscription Modal -->
+    <div id="subscriptionModal" class="modal fixed inset-0 bg-black/50 items-center justify-center z-50">
+        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h3 id="subscriptionModalTitle" class="text-xl font-bold text-gray-800">Thêm gói dịch vụ</h3>
+                <button onclick="closeSubscriptionModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form id="subscriptionForm" class="p-6 space-y-4">
+                <input type="hidden" id="subId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên gói *</label>
+                        <input type="text" id="subName" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Giá (VNĐ) *</label>
+                        <input type="number" id="subPrice" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Chu kỳ</label>
+                        <select id="subPeriod" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                            <option value="monthly">Hàng tháng</option>
+                            <option value="yearly">Hàng năm</option>
+                            <option value="forever">Vĩnh viễn</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end gap-4">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="subPopular" class="w-5 h-5 rounded border-gray-300">
+                            <span class="text-sm text-gray-700">Phổ biến</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="subActive" checked class="w-5 h-5 rounded border-gray-300">
+                            <span class="text-sm text-gray-700">Kích hoạt</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tính năng (mỗi dòng 1 tính năng)</label>
+                    <textarea id="subFeatures" rows="5" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="Xem lịch pháp lý&#10;Nhắc nhở tự động&#10;Liên hệ luật sư"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tính năng không có (mỗi dòng 1 tính năng)</label>
+                    <textarea id="subNotIncluded" rows="3" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500" placeholder="Hỗ trợ ưu tiên&#10;API tích hợp"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="closeSubscriptionModal()" class="px-6 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50">Hủy</button>
+                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const API_BASE = window.location.origin;
         let authToken = localStorage.getItem('adminToken');
+        let allUsers = [];
+
+        // Rich Text Editor Functions
+        function execCmd(editorId, command) {
+            document.getElementById(editorId).focus();
+            document.execCommand(command, false, null);
+        }
+
+        function execCmdColor(editorId, color) {
+            document.getElementById(editorId).focus();
+            document.execCommand('foreColor', false, color);
+        }
+
+        // Image preview
+        document.getElementById('newsImageUrl')?.addEventListener('input', function() {
+            const preview = document.getElementById('newsImagePreview');
+            const img = preview.querySelector('img');
+            if (this.value) {
+                img.src = this.value;
+                preview.classList.remove('hidden');
+                img.onerror = () => preview.classList.add('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        });
 
         // Login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -583,7 +809,6 @@
             }
         });
 
-        // Check auth on load
         if (authToken) {
             document.getElementById('loginModal').classList.remove('active');
             document.getElementById('mainApp').classList.remove('hidden');
@@ -615,13 +840,29 @@
         // Dashboard
         async function loadDashboard() {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/stats`);
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('stat-events').textContent = data.data.events?.total || 0;
-                    document.getElementById('stat-news').textContent = data.data.news?.total || 0;
-                    document.getElementById('stat-agencies').textContent = data.data.agencies?.total || 0;
-                    document.getElementById('stat-users').textContent = data.data.users?.total || 0;
+                const [statsRes, usersRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/admin/stats`),
+                    fetch(`${API_BASE}/api/admin/users`)
+                ]);
+                const stats = await statsRes.json();
+                const users = await usersRes.json();
+                
+                if (stats.success) {
+                    document.getElementById('stat-events').textContent = stats.data.events?.total || 0;
+                    document.getElementById('stat-news').textContent = stats.data.news?.total || 0;
+                    document.getElementById('stat-agencies').textContent = stats.data.agencies?.total || 0;
+                    document.getElementById('stat-users').textContent = stats.data.users?.total || 0;
+                }
+                
+                if (users.success) {
+                    allUsers = users.data;
+                    const freeCount = allUsers.filter(u => !u.subscription || u.subscription === 'free').length;
+                    const proCount = allUsers.filter(u => u.subscription === 'pro').length;
+                    const enterpriseCount = allUsers.filter(u => u.subscription === 'enterprise').length;
+                    
+                    document.getElementById('stat-free').textContent = freeCount;
+                    document.getElementById('stat-pro').textContent = proCount;
+                    document.getElementById('stat-enterprise').textContent = enterpriseCount;
                 }
             } catch (err) { console.error(err); }
         }
@@ -637,7 +878,7 @@
                         <td class="px-6 py-4"><div class="font-medium text-gray-800">${e.title}</div></td>
                         <td class="px-6 py-4"><span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">${getCategoryName(e.category)}</span></td>
                         <td class="px-6 py-4 text-gray-600">${e.deadline || ''}</td>
-                        <td class="px-6 py-4">${e.isActive ? '<span class="text-green-600">✓ Hoạt động</span>' : '<span class="text-gray-400">Ẩn</span>'}</td>
+                        <td class="px-6 py-4">${e.isActive !== false ? '<span class="text-green-600">✓ Hoạt động</span>' : '<span class="text-gray-400">Ẩn</span>'}</td>
                         <td class="px-6 py-4 text-right">
                             <button onclick="editEvent(${e.id})" class="text-blue-600 hover:text-blue-800 mr-3"><i class="fas fa-edit"></i></button>
                             <button onclick="deleteEvent(${e.id})" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
@@ -651,6 +892,7 @@
             document.getElementById('eventModalTitle').textContent = 'Thêm sự kiện mới';
             document.getElementById('eventForm').reset();
             document.getElementById('eventId').value = '';
+            document.getElementById('eventDescEditor').innerHTML = '';
             document.getElementById('eventModal').classList.add('active');
         }
 
@@ -668,10 +910,10 @@
                 document.getElementById('eventTitle').value = event.title;
                 document.getElementById('eventCategory').value = event.category;
                 document.getElementById('eventDeadline').value = event.deadline;
-                document.getElementById('eventDescription').value = event.description || '';
+                document.getElementById('eventDescEditor').innerHTML = event.description || '';
                 document.getElementById('eventLegalBasis').value = event.legalBasis || '';
                 document.getElementById('eventPenalty').value = event.penalty || '';
-                document.getElementById('eventIsActive').checked = event.isActive;
+                document.getElementById('eventIsActive').checked = event.isActive !== false;
                 document.getElementById('eventModal').classList.add('active');
             }
         }
@@ -683,7 +925,7 @@
                 title: document.getElementById('eventTitle').value,
                 category: document.getElementById('eventCategory').value,
                 deadline: document.getElementById('eventDeadline').value,
-                description: document.getElementById('eventDescription').value,
+                description: document.getElementById('eventDescEditor').innerHTML,
                 legalBasis: document.getElementById('eventLegalBasis').value,
                 penalty: document.getElementById('eventPenalty').value,
                 isActive: document.getElementById('eventIsActive').checked
@@ -711,7 +953,7 @@
                 tbody.innerHTML = data.data.map(n => `
                     <tr>
                         <td class="px-6 py-4">
-                            ${n.imageUrl ? `<img src="${n.imageUrl}" class="w-16 h-12 object-cover rounded-lg">` : '<div class="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center"><i class="fas fa-image text-gray-400"></i></div>'}
+                            ${n.imageUrl ? `<img src="${n.imageUrl}" class="w-16 h-12 object-cover rounded-lg" onerror="this.style.display='none'">` : '<div class="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center"><i class="fas fa-image text-gray-400"></i></div>'}
                         </td>
                         <td class="px-6 py-4"><div class="font-medium text-gray-800 max-w-xs truncate">${n.title}</div></td>
                         <td class="px-6 py-4"><span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">${getCategoryName(n.category)}</span></td>
@@ -730,6 +972,8 @@
             document.getElementById('newsModalTitle').textContent = 'Thêm tin tức mới';
             document.getElementById('newsForm').reset();
             document.getElementById('newsId').value = '';
+            document.getElementById('newsContentEditor').innerHTML = '';
+            document.getElementById('newsImagePreview').classList.add('hidden');
             document.getElementById('newsModal').classList.add('active');
         }
 
@@ -749,8 +993,17 @@
                 document.getElementById('newsDate').value = news.date ? news.date.split('T')[0] : '';
                 document.getElementById('newsImageUrl').value = news.imageUrl || '';
                 document.getElementById('newsSummary').value = news.summary || '';
-                document.getElementById('newsContent').value = news.content || '';
+                document.getElementById('newsContentEditor').innerHTML = news.content || '';
                 document.getElementById('newsIsHot').checked = news.isHot;
+                
+                const preview = document.getElementById('newsImagePreview');
+                if (news.imageUrl) {
+                    preview.querySelector('img').src = news.imageUrl;
+                    preview.classList.remove('hidden');
+                } else {
+                    preview.classList.add('hidden');
+                }
+                
                 document.getElementById('newsModal').classList.add('active');
             }
         }
@@ -764,7 +1017,7 @@
                 date: document.getElementById('newsDate').value ? new Date(document.getElementById('newsDate').value).toISOString() : new Date().toISOString(),
                 imageUrl: document.getElementById('newsImageUrl').value,
                 summary: document.getElementById('newsSummary').value,
-                content: document.getElementById('newsContent').value,
+                content: document.getElementById('newsContentEditor').innerHTML,
                 isHot: document.getElementById('newsIsHot').checked
             };
             const url = id ? `${API_BASE}/api/admin/news/${id}` : `${API_BASE}/api/admin/news`;
@@ -864,43 +1117,213 @@
             try {
                 const res = await fetch(`${API_BASE}/api/admin/users`);
                 const data = await res.json();
-                const tbody = document.getElementById('usersTable');
-                if (data.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">Chưa có người dùng đăng ký</td></tr>';
-                } else {
-                    tbody.innerHTML = data.data.map(u => `
-                        <tr>
-                            <td class="px-6 py-4"><div class="font-medium text-gray-800">${u.email}</div></td>
-                            <td class="px-6 py-4 text-gray-600">${u.companyName || '-'}</td>
-                            <td class="px-6 py-4"><span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">${u.subscription || 'free'}</span></td>
-                            <td class="px-6 py-4 text-gray-600">${formatDate(u.createdAt)}</td>
-                            <td class="px-6 py-4">${u.isActive ? '<span class="text-green-600">✓ Hoạt động</span>' : '<span class="text-gray-400">Khóa</span>'}</td>
-                        </tr>
-                    `).join('');
-                }
+                allUsers = data.data;
+                renderUsers(allUsers);
             } catch (err) { console.error(err); }
+        }
+
+        function filterUsers(filter) {
+            document.querySelectorAll('.user-filter').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            event.target.classList.add('active', 'bg-blue-600', 'text-white');
+            event.target.classList.remove('bg-gray-100', 'text-gray-600');
+            
+            let filtered = allUsers;
+            if (filter === 'free') filtered = allUsers.filter(u => !u.subscription || u.subscription === 'free');
+            else if (filter === 'pro') filtered = allUsers.filter(u => u.subscription === 'pro');
+            else if (filter === 'enterprise') filtered = allUsers.filter(u => u.subscription === 'enterprise');
+            
+            renderUsers(filtered);
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTable');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Chưa có người dùng</td></tr>';
+            } else {
+                tbody.innerHTML = users.map(u => `
+                    <tr>
+                        <td class="px-6 py-4"><div class="font-medium text-gray-800">${u.email}</div></td>
+                        <td class="px-6 py-4 text-gray-600">${u.companyName || '-'}</td>
+                        <td class="px-6 py-4 text-gray-600">${u.taxCode || '-'}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${getSubscriptionColor(u.subscription)}">${getSubscriptionName(u.subscription)}</span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">${formatDate(u.createdAt)}</td>
+                        <td class="px-6 py-4">${u.isActive !== false ? '<span class="text-green-600">✓ Hoạt động</span>' : '<span class="text-red-600">Khóa</span>'}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="changeUserSubscription(${u.id})" class="text-blue-600 hover:text-blue-800 mr-2" title="Đổi gói"><i class="fas fa-crown"></i></button>
+                            <button onclick="toggleUserStatus(${u.id})" class="text-orange-600 hover:text-orange-800" title="Khóa/Mở khóa"><i class="fas fa-ban"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function changeUserSubscription(id) {
+            const user = allUsers.find(u => u.id === id);
+            const newSub = prompt('Nhập gói mới (free, pro, enterprise):', user.subscription || 'free');
+            if (newSub && ['free', 'pro', 'enterprise'].includes(newSub)) {
+                // This would need a PUT endpoint for users - for now just show alert
+                alert('Chức năng đang phát triển. Cần thêm API PUT /api/admin/users/:id');
+            }
+        }
+
+        async function toggleUserStatus(id) {
+            alert('Chức năng đang phát triển. Cần thêm API PUT /api/admin/users/:id');
         }
 
         // Subscriptions
         async function loadSubscriptions() {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/subscriptions`);
-                const data = await res.json();
+                const [subsRes, usersRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/admin/subscriptions`),
+                    fetch(`${API_BASE}/api/admin/users`)
+                ]);
+                const subs = await subsRes.json();
+                const users = await usersRes.json();
+                allUsers = users.data;
+                
                 const container = document.getElementById('subscriptionsList');
-                container.innerHTML = data.data.map(s => `
-                    <div class="bg-white rounded-2xl border border-gray-100 p-6 ${s.popular ? 'ring-2 ring-blue-500' : ''}">
-                        ${s.popular ? '<div class="text-center mb-2"><span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs">PHỔ BIẾN</span></div>' : ''}
-                        <h3 class="text-xl font-bold text-gray-800 text-center">${s.name}</h3>
+                container.innerHTML = subs.data.map(s => {
+                    const userCount = allUsers.filter(u => {
+                        if (s.name === 'Miễn phí') return !u.subscription || u.subscription === 'free';
+                        if (s.name === 'Pro') return u.subscription === 'pro';
+                        if (s.name === 'Doanh nghiệp') return u.subscription === 'enterprise';
+                        return false;
+                    }).length;
+                    
+                    return `
+                    <div class="subscription-card bg-white rounded-2xl border border-gray-100 p-6 ${s.popular ? 'popular' : ''}">
+                        ${s.popular ? '<div class="popular-badge"><span class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-medium">PHỔ BIẾN</span></div>' : ''}
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">${s.name}</h3>
+                            <div class="flex gap-1">
+                                <button onclick="editSubscription(${s.id})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteSubscription(${s.id})" class="p-2 text-red-600 hover:bg-red-50 rounded-lg"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
                         <div class="text-center my-4">
                             <span class="text-3xl font-bold text-gray-800">${s.price.toLocaleString()}đ</span>
-                            <span class="text-gray-500">/${s.period === 'forever' ? 'mãi mãi' : 'tháng'}</span>
+                            <span class="text-gray-500">/${getPeriodName(s.period)}</span>
+                        </div>
+                        <div class="bg-blue-50 rounded-xl p-3 mb-4 text-center">
+                            <span class="text-2xl font-bold text-blue-600">${userCount}</span>
+                            <span class="text-blue-600 text-sm ml-1">người dùng</span>
                         </div>
                         <ul class="space-y-2">
-                            ${s.features.map(f => `<li class="flex items-center gap-2 text-sm text-gray-600"><i class="fas fa-check text-green-500"></i>${f}</li>`).join('')}
+                            ${(s.features || []).map(f => `<li class="flex items-center gap-2 text-sm text-gray-600"><i class="fas fa-check text-green-500 w-4"></i>${f}</li>`).join('')}
+                            ${(s.notIncluded || []).map(f => `<li class="flex items-center gap-2 text-sm text-gray-400"><i class="fas fa-times text-gray-300 w-4"></i>${f}</li>`).join('')}
                         </ul>
                     </div>
-                `).join('');
+                `}).join('');
+                
+                // Render users by subscription
+                renderSubscriptionUsers();
             } catch (err) { console.error(err); }
+        }
+
+        function renderSubscriptionUsers() {
+            const container = document.getElementById('subscriptionUsersTable');
+            
+            const groupedUsers = {
+                'Miễn phí': allUsers.filter(u => !u.subscription || u.subscription === 'free'),
+                'Pro': allUsers.filter(u => u.subscription === 'pro'),
+                'Doanh nghiệp': allUsers.filter(u => u.subscription === 'enterprise')
+            };
+            
+            let html = '';
+            for (const [subName, users] of Object.entries(groupedUsers)) {
+                html += `
+                    <div class="mb-6">
+                        <h4 class="font-medium text-gray-700 mb-2 flex items-center gap-2">
+                            <span class="px-2 py-1 ${subName === 'Pro' ? 'bg-blue-100 text-blue-700' : subName === 'Doanh nghiệp' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'} rounded text-xs">${subName}</span>
+                            <span class="text-gray-400">(${users.length} người dùng)</span>
+                        </h4>
+                        ${users.length > 0 ? `
+                            <div class="bg-gray-50 rounded-xl overflow-hidden">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="text-left px-4 py-2 text-gray-600">Email</th>
+                                            <th class="text-left px-4 py-2 text-gray-600">Công ty</th>
+                                            <th class="text-left px-4 py-2 text-gray-600">Ngày đăng ký</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        ${users.map(u => `
+                                            <tr>
+                                                <td class="px-4 py-2 text-gray-800">${u.email}</td>
+                                                <td class="px-4 py-2 text-gray-600">${u.companyName || '-'}</td>
+                                                <td class="px-4 py-2 text-gray-600">${formatDate(u.createdAt)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ` : '<p class="text-gray-400 text-sm italic">Chưa có người dùng</p>'}
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function openSubscriptionModal() {
+            document.getElementById('subscriptionModalTitle').textContent = 'Thêm gói dịch vụ';
+            document.getElementById('subscriptionForm').reset();
+            document.getElementById('subId').value = '';
+            document.getElementById('subscriptionModal').classList.add('active');
+        }
+
+        function closeSubscriptionModal() {
+            document.getElementById('subscriptionModal').classList.remove('active');
+        }
+
+        async function editSubscription(id) {
+            const res = await fetch(`${API_BASE}/api/admin/subscriptions`);
+            const data = await res.json();
+            const sub = data.data.find(s => s.id === id);
+            if (sub) {
+                document.getElementById('subscriptionModalTitle').textContent = 'Sửa gói dịch vụ';
+                document.getElementById('subId').value = sub.id;
+                document.getElementById('subName').value = sub.name;
+                document.getElementById('subPrice').value = sub.price;
+                document.getElementById('subPeriod').value = sub.period;
+                document.getElementById('subPopular').checked = sub.popular || false;
+                document.getElementById('subActive').checked = sub.isActive !== false;
+                document.getElementById('subFeatures').value = (sub.features || []).join('\n');
+                document.getElementById('subNotIncluded').value = (sub.notIncluded || []).join('\n');
+                document.getElementById('subscriptionModal').classList.add('active');
+            }
+        }
+
+        document.getElementById('subscriptionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('subId').value;
+            const subData = {
+                name: document.getElementById('subName').value,
+                price: parseInt(document.getElementById('subPrice').value),
+                period: document.getElementById('subPeriod').value,
+                popular: document.getElementById('subPopular').checked,
+                isActive: document.getElementById('subActive').checked,
+                features: document.getElementById('subFeatures').value.split('\n').filter(f => f.trim()),
+                notIncluded: document.getElementById('subNotIncluded').value.split('\n').filter(f => f.trim())
+            };
+            const url = id ? `${API_BASE}/api/admin/subscriptions/${id}` : `${API_BASE}/api/admin/subscriptions`;
+            const method = id ? 'PUT' : 'POST';
+            await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(subData) });
+            closeSubscriptionModal();
+            loadSubscriptions();
+        });
+
+        async function deleteSubscription(id) {
+            if (confirm('Bạn có chắc muốn xóa gói dịch vụ này?')) {
+                await fetch(`${API_BASE}/api/admin/subscriptions/${id}`, { method: 'DELETE' });
+                loadSubscriptions();
+            }
         }
 
         // Company
@@ -918,8 +1341,6 @@
                 document.getElementById('companyHotline').value = c.hotline || '';
                 document.getElementById('companyEmail').value = c.email || '';
                 document.getElementById('companyWebsite').value = c.website || '';
-                document.getElementById('companyWorkingHours').value = c.workingHours || '';
-                document.getElementById('companyTaxCode').value = c.taxCode || '';
             } catch (err) { console.error(err); }
         }
 
@@ -934,9 +1355,7 @@
                 phone: document.getElementById('companyPhone').value,
                 hotline: document.getElementById('companyHotline').value,
                 email: document.getElementById('companyEmail').value,
-                website: document.getElementById('companyWebsite').value,
-                workingHours: document.getElementById('companyWorkingHours').value,
-                taxCode: document.getElementById('companyTaxCode').value
+                website: document.getElementById('companyWebsite').value
             };
             await fetch(`${API_BASE}/api/admin/company`, {
                 method: 'POST',
@@ -984,6 +1403,25 @@
         function getTypeName(type) {
             const names = { tax: 'Thuế', insurance: 'Bảo hiểm', notary: 'Công chứng', court: 'Tòa án', police: 'Công an' };
             return names[type] || type;
+        }
+
+        function getSubscriptionName(sub) {
+            const names = { free: 'Miễn phí', pro: 'Pro', enterprise: 'Doanh nghiệp' };
+            return names[sub] || 'Miễn phí';
+        }
+
+        function getSubscriptionColor(sub) {
+            const colors = { 
+                free: 'bg-gray-100 text-gray-700', 
+                pro: 'bg-blue-100 text-blue-700', 
+                enterprise: 'bg-purple-100 text-purple-700' 
+            };
+            return colors[sub] || colors.free;
+        }
+
+        function getPeriodName(period) {
+            const names = { monthly: 'tháng', yearly: 'năm', forever: 'mãi mãi' };
+            return names[period] || period;
         }
 
         function formatDate(dateStr) {
