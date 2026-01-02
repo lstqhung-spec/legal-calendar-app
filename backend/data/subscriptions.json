@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "name": "Miễn phí",
+    "price": 0,
+    "period": "forever",
+    "features": ["Xem lịch pháp lý cơ bản", "Tối đa 5 sự kiện/tháng", "Tin tức pháp lý", "Tra cứu cơ quan cơ bản"],
+    "notIncluded": ["Nhắc nhở tự động", "Liên hệ luật sư", "Tài liệu pháp lý", "Hỗ trợ ưu tiên"],
+    "isActive": true
+  },
+  {
+    "id": 2,
+    "name": "Pro",
+    "price": 199000,
+    "period": "monthly",
+    "popular": true,
+    "features": ["Tất cả tính năng miễn phí", "Không giới hạn sự kiện", "Nhắc nhở tự động đa kênh", "Liên hệ luật sư 24/7", "Thư viện tài liệu pháp lý", "Hỗ trợ ưu tiên"],
+    "notIncluded": [],
+    "isActive": true
+  },
+  {
+    "id": 3,
+    "name": "Doanh nghiệp",
+    "price": 499000,
+    "period": "monthly",
+    "features": ["Tất cả tính năng Pro", "Quản lý đa chi nhánh", "API tích hợp", "Báo cáo chi tiết", "Tư vấn pháp lý riêng", "Account Manager"],
+    "notIncluded": [],
+    "isActive": true
+  }
+]
