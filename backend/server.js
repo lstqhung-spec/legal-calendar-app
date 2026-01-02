@@ -1,11 +1,10 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 
-// Data file paths - trong thư mục backend/data/
+// Data file paths
 const DATA_DIR = path.join(__dirname, 'data');
 const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 const NEWS_FILE = path.join(DATA_DIR, 'news.json');
@@ -13,13 +12,10 @@ const PROVINCES_FILE = path.join(DATA_DIR, 'provinces.json');
 const AGENCIES_FILE = path.join(DATA_DIR, 'agencies.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
-const SUBSCRIPTIONS_FILE = path.join(DATA_DIR, 'subscriptions.json');
-const COMPANY_FILE = path.join(DATA_DIR, 'company.json');
+const LAWYERS_FILE = path.join(DATA_DIR, 'lawyers.json');
+const PAYMENTS_FILE = path.join(DATA_DIR, 'payments.json');
 
-// Frontend directory - thư mục frontend/
-const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
-
-// Đảm bảo thư mục data tồn tại
+// Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -48,20 +44,12 @@ function writeJSON(file, data) {
 
 function getNextId(items) {
     if (!items || items.length === 0) return 1;
-    return Math.max(...items.map(i => parseInt(i.id) || 0)) + 1;
-}
-
-function generateToken() {
-    return crypto.randomBytes(32).toString('hex');
-}
-
-function hashPassword(password) {
-    return crypto.createHash('sha256').update(password).digest('hex');
+    return Math.max(...items.map(i => i.id || 0)) + 1;
 }
 
 function sendJSON(res, data, status = 200) {
     res.writeHead(status, {
-        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization'
@@ -86,7 +74,7 @@ function parseBody(req) {
 
 // MIME types
 const MIME_TYPES = {
-    '.html': 'text/html; charset=utf-8',
+    '.html': 'text/html',
     '.css': 'text/css',
     '.js': 'application/javascript',
     '.json': 'application/json',
@@ -107,178 +95,207 @@ function serveStatic(res, filePath) {
             res.writeHead(404);
             res.end('File not found');
         } else {
-            res.writeHead(200, { 
-                'Content-Type': contentType,
-                'Access-Control-Allow-Origin': '*'
-            });
+            res.writeHead(200, { 'Content-Type': contentType });
             res.end(data);
         }
     });
 }
 
-// Initialize default data
+// Initialize default data if not exists
 function initializeData() {
-    // Default users
-    if (!fs.existsSync(USERS_FILE)) {
-        writeJSON(USERS_FILE, []);
-    }
-
-    // Default subscriptions
-    if (!fs.existsSync(SUBSCRIPTIONS_FILE)) {
-        const defaultSubscriptions = [
-            { id: 1, name: 'Miễn phí', price: 0, period: 'forever', features: ['Xem lịch pháp lý cơ bản', 'Tối đa 5 sự kiện/tháng', 'Tin tức pháp lý', 'Tra cứu cơ quan cơ bản'], notIncluded: ['Nhắc nhở tự động', 'Liên hệ luật sư', 'Tài liệu pháp lý', 'Hỗ trợ ưu tiên'], isActive: true },
-            { id: 2, name: 'Pro', price: 199000, period: 'monthly', popular: true, features: ['Tất cả tính năng miễn phí', 'Không giới hạn sự kiện', 'Nhắc nhở tự động đa kênh', 'Liên hệ luật sư 24/7', 'Thư viện tài liệu pháp lý', 'Hỗ trợ ưu tiên'], notIncluded: [], isActive: true },
-            { id: 3, name: 'Doanh nghiệp', price: 499000, period: 'monthly', features: ['Tất cả tính năng Pro', 'Quản lý đa chi nhánh', 'API tích hợp', 'Báo cáo chi tiết', 'Tư vấn pháp lý riêng', 'Account Manager'], notIncluded: [], isActive: true }
-        ];
-        writeJSON(SUBSCRIPTIONS_FILE, defaultSubscriptions);
-    }
-
-    // Default company info
-    if (!fs.existsSync(COMPANY_FILE)) {
-        const defaultCompany = {
-            name: 'Công ty Luật HTIC',
-            shortName: 'HTIC Law',
-            slogan: 'Đồng hành pháp lý - Phát triển bền vững',
-            description: 'Công ty Luật HTIC được thành lập với sứ mệnh cung cấp các giải pháp pháp lý toàn diện cho doanh nghiệp Việt Nam.',
-            address: '123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh',
-            phone: '1900 123 456',
-            hotline: '0901 234 567',
-            email: 'contact@hticlaw.vn',
-            website: 'https://hticlaw.vn',
-            workingHours: 'Thứ 2 - Thứ 7: 8:00 - 17:30',
-            taxCode: '0123456789',
-            foundedYear: 2010,
-            experience: '15+',
-            clients: '500+',
-            cases: '1000+',
-            services: ['Tư vấn pháp luật doanh nghiệp', 'Soạn thảo hợp đồng', 'Tư vấn thuế & kế toán', 'Pháp luật lao động', 'Sáp nhập & Mua bán doanh nghiệp', 'Sở hữu trí tuệ'],
-            social: { facebook: '', linkedin: '', youtube: '' },
-            logo: null
-        };
-        writeJSON(COMPANY_FILE, defaultCompany);
-    }
-
-    // Default settings
-    if (!fs.existsSync(SETTINGS_FILE)) {
-        writeJSON(SETTINGS_FILE, { logo: null, appName: 'HTIC Legal', appVersion: '2.0.0', primaryColor: '#136DEC' });
-    }
-
     // Default events
-    if (!fs.existsSync(EVENTS_FILE) || readJSON(EVENTS_FILE).length === 0) {
+    if (!fs.existsSync(EVENTS_FILE)) {
         const defaultEvents = [
-            { id: 1, title: 'Nộp tờ khai thuế GTGT tháng', category: 'tax', deadline: '2026-01-20', description: 'Nộp tờ khai thuế GTGT tháng trước theo mẫu 01/GTGT', legalBasis: 'Theo Điều 44 Luật Quản lý thuế 2019', penalty: 'Phạt 2-5 triệu đồng nếu nộp chậm', isActive: true },
-            { id: 2, title: 'Đóng BHXH, BHYT, BHTN tháng 1/2026', category: 'insurance', deadline: '2026-01-25', description: 'Đóng bảo hiểm xã hội, y tế, thất nghiệp hàng tháng', legalBasis: 'Luật Bảo hiểm xã hội 2014', penalty: 'Phạt 12-15% số tiền chậm đóng', isActive: true },
-            { id: 3, title: 'Nộp tờ khai thuế TNCN', category: 'tax', deadline: '2026-01-20', description: 'Nộp tờ khai thuế thu nhập cá nhân', legalBasis: 'Thông tư 111/2013/TT-BTC', penalty: 'Phạt 2-5 triệu đồng', isActive: true }
+            { id: 1, title: 'Nop to khai thue GTGT thang', category: 'tax', frequency: 'monthly', dayOfMonth: 20, description: 'Nop to khai thue GTGT thang truoc', legalReference: 'Theo Dieu 44 Luat Quan ly thue 2019', penalty: 'Phat 2-5 trieu dong neu nop cham', isActive: true },
+            { id: 2, title: 'Dong BHXH, BHYT, BHTN', category: 'insurance', frequency: 'monthly', dayOfMonth: 25, description: 'Dong bao hiem xa hoi, y te, that nghiep hang thang', legalReference: 'Luat Bao hiem xa hoi 2014', penalty: 'Phat 12-15% so tien cham dong', isActive: true }
         ];
         writeJSON(EVENTS_FILE, defaultEvents);
     }
 
     // Default news
-    if (!fs.existsSync(NEWS_FILE) || readJSON(NEWS_FILE).length === 0) {
+    if (!fs.existsSync(NEWS_FILE)) {
         const defaultNews = [
-            { id: 1, title: 'Cập nhật mức đóng BHXH mới nhất 2026', category: 'insurance', date: new Date().toISOString(), summary: 'Tổng hợp các thay đổi về tỷ lệ đóng BHXH từ tháng 1/2026', content: 'Theo quy định mới, mức đóng BHXH bắt buộc sẽ được điều chỉnh từ ngày 01/01/2026.', imageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400', isHot: true },
-            { id: 2, title: 'Hạn cuối nộp tờ khai thuế GTGT quý IV/2025', category: 'tax', date: new Date(Date.now() - 86400000).toISOString(), summary: 'Doanh nghiệp cần lưu ý thời hạn nộp tờ khai thuế', content: 'Tổng cục Thuế thông báo hạn cuối nộp tờ khai thuế GTGT quý IV/2025 là ngày 30/01/2026.', imageUrl: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=400', isHot: true }
+            { id: 1, title: 'Nghi dinh moi ve quan ly thue 2024', category: 'tax', date: '25/12/2024', summary: 'Chinh phu ban hanh Nghi dinh moi...', content: 'Noi dung chi tiet...', imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400', isHot: true }
         ];
         writeJSON(NEWS_FILE, defaultNews);
     }
 
+    // Default provinces
+    if (!fs.existsSync(PROVINCES_FILE)) {
+        const defaultProvinces = [
+            { id: 'hanoi', name: 'Ha Noi' },
+            { id: 'hcm', name: 'TP. Ho Chi Minh' },
+            { id: 'danang', name: 'Da Nang' }
+        ];
+        writeJSON(PROVINCES_FILE, defaultProvinces);
+    }
+
     // Default agencies
-    if (!fs.existsSync(AGENCIES_FILE) || readJSON(AGENCIES_FILE).length === 0) {
+    if (!fs.existsSync(AGENCIES_FILE)) {
         const defaultAgencies = [
-            { id: 1, name: 'Cục Thuế TP. Hồ Chí Minh', type: 'tax', city: 'TP. Hồ Chí Minh', address: '63 Vũ Tông Phan, Quận 2', phone: '028 3770 2288', email: 'cucthue.hcm@gdt.gov.vn', workingHours: 'Thứ 2 - Thứ 6: 7:30 - 16:30', description: 'Cục Thuế TP.HCM', services: ['Đăng ký thuế', 'Kê khai thuế', 'Hoàn thuế'] },
-            { id: 2, name: 'BHXH Quận 1', type: 'insurance', city: 'TP. Hồ Chí Minh', address: '35 Lý Tự Trọng, Quận 1', phone: '028 3827 5566', email: 'bhxh.quan1@vss.gov.vn', workingHours: 'Thứ 2 - Thứ 6: 7:30 - 16:30', description: 'Cơ quan BHXH quận 1', services: ['Đăng ký BHXH', 'Cấp sổ BHXH', 'Cấp thẻ BHYT'] }
+            { id: 1, name: 'Cuc Thue TP. Ha Noi', category: 'government', provinceId: 'hanoi', address: '20 Le Dai Hanh, Ha Noi', phone: '024 3974 2020' },
+            { id: 2, name: 'Cong ty Luat HTIC', category: 'lawfirm', provinceId: 'hanoi', address: '15 Pham Hung, Ha Noi', phone: '0379 044 299', website: 'www.htic.com.vn' }
         ];
         writeJSON(AGENCIES_FILE, defaultAgencies);
     }
 
-    // Default provinces
-    if (!fs.existsSync(PROVINCES_FILE) || readJSON(PROVINCES_FILE).length === 0) {
-        const defaultProvinces = [
-            { id: 'hcm', name: 'TP. Hồ Chí Minh' },
-            { id: 'hanoi', name: 'Hà Nội' },
-            { id: 'danang', name: 'Đà Nẵng' }
+    // Default settings
+    if (!fs.existsSync(SETTINGS_FILE)) {
+        const defaultSettings = {
+            logo: null,
+            companyName: 'HTIC LAW FIRM',
+            website: 'www.htic.com.vn',
+            phone: '0379 044 299',
+            email: 'contact@htic.com.vn',
+            address: 'Ha Noi, Viet Nam'
+        };
+        writeJSON(SETTINGS_FILE, defaultSettings);
+    }
+
+    // Default users - với tài khoản test Pro
+    if (!fs.existsSync(USERS_FILE)) {
+        const defaultUsers = [
+            {
+                id: 1,
+                email: 'admin@htic.vn',
+                password: 'htic2025',
+                name: 'HTIC Admin',
+                phone: '0379044299',
+                avatar: null,
+                company: 'HTIC Law Firm',
+                taxCode: '0123456789',
+                address: '15 Pham Hung, Nam Tu Liem, Ha Noi',
+                industry: 'Dich vu phap ly',
+                contactInfo: 'Hotline: 0379044299',
+                isPro: true,
+                proExpiry: '2026-12-31',
+                provider: 'email',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 2,
+                email: 'test@gmail.com',
+                password: '123456',
+                name: 'Test User',
+                phone: '0901234567',
+                avatar: null,
+                company: '',
+                taxCode: '',
+                address: '',
+                industry: '',
+                contactInfo: '',
+                isPro: false,
+                proExpiry: null,
+                provider: 'email',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            },
+            {
+                id: 3,
+                email: 'pro@test.com',
+                password: 'pro123',
+                name: 'Pro User Test',
+                phone: '0909999888',
+                avatar: null,
+                company: 'Test Company',
+                taxCode: '9876543210',
+                address: 'TP.HCM',
+                industry: 'Thuong mai',
+                contactInfo: '',
+                isPro: true,
+                proExpiry: '2026-06-30',
+                provider: 'email',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }
         ];
-        writeJSON(PROVINCES_FILE, defaultProvinces);
+        writeJSON(USERS_FILE, defaultUsers);
+    }
+
+    // Default lawyers
+    if (!fs.existsSync(LAWYERS_FILE)) {
+        const defaultLawyers = [
+            {
+                id: 1,
+                name: 'Luat su Tran Van A',
+                title: 'Luat su dieu hanh',
+                specialty: 'Doanh nghiep, Thue, Dau tu',
+                phone: '0379044299',
+                zalo: '0379044299',
+                email: 'lawyer.a@htic.vn',
+                avatar: null,
+                experience: '15 nam',
+                isAvailable: true,
+                isPrimary: true
+            },
+            {
+                id: 2,
+                name: 'Luat su Nguyen Thi B',
+                title: 'Luat su thanh vien',
+                specialty: 'Lao dong, Bao hiem xa hoi',
+                phone: '0901234567',
+                zalo: '0901234567',
+                email: 'lawyer.b@htic.vn',
+                avatar: null,
+                experience: '10 nam',
+                isAvailable: true,
+                isPrimary: false
+            }
+        ];
+        writeJSON(LAWYERS_FILE, defaultLawyers);
+    }
+
+    // Default payments
+    if (!fs.existsSync(PAYMENTS_FILE)) {
+        writeJSON(PAYMENTS_FILE, []);
     }
 }
 
 // Initialize data
 initializeData();
 
-// Create server
+// Request handler
 const server = http.createServer(async (req, res) => {
-    const { method, url } = req;
-    const parsedUrl = new URL(url, `http://localhost:${PORT}`);
-    const pathname = parsedUrl.pathname;
+    const url = new URL(req.url, `http://localhost:${PORT}`);
+    const pathname = url.pathname;
+    const method = req.method;
 
-    // Handle CORS preflight
+    // CORS preflight
     if (method === 'OPTIONS') {
-        res.writeHead(204, {
+        res.writeHead(200, {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization'
         });
-        return res.end();
+        res.end();
+        return;
     }
+
+    console.log(`${method} ${pathname}`);
 
     // =============== API ROUTES ===============
-
-    // --- AUTH ---
-    if (pathname === '/api/auth/register' && method === 'POST') {
-        const body = await parseBody(req);
-        const users = readJSON(USERS_FILE);
-        if (users.find(u => u.email === body.email)) {
-            return sendJSON(res, { success: false, message: 'Email đã được sử dụng' }, 400);
-        }
-        const newUser = {
-            id: getNextId(users),
-            companyName: body.companyName || '',
-            taxCode: body.taxCode || '',
-            email: body.email,
-            phone: body.phone || '',
-            password: hashPassword(body.password),
-            subscription: 'free',
-            createdAt: new Date().toISOString(),
-            isActive: true
-        };
-        users.push(newUser);
-        if (writeJSON(USERS_FILE, users)) {
-            const { password, ...userWithoutPassword } = newUser;
-            return sendJSON(res, { success: true, data: userWithoutPassword, token: generateToken(), message: 'Đăng ký thành công' });
-        }
-        return sendJSON(res, { success: false, message: 'Lỗi khi lưu dữ liệu' }, 500);
-    }
-
-    if (pathname === '/api/auth/login' && method === 'POST') {
-        const body = await parseBody(req);
-        const users = readJSON(USERS_FILE);
-        const user = users.find(u => u.email === body.email && u.password === hashPassword(body.password));
-        if (user && user.isActive) {
-            const { password, ...userWithoutPassword } = user;
-            return sendJSON(res, { success: true, data: userWithoutPassword, token: generateToken() });
-        }
-        return sendJSON(res, { success: false, message: 'Email hoặc mật khẩu không đúng' }, 401);
-    }
 
     // --- EVENTS ---
     if (pathname === '/api/events' && method === 'GET') {
         const events = readJSON(EVENTS_FILE);
-        return sendJSON(res, { success: true, data: events.filter(e => e.isActive !== false) });
+        return sendJSON(res, { success: true, data: events });
     }
 
     if (pathname === '/api/admin/events' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(EVENTS_FILE) });
+        const events = readJSON(EVENTS_FILE);
+        return sendJSON(res, { success: true, data: events });
     }
 
     if (pathname === '/api/admin/events' && method === 'POST') {
         const body = await parseBody(req);
         const events = readJSON(EVENTS_FILE);
-        const newEvent = { id: getNextId(events), ...body, isActive: body.isActive !== false };
+        const newEvent = { id: getNextId(events), ...body, isActive: true };
         events.push(newEvent);
         if (writeJSON(EVENTS_FILE, events)) {
-            return sendJSON(res, { success: true, data: newEvent, message: 'Sự kiện đã được tạo' });
+            return sendJSON(res, { success: true, data: newEvent, message: 'Event created' });
         }
-        return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
+        return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
     }
 
     const eventMatch = pathname.match(/^\/api\/admin\/events\/(\d+)$/);
@@ -286,46 +303,44 @@ const server = http.createServer(async (req, res) => {
         const eventId = parseInt(eventMatch[1]);
         const events = readJSON(EVENTS_FILE);
         const eventIndex = events.findIndex(e => e.id === eventId);
+
         if (method === 'PUT') {
-            if (eventIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
+            if (eventIndex === -1) return sendJSON(res, { success: false, message: 'Event not found' }, 404);
             const body = await parseBody(req);
-            events[eventIndex] = { ...events[eventIndex], ...body };
-            if (writeJSON(EVENTS_FILE, events)) return sendJSON(res, { success: true, data: events[eventIndex] });
-            return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
+            events[eventIndex] = { ...events[eventIndex], ...body, id: eventId };
+            if (writeJSON(EVENTS_FILE, events)) {
+                return sendJSON(res, { success: true, data: events[eventIndex] });
+            }
         }
+
         if (method === 'DELETE') {
-            if (eventIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
+            if (eventIndex === -1) return sendJSON(res, { success: false, message: 'Event not found' }, 404);
             events.splice(eventIndex, 1);
-            if (writeJSON(EVENTS_FILE, events)) return sendJSON(res, { success: true, message: 'Đã xóa' });
-            return sendJSON(res, { success: false, message: 'Lỗi khi xóa' }, 500);
+            if (writeJSON(EVENTS_FILE, events)) {
+                return sendJSON(res, { success: true, message: 'Deleted' });
+            }
         }
     }
 
     // --- NEWS ---
     if (pathname === '/api/news' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(NEWS_FILE) });
+        const news = readJSON(NEWS_FILE);
+        return sendJSON(res, { success: true, data: news });
     }
 
     if (pathname === '/api/admin/news' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(NEWS_FILE) });
+        const news = readJSON(NEWS_FILE);
+        return sendJSON(res, { success: true, data: news });
     }
 
     if (pathname === '/api/admin/news' && method === 'POST') {
         const body = await parseBody(req);
         const news = readJSON(NEWS_FILE);
-        const newNews = {
-            id: getNextId(news),
-            title: body.title,
-            category: body.category,
-            date: body.date || new Date().toISOString(),
-            summary: body.summary,
-            content: body.content,
-            imageUrl: body.imageUrl || body.image || '',
-            isHot: body.isHot || false
-        };
-        news.unshift(newNews);
-        if (writeJSON(NEWS_FILE, news)) return sendJSON(res, { success: true, data: newNews, message: 'Tin tức đã được tạo' });
-        return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
+        const newNews = { id: getNextId(news), ...body, date: new Date().toISOString() };
+        news.push(newNews);
+        if (writeJSON(NEWS_FILE, news)) {
+            return sendJSON(res, { success: true, data: newNews });
+        }
     }
 
     const newsMatch = pathname.match(/^\/api\/admin\/news\/(\d+)$/);
@@ -333,28 +348,34 @@ const server = http.createServer(async (req, res) => {
         const newsId = parseInt(newsMatch[1]);
         const news = readJSON(NEWS_FILE);
         const newsIndex = news.findIndex(n => n.id === newsId);
+
         if (method === 'PUT') {
-            if (newsIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
+            if (newsIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
             const body = await parseBody(req);
-            news[newsIndex] = { ...news[newsIndex], ...body, imageUrl: body.imageUrl || body.image || news[newsIndex].imageUrl };
-            if (writeJSON(NEWS_FILE, news)) return sendJSON(res, { success: true, data: news[newsIndex] });
-            return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
+            news[newsIndex] = { ...news[newsIndex], ...body, id: newsId };
+            if (writeJSON(NEWS_FILE, news)) {
+                return sendJSON(res, { success: true, data: news[newsIndex] });
+            }
         }
+
         if (method === 'DELETE') {
-            if (newsIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
+            if (newsIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
             news.splice(newsIndex, 1);
-            if (writeJSON(NEWS_FILE, news)) return sendJSON(res, { success: true, message: 'Đã xóa' });
-            return sendJSON(res, { success: false, message: 'Lỗi khi xóa' }, 500);
+            if (writeJSON(NEWS_FILE, news)) {
+                return sendJSON(res, { success: true, message: 'Deleted' });
+            }
         }
     }
 
     // --- AGENCIES ---
     if (pathname === '/api/agencies' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(AGENCIES_FILE) });
+        const agencies = readJSON(AGENCIES_FILE);
+        return sendJSON(res, { success: true, data: agencies });
     }
 
     if (pathname === '/api/admin/agencies' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(AGENCIES_FILE) });
+        const agencies = readJSON(AGENCIES_FILE);
+        return sendJSON(res, { success: true, data: agencies });
     }
 
     if (pathname === '/api/admin/agencies' && method === 'POST') {
@@ -362,109 +383,47 @@ const server = http.createServer(async (req, res) => {
         const agencies = readJSON(AGENCIES_FILE);
         const newAgency = { id: getNextId(agencies), ...body };
         agencies.push(newAgency);
-        if (writeJSON(AGENCIES_FILE, agencies)) return sendJSON(res, { success: true, data: newAgency });
-        return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
-    }
-
-    const agencyMatch = pathname.match(/^\/api\/admin\/agencies\/(\d+)$/);
-    if (agencyMatch) {
-        const agencyId = parseInt(agencyMatch[1]);
-        const agencies = readJSON(AGENCIES_FILE);
-        const agencyIndex = agencies.findIndex(a => a.id === agencyId);
-        if (method === 'PUT') {
-            if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
-            const body = await parseBody(req);
-            agencies[agencyIndex] = { ...agencies[agencyIndex], ...body };
-            if (writeJSON(AGENCIES_FILE, agencies)) return sendJSON(res, { success: true, data: agencies[agencyIndex] });
-            return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
+        if (writeJSON(AGENCIES_FILE, agencies)) {
+            return sendJSON(res, { success: true, data: newAgency });
         }
-        if (method === 'DELETE') {
-            if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
-            agencies.splice(agencyIndex, 1);
-            if (writeJSON(AGENCIES_FILE, agencies)) return sendJSON(res, { success: true, message: 'Đã xóa' });
-            return sendJSON(res, { success: false, message: 'Lỗi khi xóa' }, 500);
-        }
-    }
-
-    // --- SUBSCRIPTIONS ---
-    if (pathname === '/api/subscriptions' && method === 'GET') {
-        const subs = readJSON(SUBSCRIPTIONS_FILE);
-        return sendJSON(res, { success: true, data: subs.filter(s => s.isActive !== false) });
-    }
-
-    if (pathname === '/api/admin/subscriptions' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(SUBSCRIPTIONS_FILE) });
-    }
-
-    if (pathname === '/api/admin/subscriptions' && method === 'POST') {
-        const body = await parseBody(req);
-        const subs = readJSON(SUBSCRIPTIONS_FILE);
-        const newSub = { id: getNextId(subs), ...body, isActive: true };
-        subs.push(newSub);
-        if (writeJSON(SUBSCRIPTIONS_FILE, subs)) return sendJSON(res, { success: true, data: newSub });
-        return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
-    }
-
-    // --- COMPANY ---
-    if (pathname === '/api/company' && method === 'GET') {
-        const company = readJSON(COMPANY_FILE);
-        return sendJSON(res, { success: true, data: Array.isArray(company) ? {} : company });
-    }
-
-    if (pathname === '/api/admin/company' && method === 'GET') {
-        const company = readJSON(COMPANY_FILE);
-        return sendJSON(res, { success: true, data: Array.isArray(company) ? {} : company });
-    }
-
-    if (pathname === '/api/admin/company' && method === 'POST') {
-        const body = await parseBody(req);
-        let company = readJSON(COMPANY_FILE);
-        if (Array.isArray(company)) company = {};
-        Object.assign(company, body);
-        if (writeJSON(COMPANY_FILE, company)) return sendJSON(res, { success: true, data: company, message: 'Đã cập nhật' });
-        return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
-    }
-
-    // --- USERS ---
-    if (pathname === '/api/admin/users' && method === 'GET') {
-        const users = readJSON(USERS_FILE);
-        return sendJSON(res, { success: true, data: users.map(({ password, ...rest }) => rest) });
     }
 
     // --- PROVINCES ---
     if (pathname === '/api/provinces' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(PROVINCES_FILE) });
+        const provinces = readJSON(PROVINCES_FILE);
+        return sendJSON(res, { success: true, data: provinces });
     }
 
     // --- SETTINGS ---
     if (pathname === '/api/settings' && method === 'GET') {
-        const settings = readJSON(SETTINGS_FILE);
-        return sendJSON(res, { success: true, data: Array.isArray(settings) ? {} : settings });
-    }
-
-    if (pathname === '/api/admin/settings' && method === 'GET') {
-        const settings = readJSON(SETTINGS_FILE);
-        return sendJSON(res, { success: true, data: Array.isArray(settings) ? {} : settings });
+        const settings = readJSON(SETTINGS_FILE) || {};
+        return sendJSON(res, { success: true, data: settings });
     }
 
     if (pathname === '/api/admin/settings' && method === 'POST') {
         const body = await parseBody(req);
-        let settings = readJSON(SETTINGS_FILE);
-        if (Array.isArray(settings)) settings = {};
+        const settings = readJSON(SETTINGS_FILE) || {};
         Object.assign(settings, body);
-        if (writeJSON(SETTINGS_FILE, settings)) return sendJSON(res, { success: true, data: settings });
-        return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
+        if (writeJSON(SETTINGS_FILE, settings)) {
+            return sendJSON(res, { success: true, message: 'Saved' });
+        }
     }
 
     // --- STATS ---
     if (pathname === '/api/admin/stats' && method === 'GET') {
+        const events = readJSON(EVENTS_FILE);
+        const news = readJSON(NEWS_FILE);
+        const agencies = readJSON(AGENCIES_FILE);
+        const users = readJSON(USERS_FILE);
+        const payments = readJSON(PAYMENTS_FILE);
         return sendJSON(res, {
             success: true,
             data: {
-                events: { total: readJSON(EVENTS_FILE).length },
-                news: { total: readJSON(NEWS_FILE).length },
-                agencies: { total: readJSON(AGENCIES_FILE).length },
-                users: { total: readJSON(USERS_FILE).length }
+                events: { total: events.length },
+                news: { total: news.length },
+                agencies: { total: agencies.length },
+                users: { total: users.length, pro: users.filter(u => u.isPro).length },
+                payments: { total: payments.length, completed: payments.filter(p => p.status === 'completed').length }
             }
         });
     }
@@ -475,50 +434,405 @@ const server = http.createServer(async (req, res) => {
         if (body.username === 'admin' && body.password === 'htic2025') {
             return sendJSON(res, { success: true, token: 'admin-token-' + Date.now() });
         }
-        return sendJSON(res, { success: false, message: 'Sai tên đăng nhập hoặc mật khẩu' }, 401);
+        return sendJSON(res, { success: false, message: 'Invalid credentials' }, 401);
+    }
+
+    // =============== USER AUTHENTICATION ===============
+
+    // --- ĐĂNG KÝ ---
+    if (pathname === '/api/auth/register' && method === 'POST') {
+        const body = await parseBody(req);
+        const users = readJSON(USERS_FILE);
+        
+        const existingUser = users.find(u => u.email === body.email);
+        if (existingUser) {
+            return sendJSON(res, { success: false, message: 'Email da duoc su dung' }, 400);
+        }
+        
+        const newUser = {
+            id: getNextId(users),
+            email: body.email,
+            password: body.password,
+            name: body.name || '',
+            phone: body.phone || '',
+            avatar: null,
+            company: body.company || '',
+            taxCode: body.taxCode || '',
+            address: body.address || '',
+            industry: body.industry || '',
+            contactInfo: body.contactInfo || '',
+            isPro: false,
+            proExpiry: null,
+            provider: body.provider || 'email',
+            providerId: body.providerId || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        users.push(newUser);
+        if (writeJSON(USERS_FILE, users)) {
+            const { password, ...userWithoutPassword } = newUser;
+            return sendJSON(res, { 
+                success: true, 
+                data: userWithoutPassword,
+                token: 'user-token-' + newUser.id + '-' + Date.now(),
+                message: 'Dang ky thanh cong' 
+            });
+        }
+        return sendJSON(res, { success: false, message: 'Loi luu du lieu' }, 500);
+    }
+
+    // --- ĐĂNG NHẬP ---
+    if (pathname === '/api/auth/login' && method === 'POST') {
+        const body = await parseBody(req);
+        const users = readJSON(USERS_FILE);
+        
+        const user = users.find(u => u.email === body.email && u.password === body.password);
+        if (user) {
+            const { password, ...userWithoutPassword } = user;
+            return sendJSON(res, { 
+                success: true, 
+                data: userWithoutPassword,
+                token: 'user-token-' + user.id + '-' + Date.now(),
+                message: 'Dang nhap thanh cong'
+            });
+        }
+        return sendJSON(res, { success: false, message: 'Email hoac mat khau khong dung' }, 401);
+    }
+
+    // --- ĐĂNG NHẬP/ĐĂNG KÝ VỚI GOOGLE/APPLE ---
+    if (pathname === '/api/auth/social' && method === 'POST') {
+        const body = await parseBody(req);
+        const users = readJSON(USERS_FILE);
+        
+        let user = users.find(u => u.email === body.email || 
+            (u.provider === body.provider && u.providerId === body.providerId));
+        
+        if (user) {
+            const { password, ...userWithoutPassword } = user;
+            return sendJSON(res, { 
+                success: true, 
+                data: userWithoutPassword,
+                token: 'user-token-' + user.id + '-' + Date.now(),
+                isNewUser: false,
+                message: 'Dang nhap thanh cong'
+            });
+        } else {
+            const newUser = {
+                id: getNextId(users),
+                email: body.email,
+                password: '',
+                name: body.name || '',
+                phone: body.phone || '',
+                avatar: body.avatar || null,
+                company: '',
+                taxCode: '',
+                address: '',
+                industry: '',
+                contactInfo: '',
+                isPro: false,
+                proExpiry: null,
+                provider: body.provider,
+                providerId: body.providerId,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            users.push(newUser);
+            if (writeJSON(USERS_FILE, users)) {
+                const { password, ...userWithoutPassword } = newUser;
+                return sendJSON(res, { 
+                    success: true, 
+                    data: userWithoutPassword,
+                    token: 'user-token-' + newUser.id + '-' + Date.now(),
+                    isNewUser: true,
+                    message: 'Tao tai khoan thanh cong'
+                });
+            }
+        }
+        return sendJSON(res, { success: false, message: 'Loi xu ly' }, 500);
+    }
+
+    // --- LẤY THÔNG TIN USER ---
+    const userGetMatch = pathname.match(/^\/api\/users\/(\d+)$/);
+    if (userGetMatch && method === 'GET') {
+        const userId = parseInt(userGetMatch[1]);
+        const users = readJSON(USERS_FILE);
+        const user = users.find(u => u.id === userId);
+        
+        if (user) {
+            const { password, ...userWithoutPassword } = user;
+            return sendJSON(res, { success: true, data: userWithoutPassword });
+        }
+        return sendJSON(res, { success: false, message: 'User khong ton tai' }, 404);
+    }
+
+    // --- CẬP NHẬT PROFILE ---
+    const userPutMatch = pathname.match(/^\/api\/users\/(\d+)$/);
+    if (userPutMatch && method === 'PUT') {
+        const userId = parseInt(userPutMatch[1]);
+        const body = await parseBody(req);
+        const users = readJSON(USERS_FILE);
+        const userIndex = users.findIndex(u => u.id === userId);
+        
+        if (userIndex === -1) {
+            return sendJSON(res, { success: false, message: 'User khong ton tai' }, 404);
+        }
+        
+        const allowedFields = ['name', 'phone', 'avatar', 'company', 'taxCode', 'address', 'industry', 'contactInfo'];
+        allowedFields.forEach(field => {
+            if (body[field] !== undefined) {
+                users[userIndex][field] = body[field];
+            }
+        });
+        users[userIndex].updatedAt = new Date().toISOString();
+        
+        if (writeJSON(USERS_FILE, users)) {
+            const { password, ...userWithoutPassword } = users[userIndex];
+            return sendJSON(res, { success: true, data: userWithoutPassword, message: 'Cap nhat thanh cong' });
+        }
+        return sendJSON(res, { success: false, message: 'Loi luu du lieu' }, 500);
+    }
+
+    // --- UPLOAD AVATAR ---
+    const avatarMatch = pathname.match(/^\/api\/users\/(\d+)\/avatar$/);
+    if (avatarMatch && method === 'POST') {
+        const userId = parseInt(avatarMatch[1]);
+        const body = await parseBody(req);
+        const users = readJSON(USERS_FILE);
+        const userIndex = users.findIndex(u => u.id === userId);
+        
+        if (userIndex === -1) {
+            return sendJSON(res, { success: false, message: 'User khong ton tai' }, 404);
+        }
+        
+        users[userIndex].avatar = body.avatar;
+        users[userIndex].updatedAt = new Date().toISOString();
+        
+        if (writeJSON(USERS_FILE, users)) {
+            return sendJSON(res, { success: true, avatar: body.avatar, message: 'Upload thanh cong' });
+        }
+        return sendJSON(res, { success: false, message: 'Loi luu du lieu' }, 500);
+    }
+
+    // =============== LAWYERS ===============
+
+    if (pathname === '/api/lawyers' && method === 'GET') {
+        const lawyers = readJSON(LAWYERS_FILE);
+        const availableLawyers = lawyers.filter(l => l.isAvailable);
+        return sendJSON(res, { success: true, data: availableLawyers });
+    }
+
+    if (pathname === '/api/lawyers/primary' && method === 'GET') {
+        const lawyers = readJSON(LAWYERS_FILE);
+        const primaryLawyer = lawyers.find(l => l.isPrimary && l.isAvailable);
+        return sendJSON(res, { success: true, data: primaryLawyer || lawyers.find(l => l.isAvailable) || null });
+    }
+
+    if (pathname === '/api/admin/lawyers' && method === 'GET') {
+        const lawyers = readJSON(LAWYERS_FILE);
+        return sendJSON(res, { success: true, data: lawyers });
+    }
+
+    if (pathname === '/api/admin/lawyers' && method === 'POST') {
+        const body = await parseBody(req);
+        const lawyers = readJSON(LAWYERS_FILE);
+        const newLawyer = { id: getNextId(lawyers), ...body, isAvailable: true };
+        lawyers.push(newLawyer);
+        if (writeJSON(LAWYERS_FILE, lawyers)) {
+            return sendJSON(res, { success: true, data: newLawyer });
+        }
+    }
+
+    const lawyerMatch = pathname.match(/^\/api\/admin\/lawyers\/(\d+)$/);
+    if (lawyerMatch) {
+        const lawyerId = parseInt(lawyerMatch[1]);
+        const lawyers = readJSON(LAWYERS_FILE);
+        const lawyerIndex = lawyers.findIndex(l => l.id === lawyerId);
+
+        if (method === 'PUT') {
+            if (lawyerIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
+            const body = await parseBody(req);
+            lawyers[lawyerIndex] = { ...lawyers[lawyerIndex], ...body, id: lawyerId };
+            if (writeJSON(LAWYERS_FILE, lawyers)) {
+                return sendJSON(res, { success: true, data: lawyers[lawyerIndex] });
+            }
+        }
+
+        if (method === 'DELETE') {
+            if (lawyerIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
+            lawyers.splice(lawyerIndex, 1);
+            if (writeJSON(LAWYERS_FILE, lawyers)) {
+                return sendJSON(res, { success: true, message: 'Deleted' });
+            }
+        }
+    }
+
+    // =============== ADMIN: USERS ===============
+
+    if (pathname === '/api/admin/users' && method === 'GET') {
+        const users = readJSON(USERS_FILE);
+        const usersWithoutPassword = users.map(u => {
+            const { password, ...rest } = u;
+            return rest;
+        });
+        return sendJSON(res, { success: true, data: usersWithoutPassword });
+    }
+
+    const userAdminMatch = pathname.match(/^\/api\/admin\/users\/(\d+)$/);
+    if (userAdminMatch) {
+        const userId = parseInt(userAdminMatch[1]);
+        const users = readJSON(USERS_FILE);
+        const userIndex = users.findIndex(u => u.id === userId);
+
+        if (method === 'PUT') {
+            if (userIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
+            const body = await parseBody(req);
+            users[userIndex] = { ...users[userIndex], ...body, id: userId, updatedAt: new Date().toISOString() };
+            if (writeJSON(USERS_FILE, users)) {
+                const { password, ...userWithoutPassword } = users[userIndex];
+                return sendJSON(res, { success: true, data: userWithoutPassword });
+            }
+        }
+
+        if (method === 'DELETE') {
+            if (userIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
+            users.splice(userIndex, 1);
+            if (writeJSON(USERS_FILE, users)) {
+                return sendJSON(res, { success: true, message: 'Deleted' });
+            }
+        }
+    }
+
+    // =============== PAYMENTS ===============
+
+    if (pathname === '/api/payments/create' && method === 'POST') {
+        const body = await parseBody(req);
+        const payments = readJSON(PAYMENTS_FILE);
+        
+        const newPayment = {
+            id: getNextId(payments),
+            orderId: 'HTIC' + Date.now(),
+            userId: body.userId,
+            amount: body.amount,
+            package: body.package,
+            method: body.method,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            completedAt: null,
+            transactionId: null,
+            note: body.note || ''
+        };
+        
+        payments.push(newPayment);
+        if (writeJSON(PAYMENTS_FILE, payments)) {
+            return sendJSON(res, { success: true, data: newPayment });
+        }
+    }
+
+    const paymentConfirmMatch = pathname.match(/^\/api\/admin\/payments\/(\d+)\/confirm$/);
+    if (paymentConfirmMatch && method === 'POST') {
+        const paymentId = parseInt(paymentConfirmMatch[1]);
+        const payments = readJSON(PAYMENTS_FILE);
+        const paymentIndex = payments.findIndex(p => p.id === paymentId);
+        
+        if (paymentIndex === -1) {
+            return sendJSON(res, { success: false, message: 'Not found' }, 404);
+        }
+        
+        const body = await parseBody(req);
+        payments[paymentIndex].status = 'completed';
+        payments[paymentIndex].completedAt = new Date().toISOString();
+        payments[paymentIndex].transactionId = body.transactionId || ('TXN' + Date.now());
+        
+        // Update user isPro
+        const users = readJSON(USERS_FILE);
+        const userIndex = users.findIndex(u => u.id === payments[paymentIndex].userId);
+        if (userIndex !== -1) {
+            users[userIndex].isPro = true;
+            const now = new Date();
+            switch (payments[paymentIndex].package) {
+                case 'monthly': now.setMonth(now.getMonth() + 1); break;
+                case 'yearly': now.setFullYear(now.getFullYear() + 1); break;
+                case 'lifetime': now.setFullYear(now.getFullYear() + 100); break;
+            }
+            users[userIndex].proExpiry = now.toISOString().split('T')[0];
+            writeJSON(USERS_FILE, users);
+        }
+        
+        if (writeJSON(PAYMENTS_FILE, payments)) {
+            return sendJSON(res, { success: true, data: payments[paymentIndex] });
+        }
+    }
+
+    const paymentUserMatch = pathname.match(/^\/api\/payments\/user\/(\d+)$/);
+    if (paymentUserMatch && method === 'GET') {
+        const userId = parseInt(paymentUserMatch[1]);
+        const payments = readJSON(PAYMENTS_FILE);
+        const userPayments = payments.filter(p => p.userId === userId);
+        return sendJSON(res, { success: true, data: userPayments });
+    }
+
+    if (pathname === '/api/admin/payments' && method === 'GET') {
+        const payments = readJSON(PAYMENTS_FILE);
+        return sendJSON(res, { success: true, data: payments });
+    }
+
+    if (pathname === '/api/packages' && method === 'GET') {
+        const packages = [
+            { id: 'monthly', name: 'Goi thang', price: 99000, originalPrice: 149000, duration: '1 thang', features: ['Ket noi luat su 24/7', 'Tu van qua chat, goi dien', 'Uu tien ho tro'] },
+            { id: 'yearly', name: 'Goi nam', price: 799000, originalPrice: 1188000, duration: '12 thang', features: ['Tat ca tinh nang goi thang', 'Tiet kiem 33%', 'Soan thao hop dong mien phi'], isBestValue: true },
+            { id: 'lifetime', name: 'Tron doi', price: 1990000, originalPrice: 2990000, duration: 'Vinh vien', features: ['Tat ca tinh nang', 'Khong gioi han thoi gian', 'Ho tro VIP'] }
+        ];
+        return sendJSON(res, { success: true, data: packages });
+    }
+
+    if (pathname === '/api/payment-info' && method === 'GET') {
+        const paymentInfo = {
+            bankName: 'Vietcombank',
+            bankBranch: 'Chi nhanh Ha Noi',
+            accountNumber: '1234567890123',
+            accountName: 'CONG TY LUAT TNHH HTIC',
+            transferContent: 'HTIC PRO [Ma don hang]',
+            qrCode: null,
+            momo: { phone: '0379044299', name: 'HTIC LAW FIRM' }
+        };
+        return sendJSON(res, { success: true, data: paymentInfo });
     }
 
     // =============== STATIC FILES ===============
     
-    // Serve frontend files từ thư mục ../frontend/
     if (pathname === '/' || pathname === '/index.html') {
-        return serveStatic(res, path.join(FRONTEND_DIR, 'index.html'));
+        return serveStatic(res, path.join(__dirname, 'index.html'));
     }
     
     if (pathname === '/admin' || pathname === '/admin.html') {
-        return serveStatic(res, path.join(FRONTEND_DIR, 'admin.html'));
+        return serveStatic(res, path.join(__dirname, 'admin.html'));
     }
 
-    // Serve images từ thư mục ../frontend/images/
-    if (pathname.startsWith('/images/')) {
-        const imagePath = path.join(FRONTEND_DIR, pathname);
-        if (fs.existsSync(imagePath)) {
-            return serveStatic(res, imagePath);
-        }
-    }
-
-    // Serve other static files từ frontend
-    const frontendPath = path.join(FRONTEND_DIR, pathname);
-    if (fs.existsSync(frontendPath) && fs.statSync(frontendPath).isFile()) {
-        return serveStatic(res, frontendPath);
+    const staticPath = path.join(__dirname, pathname);
+    if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
+        return serveStatic(res, staticPath);
     }
 
     // 404
     res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: false, message: 'Không tìm thấy' }));
+    res.end(JSON.stringify({ success: false, message: 'Not found' }));
 });
 
 server.listen(PORT, () => {
     console.log(`
-╔════════════════════════════════════════════════════════════╗
-║            HTIC Legal App Server v2.0                      ║
-╠════════════════════════════════════════════════════════════╣
-║  Server: http://localhost:${PORT}                            ║
-║  Admin:  http://localhost:${PORT}/admin                      ║
-║  Login:  admin / htic2025                                  ║
-╠════════════════════════════════════════════════════════════╣
-║  Data:   ${DATA_DIR}
-║  Frontend: ${FRONTEND_DIR}
-╚════════════════════════════════════════════════════════════╝
+╔═══════════════════════════════════════════════════════════╗
+║           HTIC Legal App Server v9.0                      ║
+╠═══════════════════════════════════════════════════════════╣
+║  Server: http://localhost:${PORT}                           ║
+║  Admin:  http://localhost:${PORT}/admin                     ║
+║  Login:  admin / htic2025                                 ║
+╠═══════════════════════════════════════════════════════════╣
+║  Test Accounts:                                           ║
+║  - Pro: admin@htic.vn / htic2025                         ║
+║  - Pro: pro@test.com / pro123                            ║
+║  - Free: test@gmail.com / 123456                         ║
+╚═══════════════════════════════════════════════════════════╝
     `);
 });
