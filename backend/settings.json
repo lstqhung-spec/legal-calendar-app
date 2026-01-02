@@ -1,12 +1,6 @@
 {
-  "appName": "HTIC Legal Calendar",
-  "logo": "",
-  "companyName": "HTIC Law Company",
-  "companyAddress": "TP. Hồ Chí Minh, Việt Nam",
-  "companyPhone": "028 1234 5678",
-  "companyEmail": "contact@hticlaw.com",
-  "companyWebsite": "https://hticlaw.com",
-  "primaryColor": "#1E3A5F",
-  "proPrice": 99000,
-  "updatedAt": "2024-12-31T00:00:00.000Z"
+  "logo": null,
+  "appName": "HTIC Legal",
+  "appVersion": "1.0.0",
+  "primaryColor": "#136DEC"
 }
