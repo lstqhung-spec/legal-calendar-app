@@ -576,42 +576,64 @@
         }
 
         // ========== NEWS ==========
-        function renderNews(el) {
-            el.innerHTML = `
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Tin tức pháp luật</h2>
-                        <p class="text-gray-500">Quản lý ${allData.news.length} bài viết</p>
-                    </div>
-                    <button onclick="showNewsModal()" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
-                        <span>+</span> Thêm tin tức
-                    </button>
-                </div>
+function renderNews(el) {
+    // Sắp xếp tin mới nhất lên đầu (theo id giảm dần)
+    const sortedNews = [...allData.news].sort((a, b) => b.id - a.id);
+    
+    el.innerHTML = `
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Tin tức pháp luật</h2>
+                <p class="text-gray-500">Quản lý ${allData.news.length} bài viết</p>
+            </div>
+            <button onclick="showNewsModal()" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
+                <span>+</span> Thêm tin tức
+            </button>
+        </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${allData.news.map(n => `
-                        <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
-                            <div class="h-44 bg-gray-200 bg-cover bg-center relative" style="background-image: url('${n.image || n.imageUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400'}')">
-                                ${n.isHot ? '<span class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">🔥 Nổi bật</span>' : ''}
-                            </div>
-                            <div class="p-4">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="px-2 py-1 bg-navy-100 text-navy-600 text-xs rounded-full">${n.category}</span>
-                                    <span class="text-xs text-gray-400">${n.date}</span>
-                                </div>
-                                <h3 class="font-bold text-gray-900 line-clamp-2 mb-2">${n.title}</h3>
-                                <p class="text-sm text-gray-500 line-clamp-2">${stripHtml(n.summary || n.content || '')}</p>
-                                <div class="flex gap-2 mt-4 pt-4 border-t">
-                                    <button onclick='showNewsModal(${JSON.stringify(n).replace(/'/g, "&#39;")})' class="flex-1 py-2 text-center text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition text-sm font-medium">✏️ Sửa</button>
-                                    <button onclick="deleteNews(${n.id})" class="flex-1 py-2 text-center text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition text-sm font-medium">🗑️ Xóa</button>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                    ${allData.news.length === 0 ? '<div class="col-span-full text-center py-12 text-gray-500">Chưa có tin tức nào</div>' : ''}
-                </div>
-            `;
-        }
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-16">Ảnh</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tiêu đề</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-28">Danh mục</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-28">Ngày đăng</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600 w-20">Nổi bật</th>
+                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600 w-28">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        ${sortedNews.map(n => `
+                        <tr class="table-row transition hover:bg-gray-50">
+                            <td class="px-4 py-3">
+                                <div class="w-14 h-14 bg-gray-200 rounded-lg bg-cover bg-center" style="background-image: url('${n.image || n.imageUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=100'}')"></div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <p class="font-medium text-gray-900 line-clamp-1">${n.title}</p>
+                                <p class="text-sm text-gray-500 line-clamp-1">${stripHtml(n.summary || n.content || '')}</p>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">${n.category}</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-gray-600">${n.date}</td>
+                            <td class="px-4 py-3 text-center">
+                                ${n.isHot ? '<span class="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full">🔥 Hot</span>' : '<span class="text-gray-400">-</span>'}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <button onclick='showNewsModal(${JSON.stringify(n).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-2 text-sm">Sửa</button>
+                                <button onclick="deleteNews(${n.id})" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
+                            </td>
+                        </tr>
+                        `).join('')}
+                        ${allData.news.length === 0 ? '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">Chưa có tin tức nào</td></tr>' : ''}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
 
         function showNewsModal(news = null) {
             const isEdit = !!news;
