@@ -1,1 +1,31 @@
-
+{
+  "name": "Công ty Luật HTIC",
+  "shortName": "HTIC Law",
+  "slogan": "Đồng hành pháp lý - Phát triển bền vững",
+  "description": "Công ty Luật HTIC được thành lập với sứ mệnh cung cấp các giải pháp pháp lý toàn diện cho doanh nghiệp Việt Nam. Với đội ngũ luật sư giàu kinh nghiệm, chúng tôi cam kết đồng hành cùng doanh nghiệp trong mọi vấn đề pháp lý.",
+  "address": "123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh",
+  "phone": "1900 123 456",
+  "hotline": "0901 234 567",
+  "email": "contact@hticlaw.vn",
+  "website": "https://hticlaw.vn",
+  "workingHours": "Thứ 2 - Thứ 7: 8:00 - 17:30",
+  "taxCode": "0123456789",
+  "foundedYear": 2010,
+  "experience": "15+",
+  "clients": "500+",
+  "cases": "1000+",
+  "services": [
+    "Tư vấn pháp luật doanh nghiệp",
+    "Soạn thảo hợp đồng",
+    "Tư vấn thuế & kế toán",
+    "Pháp luật lao động",
+    "Sáp nhập & Mua bán doanh nghiệp",
+    "Sở hữu trí tuệ"
+  ],
+  "social": {
+    "facebook": "https://facebook.com/hticlaw",
+    "linkedin": "https://linkedin.com/company/hticlaw",
+    "youtube": "https://youtube.com/@hticlaw"
+  },
+  "logo": null
+}
