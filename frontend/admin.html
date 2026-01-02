@@ -3,1144 +3,1064 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTIC Legal Calendar - Quản trị</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Quản trị - HTIC Legal App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Quill Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: { 50: '#e8eef5', 100: '#c5d4e8', 500: '#3d6d9e', 600: '#1e3a5f', 700: '#162d4a', 800: '#0f1f33' }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         * { font-family: 'Inter', sans-serif; }
-        .sidebar { background: linear-gradient(180deg, #1E3A5F 0%, #152A45 100%); }
-        .sidebar-item.active { background: rgba(255,255,255,0.15); border-left: 3px solid #C9A227; }
-        .sidebar-item:hover:not(.active) { background: rgba(255,255,255,0.08); }
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .btn-primary { background: linear-gradient(135deg, #1E3A5F 0%, #152A45 100%); }
-        .btn-primary:hover { background: linear-gradient(135deg, #152A45 0%, #0F1E30 100%); }
-        .btn-gold { background: linear-gradient(135deg, #C9A227 0%, #B8860B 100%); }
-        .btn-danger { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); }
-        .table-row:hover { background: #F9FAFB; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .badge-success { background: #D1FAE5; color: #065F46; }
-        .badge-warning { background: #FEF3C7; color: #92400E; }
-        .badge-danger { background: #FEE2E2; color: #991B1B; }
-        .badge-info { background: #DBEAFE; color: #1E40AF; }
-        .badge-gold { background: #FEF3C7; color: #B8860B; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-        .modal.active { display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: white; border-radius: 20px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
-        .input-field { border: 2px solid #E5E7EB; border-radius: 12px; padding: 12px 16px; transition: all 0.2s; }
-        .input-field:focus { border-color: #1E3A5F; outline: none; box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1); }
-        .toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: 12px; color: white; z-index: 2000; animation: slideIn 0.3s ease; }
-        .toast-success { background: #10B981; }
-        .toast-error { background: #EF4444; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .stat-card { background: linear-gradient(135deg, var(--from) 0%, var(--to) 100%); }
-        .logo-preview { width: 120px; height: 120px; border: 3px dashed #E5E7EB; border-radius: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .gold-text { color: #C9A227; }
+        .sidebar-item { transition: all 0.2s; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+        .sidebar-item.active { background: rgba(255,255,255,0.2); border-left: 3px solid #f97316; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
+        .table-row:hover { background: #f8fafc; }
+        .stat-card:hover { transform: translateY(-2px); }
+        /* Quill Editor Styling */
+        .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #e5e7eb; background: #f9fafb; }
+        .ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #e5e7eb; font-size: 16px; }
+        .ql-editor { min-height: 180px; max-height: 400px; overflow-y: auto; }
+        .ql-editor.ql-blank::before { font-style: normal; color: #9ca3af; }
+        .ql-snow .ql-picker { color: #374151; }
+        .ql-snow .ql-stroke { stroke: #374151; }
+        .ql-snow .ql-fill { fill: #374151; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gray-100">
-    <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center" style="background: linear-gradient(135deg, #1E3A5F 0%, #152A45 100%);">
-        <div class="w-full max-w-md mx-auto p-6">
-            <div class="card p-8">
-                <div class="text-center mb-8">
-                    <div class="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background: linear-gradient(135deg, #1E3A5F 0%, #152A45 100%);">
-                        <span class="text-3xl font-bold text-white">H</span>
-                    </div>
-                    <h1 class="text-2xl font-bold text-gray-800">HTIC Legal Calendar</h1>
-                    <p class="text-gray-500 mt-2">Đăng nhập trang quản trị</p>
-                </div>
-                <form id="loginForm">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tên đăng nhập</label>
-                        <input type="text" id="username" class="input-field w-full" placeholder="Nhập tên đăng nhập" required>
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
-                        <input type="password" id="password" class="input-field w-full" placeholder="Nhập mật khẩu" required>
-                    </div>
-                    <button type="submit" class="btn-primary w-full py-3 text-white font-semibold rounded-xl">
-                        Đăng nhập
-                    </button>
-                </form>
-                <p id="loginError" class="text-red-500 text-center mt-4 hidden">Sai tên đăng nhập hoặc mật khẩu</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ADMIN PANEL -->
-    <div id="adminPanel" class="hidden">
-        <!-- Sidebar -->
-        <aside class="sidebar fixed left-0 top-0 h-full w-64 z-50">
-            <div class="p-6 border-b border-white border-opacity-10">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                        <span class="text-white font-bold text-lg">H</span>
-                    </div>
-                    <div>
-                        <h2 class="font-bold text-white">HTIC Legal</h2>
-                        <p class="text-xs text-gray-300">Admin Panel v2.0</p>
-                    </div>
-                </div>
-            </div>
-            <nav class="p-4">
-                <ul class="space-y-2">
-                    <li>
-                        <a href="#" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-xl text-white" data-page="dashboard">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                            <span>Tổng quan</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="events">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            <span>Lịch pháp lý</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="news">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
-                            <span>Tin tức</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="agencies">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                            <span>Cơ quan</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="customers">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <span>Khách hàng</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300" data-page="settings">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <span>Cài đặt</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white border-opacity-10">
-                <button onclick="logout()" class="flex items-center gap-3 px-4 py-3 rounded-xl text-red-300 hover:bg-red-500 hover:bg-opacity-20 w-full transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    <span>Đăng xuất</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="ml-64 p-8 min-h-screen">
-            <!-- Header -->
-            <header class="flex items-center justify-between mb-8">
-                <div>
-                    <h1 id="pageTitle" class="text-2xl font-bold text-gray-800">Tổng quan</h1>
-                    <p id="pageSubtitle" class="text-gray-500">Chào mừng bạn đến với trang quản trị</p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span class="text-sm text-gray-500" id="currentDate"></span>
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #1E3A5F 0%, #152A45 100%);">
-                        <span class="text-white font-semibold">A</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Page Content -->
-            <div id="pageContent">
-                <!-- Dashboard sẽ được load ở đây -->
-            </div>
-        </main>
-    </div>
-
-    <!-- MODAL -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 id="modalTitle" class="text-xl font-bold text-gray-800">Modal</h3>
-                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                </div>
-            </div>
-            <div id="modalBody" class="p-6">
-                <!-- Form content -->
-            </div>
-        </div>
-    </div>
+<body class="bg-gray-100 min-h-screen">
+    <div id="app"></div>
+    <div id="modal-root"></div>
 
     <script>
-        // =============== CONFIG ===============
-        const API_BASE = window.location.origin;
-        let currentPage = 'dashboard';
-        let editingId = null;
+        // ========== CONFIGURATION ==========
+        const API = '/api';
+        let token = localStorage.getItem('adminToken');
+        let currentSection = 'dashboard';
+        let allData = { events: [], news: [], agencies: [], provinces: [], settings: {}, stats: {} };
+        let quillEditor = null;
 
-        // =============== INIT ===============
-        document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('adminToken')) {
-                showAdminPanel();
-            }
+        const app = document.getElementById('app');
+        const modalRoot = document.getElementById('modal-root');
 
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                
-                try {
-                    const res = await fetch(`${API_BASE}/api/admin/login`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username, password })
-                    });
-                    const data = await res.json();
-                    
-                    if (data.success) {
-                        localStorage.setItem('adminToken', data.token);
-                        showAdminPanel();
-                        showToast('Đăng nhập thành công!', 'success');
-                    } else {
-                        document.getElementById('loginError').classList.remove('hidden');
-                    }
-                } catch (err) {
-                    showToast('Lỗi kết nối server', 'error');
-                }
-            });
+        // ========== CONSTANTS ==========
+        const CATEGORIES = [
+            { id: 'tax', name: 'Thuế', icon: '💰', color: 'blue' },
+            { id: 'insurance', name: 'Bảo hiểm', icon: '🏥', color: 'green' },
+            { id: 'labor', name: 'Lao động', icon: '👷', color: 'orange' },
+            { id: 'safety', name: 'An toàn lao động', icon: '🛡️', color: 'red' },
+            { id: 'environment', name: 'Môi trường', icon: '🌿', color: 'emerald' },
+            { id: 'investment', name: 'Đầu tư', icon: '📈', color: 'purple' },
+            { id: 'report', name: 'Báo cáo', icon: '📊', color: 'indigo' },
+            { id: 'license', name: 'Giấy phép', icon: '📋', color: 'gray' },
+            { id: 'holiday', name: 'Nghỉ lễ', icon: '🎉', color: 'pink' }
+        ];
 
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const page = item.dataset.page;
-                    navigateTo(page);
+        const FREQUENCIES = [
+            { id: 'once', name: 'Một lần (ngày cụ thể)' },
+            { id: 'monthly', name: 'Hàng tháng' },
+            { id: 'quarterly', name: 'Hàng quý' },
+            { id: 'yearly', name: 'Hàng năm' }
+        ];
+
+        const NEWS_CATEGORIES = ['Thuế', 'BHXH', 'Doanh nghiệp', 'Lao động', 'Pháp luật', 'Đầu tư', 'Môi trường', 'Khác'];
+
+        const AGENCY_CATEGORIES = [
+            { id: 'government', name: 'Cơ quan Nhà nước', icon: '🏛️' },
+            { id: 'lawfirm', name: 'Công ty Luật / VP Luật sư', icon: '⚖️' },
+            { id: 'notary', name: 'Văn phòng Công chứng', icon: '📝' },
+            { id: 'bailiff', name: 'Văn phòng Thừa phát lại', icon: '📜' }
+        ];
+
+        // ========== AUTHENTICATION ==========
+        function checkAuth() {
+            if (!token) showLogin();
+            else loadDashboard();
+        }
+
+        function showLogin() {
+            app.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-600 to-navy-800 p-4">
+                    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+                        <div class="text-center mb-8">
+                            <div class="w-20 h-20 bg-gradient-to-br from-navy-600 to-navy-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <span class="text-white text-3xl font-bold">H</span>
+                            </div>
+                            <h1 class="text-2xl font-bold text-gray-900">HTIC Legal Admin</h1>
+                            <p class="text-gray-500 mt-2">Đăng nhập để quản trị hệ thống</p>
+                        </div>
+                        <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm"></div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên đăng nhập</label>
+                                <input type="text" id="username" value="admin" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mật khẩu</label>
+                                <input type="password" id="password" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" onkeypress="if(event.key==='Enter')login()">
+                            </div>
+                            <button onclick="login()" class="w-full bg-gradient-to-r from-navy-600 to-navy-700 text-white py-3 rounded-xl font-bold hover:opacity-90 transition shadow-lg">
+                                Đăng nhập
+                            </button>
+                        </div>
+                        <p class="text-center text-gray-400 text-sm mt-6">© 2024 HTIC Law Firm</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            try {
+                const res = await fetch(`${API}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
                 });
-            });
-
-            const now = new Date();
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', {
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-            });
-        });
-
-        // =============== NAVIGATION ===============
-        function showAdminPanel() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('adminPanel').classList.remove('hidden');
-            navigateTo('dashboard');
+                const data = await res.json();
+                if (data.success) {
+                    token = data.token;
+                    localStorage.setItem('adminToken', token);
+                    loadDashboard();
+                } else {
+                    document.getElementById('loginError').textContent = 'Tên đăng nhập hoặc mật khẩu không đúng!';
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            } catch (e) {
+                document.getElementById('loginError').textContent = 'Lỗi kết nối máy chủ!';
+                document.getElementById('loginError').classList.remove('hidden');
+            }
         }
 
         function logout() {
+            token = null;
             localStorage.removeItem('adminToken');
-            document.getElementById('adminPanel').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-            showToast('Đã đăng xuất', 'success');
+            showLogin();
         }
 
-        function navigateTo(page) {
-            currentPage = page;
-            
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.remove('active');
-                item.classList.add('text-gray-300');
-                item.classList.remove('text-white');
-                if (item.dataset.page === page) {
-                    item.classList.add('active');
-                    item.classList.remove('text-gray-300');
-                    item.classList.add('text-white');
-                }
-            });
-
-            const titles = {
-                dashboard: ['Tổng quan', 'Thống kê dữ liệu hệ thống'],
-                events: ['Lịch pháp lý', 'Quản lý các mốc thời gian báo cáo'],
-                news: ['Tin tức pháp luật', 'Quản lý tin tức - Tin mới nhất hiển thị đầu tiên'],
-                agencies: ['Cơ quan pháp lý', 'Quản lý danh sách cơ quan, văn phòng'],
-                customers: ['Khách hàng', 'Danh sách khách hàng đăng ký từ ứng dụng'],
-                settings: ['Cài đặt', 'Cấu hình ứng dụng và thông tin công ty']
-            };
-            document.getElementById('pageTitle').textContent = titles[page][0];
-            document.getElementById('pageSubtitle').textContent = titles[page][1];
-
-            loadPage(page);
-        }
-
-        async function loadPage(page) {
-            switch(page) {
-                case 'dashboard': await loadDashboard(); break;
-                case 'events': await loadEvents(); break;
-                case 'news': await loadNews(); break;
-                case 'agencies': await loadAgencies(); break;
-                case 'customers': await loadCustomers(); break;
-                case 'settings': await loadSettings(); break;
-            }
-        }
-
-        // =============== DASHBOARD ===============
+        // ========== DATA LOADING ==========
         async function loadDashboard() {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/stats`);
-                const data = await res.json();
-                const stats = data.data;
-
-                document.getElementById('pageContent').innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div class="stat-card p-6 rounded-2xl text-white" style="--from: #1E3A5F; --to: #152A45;">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-blue-200">Lịch pháp lý</p>
-                                    <p class="text-3xl font-bold mt-2">${stats.events?.total || 0}</p>
-                                    <p class="text-sm text-blue-200 mt-1">${stats.events?.active || 0} đang hoạt động</p>
-                                </div>
-                                <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="stat-card p-6 rounded-2xl text-white" style="--from: #10B981; --to: #059669;">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-green-100">Tin tức</p>
-                                    <p class="text-3xl font-bold mt-2">${stats.news?.total || 0}</p>
-                                    <p class="text-sm text-green-100 mt-1">${stats.news?.hot || 0} tin nổi bật</p>
-                                </div>
-                                <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="stat-card p-6 rounded-2xl text-white" style="--from: #F59E0B; --to: #D97706;">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-yellow-100">Cơ quan</p>
-                                    <p class="text-3xl font-bold mt-2">${stats.agencies?.total || 0}</p>
-                                    <p class="text-sm text-yellow-100 mt-1">đơn vị</p>
-                                </div>
-                                <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="stat-card p-6 rounded-2xl text-white" style="--from: #8B5CF6; --to: #7C3AED;">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-purple-100">Khách hàng</p>
-                                    <p class="text-3xl font-bold mt-2">${stats.customers?.total || 0}</p>
-                                    <p class="text-sm text-purple-100 mt-1">${stats.customers?.pro || 0} gói Pro</p>
-                                </div>
-                                <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                </div>
-                            </div>
-                        </div>
+            app.innerHTML = `
+                <div class="flex items-center justify-center min-h-screen">
+                    <div class="text-center">
+                        <div class="animate-spin w-12 h-12 border-4 border-navy-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                        <p class="text-gray-500">Đang tải dữ liệu...</p>
                     </div>
+                </div>
+            `;
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="card p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">📌 Hướng dẫn nhanh</h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center gap-3 p-3 rounded-xl" style="background: rgba(30, 58, 95, 0.05);">
-                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold" style="background: #1E3A5F;">1</div>
-                                    <p class="text-gray-700">Thêm/sửa <strong>Lịch pháp lý</strong> để cập nhật deadline báo cáo</p>
-                                </div>
-                                <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
-                                    <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center text-white font-bold">2</div>
-                                    <p class="text-gray-700">Đăng <strong>Tin tức</strong> mới - tin mới nhất tự động lên đầu</p>
-                                </div>
-                                <div class="flex items-center gap-3 p-3 bg-yellow-50 rounded-xl">
-                                    <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center text-white font-bold">3</div>
-                                    <p class="text-gray-700">Quản lý <strong>Cơ quan</strong> và thông tin liên hệ</p>
-                                </div>
-                                <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
-                                    <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center text-white font-bold">4</div>
-                                    <p class="text-gray-700">Xem danh sách <strong>Khách hàng</strong> đã đăng ký từ app</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">ℹ️ Thông tin hệ thống</h3>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                                    <span class="text-gray-600">Phiên bản</span>
-                                    <span class="font-semibold text-gray-800">2.0.0</span>
-                                </div>
-                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                                    <span class="text-gray-600">Server</span>
-                                    <span class="badge badge-success">Đang hoạt động</span>
-                                </div>
-                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                                    <span class="text-gray-600">Cập nhật cuối</span>
-                                    <span class="font-semibold text-gray-800">${new Date().toLocaleDateString('vi-VN')}</span>
-                                </div>
-                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                                    <span class="text-gray-600">Ngôn ngữ</span>
-                                    <span class="font-semibold text-gray-800">🇻🇳 Tiếng Việt</span>
-                                </div>
-                            </div>
+            try {
+                const [stats, events, news, agencies, provinces, settings] = await Promise.all([
+                    fetch(`${API}/admin/stats`).then(r => r.json()),
+                    fetch(`${API}/admin/events`).then(r => r.json()),
+                    fetch(`${API}/admin/news`).then(r => r.json()),
+                    fetch(`${API}/admin/agencies`).then(r => r.json()),
+                    fetch(`${API}/admin/provinces`).then(r => r.json()),
+                    fetch(`${API}/settings`).then(r => r.json())
+                ]);
+
+                allData = {
+                    stats: stats.data || {},
+                    events: events.data || [],
+                    news: news.data || [],
+                    agencies: agencies.data || [],
+                    provinces: provinces.data || [],
+                    settings: settings.data || {}
+                };
+
+                renderApp();
+            } catch (e) {
+                console.error(e);
+                app.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen">
+                        <div class="text-center">
+                            <div class="text-6xl mb-4">⚠️</div>
+                            <p class="text-red-500 text-lg mb-4">Lỗi tải dữ liệu!</p>
+                            <button onclick="loadDashboard()" class="px-6 py-3 bg-navy-600 text-white rounded-lg hover:bg-navy-700">Thử lại</button>
                         </div>
                     </div>
                 `;
-            } catch (err) {
-                showToast('Lỗi tải dữ liệu', 'error');
             }
         }
 
-        // =============== EVENTS ===============
-        async function loadEvents() {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/events`);
-                const data = await res.json();
-                const events = data.data || [];
+        // ========== MAIN APP RENDER ==========
+        function renderApp() {
+            app.innerHTML = `
+                <div class="flex min-h-screen">
+                    <!-- Sidebar -->
+                    <div class="w-64 bg-gradient-to-b from-navy-700 to-navy-800 text-white flex flex-col shadow-xl">
+                        <div class="p-6 border-b border-navy-600">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                                    <span class="font-bold text-lg">H</span>
+                                </div>
+                                <div>
+                                    <h1 class="text-lg font-bold">HTIC Admin</h1>
+                                    <p class="text-navy-100 text-xs">Phiên bản 9.0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 py-4 overflow-y-auto hide-scrollbar">
+                            <p class="px-6 py-2 text-xs text-navy-300 uppercase tracking-wider">Tổng quan</p>
+                            <div onclick="setSection('dashboard')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'dashboard' ? 'active' : ''}">
+                                <span>📊</span> <span>Bảng điều khiển</span>
+                            </div>
 
-                const categoryLabels = {
-                    tax: 'Thuế', insurance: 'Bảo hiểm', report: 'Báo cáo', 
-                    labor: 'Lao động', license: 'Giấy phép', safety: 'An toàn',
-                    environment: 'Môi trường', investment: 'Đầu tư', other: 'Khác'
-                };
-                const frequencyLabels = {
-                    monthly: 'Hàng tháng', quarterly: 'Hàng quý', yearly: 'Hàng năm', once: 'Một lần'
-                };
+                            <p class="px-6 py-2 text-xs text-navy-300 uppercase tracking-wider mt-4">Nội dung</p>
+                            <div onclick="setSection('events')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'events' ? 'active' : ''}">
+                                <span>📅</span> <span>Lịch pháp lý</span>
+                                <span class="ml-auto bg-navy-600 px-2 py-0.5 rounded-full text-xs">${allData.events.length}</span>
+                            </div>
+                            <div onclick="setSection('news')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'news' ? 'active' : ''}">
+                                <span>📰</span> <span>Tin tức</span>
+                                <span class="ml-auto bg-navy-600 px-2 py-0.5 rounded-full text-xs">${allData.news.length}</span>
+                            </div>
+                            <div onclick="setSection('agencies')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'agencies' ? 'active' : ''}">
+                                <span>🏢</span> <span>Cơ quan / Tổ chức</span>
+                                <span class="ml-auto bg-navy-600 px-2 py-0.5 rounded-full text-xs">${allData.agencies.length}</span>
+                            </div>
+                            <div onclick="setSection('provinces')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'provinces' ? 'active' : ''}">
+                                <span>🗺️</span> <span>Tỉnh / Thành phố</span>
+                                <span class="ml-auto bg-navy-600 px-2 py-0.5 rounded-full text-xs">${allData.provinces.length}</span>
+                            </div>
 
-                document.getElementById('pageContent').innerHTML = `
-                    <div class="card">
-                        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-                            <h3 class="text-lg font-bold text-gray-800">📅 Danh sách lịch pháp lý (${events.length})</h3>
-                            <button onclick="openEventModal()" class="btn-primary px-4 py-2 text-white rounded-xl flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                Thêm lịch mới
+                            <p class="px-6 py-2 text-xs text-navy-300 uppercase tracking-wider mt-4">Hệ thống</p>
+                            <div onclick="setSection('settings')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'settings' ? 'active' : ''}">
+                                <span>⚙️</span> <span>Cài đặt</span>
+                            </div>
+                        </nav>
+                        <div class="p-4 border-t border-navy-600">
+                            <div class="flex items-center gap-3 mb-4 px-2">
+                                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-sm font-bold">A</div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium">Admin</p>
+                                    <p class="text-xs text-navy-300">Quản trị viên</p>
+                                </div>
+                            </div>
+                            <button onclick="logout()" class="w-full py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg text-sm font-semibold transition flex items-center justify-center gap-2">
+                                <span>🚪</span> Đăng xuất
                             </button>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Tiêu đề</th>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Danh mục</th>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Tần suất</th>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Hạn nộp</th>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Trạng thái</th>
-                                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    ${events.map(e => `
-                                        <tr class="table-row">
-                                            <td class="px-6 py-4">
-                                                <div class="font-medium text-gray-800">${e.title || ''}</div>
-                                                <div class="text-sm text-gray-500 truncate max-w-xs">${e.description || ''}</div>
-                                            </td>
-                                            <td class="px-6 py-4"><span class="badge badge-info">${categoryLabels[e.category] || e.category || 'Khác'}</span></td>
-                                            <td class="px-6 py-4 text-gray-600">${frequencyLabels[e.frequency] || e.frequency || ''}</td>
-                                            <td class="px-6 py-4 text-gray-600">Ngày ${e.dayOfMonth || e.day || ''}${e.month ? '/' + e.month : ''}</td>
-                                            <td class="px-6 py-4">
-                                                <span class="badge ${e.isActive !== false ? 'badge-success' : 'badge-danger'}">${e.isActive !== false ? 'Hoạt động' : 'Tắt'}</span>
-                                            </td>
-                                            <td class="px-6 py-4 text-right">
-                                                <button onclick='openEventModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
-                                                <button onclick="deleteEvent(${e.id})" class="text-red-600 hover:text-red-800">Xóa</button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
-                `;
-            } catch (err) {
-                showToast('Lỗi tải dữ liệu', 'error');
+
+                    <!-- Main Content -->
+                    <div class="flex-1 overflow-auto bg-gray-50">
+                        <div id="content" class="p-6"></div>
+                    </div>
+                </div>
+            `;
+            renderSection();
+        }
+
+        function setSection(section) {
+            currentSection = section;
+            renderApp();
+        }
+
+        function renderSection() {
+            const content = document.getElementById('content');
+            switch (currentSection) {
+                case 'dashboard': renderDashboard(content); break;
+                case 'events': renderEvents(content); break;
+                case 'news': renderNews(content); break;
+                case 'agencies': renderAgencies(content); break;
+                case 'provinces': renderProvinces(content); break;
+                case 'settings': renderSettings(content); break;
             }
         }
 
-        function openEventModal(event = null) {
-            editingId = event?.id || null;
-            document.getElementById('modalTitle').textContent = event ? 'Sửa lịch pháp lý' : 'Thêm lịch pháp lý';
-            document.getElementById('modalBody').innerHTML = `
-                <form id="eventForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tiêu đề *</label>
-                        <input type="text" name="title" value="${event?.title || ''}" class="input-field w-full" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
-                            <select name="category" class="input-field w-full">
-                                <option value="tax" ${event?.category === 'tax' ? 'selected' : ''}>Thuế</option>
-                                <option value="insurance" ${event?.category === 'insurance' ? 'selected' : ''}>Bảo hiểm</option>
-                                <option value="report" ${event?.category === 'report' ? 'selected' : ''}>Báo cáo</option>
-                                <option value="labor" ${event?.category === 'labor' ? 'selected' : ''}>Lao động</option>
-                                <option value="safety" ${event?.category === 'safety' ? 'selected' : ''}>An toàn</option>
-                                <option value="environment" ${event?.category === 'environment' ? 'selected' : ''}>Môi trường</option>
-                                <option value="investment" ${event?.category === 'investment' ? 'selected' : ''}>Đầu tư</option>
-                                <option value="license" ${event?.category === 'license' ? 'selected' : ''}>Giấy phép</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Tần suất</label>
-                            <select name="frequency" class="input-field w-full">
-                                <option value="monthly" ${event?.frequency === 'monthly' ? 'selected' : ''}>Hàng tháng</option>
-                                <option value="quarterly" ${event?.frequency === 'quarterly' ? 'selected' : ''}>Hàng quý</option>
-                                <option value="yearly" ${event?.frequency === 'yearly' ? 'selected' : ''}>Hàng năm</option>
-                                <option value="once" ${event?.frequency === 'once' ? 'selected' : ''}>Một lần</option>
-                            </select>
+        // ========== DASHBOARD ==========
+        function renderDashboard(el) {
+            const s = allData.stats;
+            el.innerHTML = `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Bảng điều khiển</h2>
+                    <p class="text-gray-500">Tổng quan hệ thống HTIC Legal App</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-blue-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Sự kiện pháp lý</p>
+                                <p class="text-3xl font-bold text-gray-900">${s.events?.total || 0}</p>
+                                <p class="text-xs text-green-600 mt-1">${s.events?.active || 0} đang hoạt động</p>
+                            </div>
+                            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">📅</div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Ngày hạn nộp</label>
-                            <input type="number" name="dayOfMonth" value="${event?.dayOfMonth || event?.day || 20}" min="1" max="31" class="input-field w-full">
+                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-green-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Tin tức</p>
+                                <p class="text-3xl font-bold text-gray-900">${s.news?.total || 0}</p>
+                                <p class="text-xs text-gray-400 mt-1">bài viết</p>
+                            </div>
+                            <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-2xl">📰</div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Tháng (nếu hàng năm)</label>
-                            <input type="number" name="month" value="${event?.month || ''}" min="1" max="12" class="input-field w-full" placeholder="1-12">
+                    </div>
+                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Cơ quan / Tổ chức</p>
+                                <p class="text-3xl font-bold text-gray-900">${s.agencies?.total || 0}</p>
+                                <p class="text-xs text-gray-400 mt-1">đơn vị</p>
+                            </div>
+                            <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">🏢</div>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Mô tả</label>
-                        <textarea name="description" rows="2" class="input-field w-full">${event?.description || ''}</textarea>
+                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-orange-500 transition">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Tỉnh / Thành phố</p>
+                                <p class="text-3xl font-bold text-gray-900">${allData.provinces.length}</p>
+                                <p class="text-xs text-gray-400 mt-1">địa phương</p>
+                            </div>
+                            <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">🗺️</div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Căn cứ pháp lý</label>
-                        <input type="text" name="legalBasis" value="${event?.legalBasis || event?.legalReference || ''}" class="input-field w-full">
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="font-bold text-gray-900 mb-4">Thao tác nhanh</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="setSection('events'); setTimeout(() => showEventModal(), 100)" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition flex items-center gap-2">
+                            <span>📅</span> Thêm sự kiện
+                        </button>
+                        <button onclick="setSection('news'); setTimeout(() => showNewsModal(), 100)" class="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition flex items-center gap-2">
+                            <span>📰</span> Thêm tin tức
+                        </button>
+                        <button onclick="setSection('agencies'); setTimeout(() => showAgencyModal(), 100)" class="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition flex items-center gap-2">
+                            <span>🏢</span> Thêm cơ quan
+                        </button>
+                        <button onclick="setSection('provinces'); setTimeout(() => showProvinceModal(), 100)" class="px-4 py-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition flex items-center gap-2">
+                            <span>🗺️</span> Thêm tỉnh/thành
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Mức phạt vi phạm</label>
-                        <input type="text" name="penalty" value="${event?.penalty || ''}" class="input-field w-full">
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm">
+                        <div class="p-4 border-b"><h3 class="font-bold text-gray-900">📅 Sự kiện gần đây</h3></div>
+                        <div class="p-4 space-y-3">
+                            ${allData.events.slice(0,5).map(e => {
+                                const cat = CATEGORIES.find(c => c.id === e.category) || {};
+                                return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-xl">${cat.icon || '📋'}</span>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-gray-900 truncate">${e.title}</p>
+                                        <p class="text-sm text-gray-500">${cat.name || e.category} • ${e.frequency === 'monthly' ? 'Ngày ' + e.dayOfMonth : getFrequencyName(e.frequency)}</p>
+                                    </div>
+                                    ${e.isActive ? '<span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">Hiện</span>' : '<span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Ẩn</span>'}
+                                </div>`;
+                            }).join('') || '<p class="text-gray-500 text-center py-4">Chưa có sự kiện</p>'}
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" name="isActive" id="isActive" ${event?.isActive !== false ? 'checked' : ''}>
-                        <label for="isActive" class="text-sm text-gray-700">Đang hoạt động</label>
+                    <div class="bg-white rounded-xl shadow-sm">
+                        <div class="p-4 border-b"><h3 class="font-bold text-gray-900">📰 Tin tức mới nhất</h3></div>
+                        <div class="p-4 space-y-3">
+                            ${allData.news.slice(0,5).map(n => `
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                    <div class="w-12 h-12 bg-gray-200 rounded-lg bg-cover bg-center" style="background-image: url('${n.image || n.imageUrl || ''}')"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-gray-900 truncate">${n.title}</p>
+                                        <p class="text-sm text-gray-500">${n.category} • ${n.date}</p>
+                                    </div>
+                                    ${n.isHot ? '<span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">🔥 Hot</span>' : ''}
+                                </div>
+                            `).join('') || '<p class="text-gray-500 text-center py-4">Chưa có tin tức</p>'}
+                        </div>
                     </div>
-                    <div class="flex gap-3 pt-4">
-                        <button type="button" onclick="closeModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50">Hủy</button>
-                        <button type="submit" class="flex-1 btn-primary px-4 py-3 text-white rounded-xl">Lưu</button>
-                    </div>
-                </form>
+                </div>
             `;
-            document.getElementById('eventForm').addEventListener('submit', saveEvent);
-            openModal();
         }
 
-        async function saveEvent(e) {
-            e.preventDefault();
-            const form = e.target;
+        // ========== EVENTS ==========
+        function renderEvents(el) {
+            el.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Lịch pháp lý</h2>
+                        <p class="text-gray-500">Quản lý ${allData.events.length} sự kiện pháp lý</p>
+                    </div>
+                    <button onclick="showEventModal()" class="px-4 py-2 bg-gradient-to-r from-navy-600 to-navy-700 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
+                        <span>+</span> Thêm sự kiện
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tiêu đề</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Danh mục</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tần suất</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Ngày</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Trạng thái</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                ${allData.events.map(e => {
+                                    const cat = CATEGORIES.find(c => c.id === e.category) || {};
+                                    return `
+                                    <tr class="table-row transition">
+                                        <td class="px-4 py-3">
+                                            <p class="font-medium text-gray-900">${e.title}</p>
+                                            <p class="text-sm text-gray-500 truncate max-w-xs">${stripHtml(e.description || '')}</p>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full">${cat.icon || ''} ${cat.name || e.category}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${getFrequencyName(e.frequency)}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${e.specificDate || (e.dayOfMonth ? 'Ngày ' + e.dayOfMonth : '-')}</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="px-2 py-1 ${e.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'} text-xs rounded-full">${e.isActive ? '✓ Hiện' : '○ Ẩn'}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <button onclick='showEventModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3 text-sm">Sửa</button>
+                                            <button onclick="deleteEvent(${e.id})" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
+                                        </td>
+                                    </tr>`;
+                                }).join('')}
+                                ${allData.events.length === 0 ? '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">Chưa có sự kiện nào</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showEventModal(event = null) {
+            const isEdit = !!event;
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
+                        <div class="p-6 border-b bg-gradient-to-r from-navy-600 to-navy-700 text-white rounded-t-2xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa sự kiện' : 'Thêm sự kiện mới'}</h3>
+                                    <p class="text-navy-100 text-sm mt-1">Điền thông tin sự kiện pháp lý</p>
+                                </div>
+                                <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-5">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề sự kiện <span class="text-red-500">*</span></label>
+                                <input type="text" id="eventTitle" value="${event?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" placeholder="VD: Nộp tờ khai thuế GTGT tháng">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Danh mục <span class="text-red-500">*</span></label>
+                                    <select id="eventCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                        ${CATEGORIES.map(c => `<option value="${c.id}" ${event?.category === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tần suất <span class="text-red-500">*</span></label>
+                                    <select id="eventFrequency" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                        ${FREQUENCIES.map(f => `<option value="${f.id}" ${event?.frequency === f.id ? 'selected' : ''}>${f.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ngày trong tháng</label>
+                                    <input type="number" id="eventDayOfMonth" min="1" max="31" value="${event?.dayOfMonth || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" placeholder="VD: 20">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Hoặc ngày cụ thể</label>
+                                    <input type="date" id="eventSpecificDate" value="${event?.specificDate || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mô tả chi tiết</label>
+                                <div id="eventDescriptionEditor"></div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Căn cứ pháp lý</label>
+                                <input type="text" id="eventLegalRef" value="${event?.legalReference || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" placeholder="VD: Theo Điều 44 Luật Quản lý thuế 2019">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mức phạt nếu vi phạm</label>
+                                <input type="text" id="eventPenalty" value="${event?.penalty || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" placeholder="VD: Phạt 2-5 triệu đồng nếu nộp chậm">
+                            </div>
+
+                            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                                <input type="checkbox" id="eventIsActive" ${event?.isActive !== false ? 'checked' : ''} class="w-5 h-5 accent-navy-600">
+                                <label class="text-sm font-semibold text-gray-700">Hiển thị trong ứng dụng</label>
+                            </div>
+                        </div>
+                        <div class="p-6 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium">Hủy</button>
+                            <button onclick="saveEvent(${event?.id || 'null'})" class="px-6 py-2 bg-gradient-to-r from-navy-600 to-navy-700 text-white rounded-xl hover:opacity-90 transition font-medium shadow-md">${isEdit ? 'Cập nhật' : 'Thêm mới'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                quillEditor = new Quill('#eventDescriptionEditor', {
+                    theme: 'snow',
+                    placeholder: 'Nhập mô tả chi tiết về sự kiện...',
+                    modules: {
+                        toolbar: [
+                            [{ 'font': [] }],
+                            [{ 'size': ['small', false, 'large', 'huge'] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link'],
+                            ['clean']
+                        ]
+                    }
+                });
+                if (event?.description) {
+                    quillEditor.root.innerHTML = event.description;
+                }
+            }, 100);
+        }
+
+        async function saveEvent(id) {
+            const description = quillEditor ? quillEditor.root.innerHTML : '';
             const data = {
-                title: form.title.value,
-                category: form.category.value,
-                frequency: form.frequency.value,
-                dayOfMonth: parseInt(form.dayOfMonth.value),
-                day: parseInt(form.dayOfMonth.value),
-                month: form.month.value ? parseInt(form.month.value) : null,
-                description: form.description.value,
-                legalBasis: form.legalBasis.value,
-                penalty: form.penalty.value,
-                isActive: form.isActive.checked
+                title: document.getElementById('eventTitle').value,
+                category: document.getElementById('eventCategory').value,
+                frequency: document.getElementById('eventFrequency').value,
+                dayOfMonth: parseInt(document.getElementById('eventDayOfMonth').value) || null,
+                specificDate: document.getElementById('eventSpecificDate').value || null,
+                description: description,
+                legalReference: document.getElementById('eventLegalRef').value,
+                penalty: document.getElementById('eventPenalty').value,
+                isActive: document.getElementById('eventIsActive').checked
             };
 
+            if (!data.title) { alert('Vui lòng nhập tiêu đề sự kiện!'); return; }
+
+            const url = id ? `${API}/admin/events/${id}` : `${API}/admin/events`;
+            const method = id ? 'PUT' : 'POST';
+
             try {
-                const url = editingId ? `${API_BASE}/api/admin/events/${editingId}` : `${API_BASE}/api/admin/events`;
-                const method = editingId ? 'PUT' : 'POST';
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (result.success) {
-                    showToast(result.message || 'Thành công', 'success');
-                    closeModal();
-                    loadEvents();
-                } else {
-                    showToast(result.message || 'Lỗi', 'error');
-                }
-            } catch (err) {
-                showToast('Lỗi lưu dữ liệu', 'error');
-            }
+                await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                closeModal();
+                loadDashboard();
+            } catch (e) { alert('Lỗi lưu dữ liệu!'); }
         }
 
         async function deleteEvent(id) {
-            if (!confirm('Bạn có chắc muốn xóa lịch này?')) return;
+            if (!confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) return;
             try {
-                const res = await fetch(`${API_BASE}/api/admin/events/${id}`, { method: 'DELETE' });
-                const result = await res.json();
-                if (result.success) {
-                    showToast('Đã xóa thành công', 'success');
-                    loadEvents();
-                }
-            } catch (err) {
-                showToast('Lỗi xóa dữ liệu', 'error');
-            }
+                await fetch(`${API}/admin/events/${id}`, { method: 'DELETE' });
+                loadDashboard();
+            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
         }
 
-        // =============== NEWS ===============
-        async function loadNews() {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/news`);
-                const data = await res.json();
-                const news = data.data || [];
+        // ========== NEWS ==========
+        function renderNews(el) {
+            el.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Tin tức pháp luật</h2>
+                        <p class="text-gray-500">Quản lý ${allData.news.length} bài viết</p>
+                    </div>
+                    <button onclick="showNewsModal()" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
+                        <span>+</span> Thêm tin tức
+                    </button>
+                </div>
 
-                document.getElementById('pageContent').innerHTML = `
-                    <div class="card">
-                        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-800">📰 Danh sách tin tức (${news.length})</h3>
-                                <p class="text-sm text-green-600">✓ Tin mới nhất tự động hiển thị đầu tiên</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${allData.news.map(n => `
+                        <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition">
+                            <div class="h-44 bg-gray-200 bg-cover bg-center relative" style="background-image: url('${n.image || n.imageUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400'}')">
+                                ${n.isHot ? '<span class="absolute top-3 left-3 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">🔥 Nổi bật</span>' : ''}
                             </div>
-                            <button onclick="openNewsModal()" class="btn-primary px-4 py-2 text-white rounded-xl flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                Thêm tin mới
-                            </button>
-                        </div>
-                        <div class="divide-y divide-gray-200">
-                            ${news.length === 0 ? `
-                                <div class="p-12 text-center text-gray-500">Chưa có tin tức nào</div>
-                            ` : news.map((n, index) => `
-                                <div class="p-6 table-row flex items-start gap-4">
-                                    <div class="flex-shrink-0 w-16 text-center">
-                                        ${index === 0 ? '<span class="badge badge-success">MỚI NHẤT</span>' : `<span class="text-gray-400 font-medium">#${index + 1}</span>`}
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center gap-2 mb-1">
-                                            <h4 class="font-semibold text-gray-800">${n.title || ''}</h4>
-                                            ${n.isHot ? '<span class="badge badge-danger">HOT</span>' : ''}
-                                        </div>
-                                        <p class="text-sm text-gray-500 mb-2 line-clamp-2">${n.summary || ''}</p>
-                                        <div class="flex items-center gap-4 text-xs text-gray-400">
-                                            <span class="badge badge-info">${n.category || 'Chung'}</span>
-                                            <span>📅 ${n.date || ''}</span>
-                                            ${n.source ? `<span>📰 ${n.source}</span>` : ''}
-                                        </div>
-                                    </div>
-                                    <div class="flex-shrink-0">
-                                        <button onclick='openNewsModal(${JSON.stringify(n).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
-                                        <button onclick="deleteNews(${n.id})" class="text-red-600 hover:text-red-800">Xóa</button>
-                                    </div>
+                            <div class="p-4">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2 py-1 bg-navy-100 text-navy-600 text-xs rounded-full">${n.category}</span>
+                                    <span class="text-xs text-gray-400">${n.date}</span>
                                 </div>
-                            `).join('')}
+                                <h3 class="font-bold text-gray-900 line-clamp-2 mb-2">${n.title}</h3>
+                                <p class="text-sm text-gray-500 line-clamp-2">${stripHtml(n.summary || n.content || '')}</p>
+                                <div class="flex gap-2 mt-4 pt-4 border-t">
+                                    <button onclick='showNewsModal(${JSON.stringify(n).replace(/'/g, "&#39;")})' class="flex-1 py-2 text-center text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition text-sm font-medium">✏️ Sửa</button>
+                                    <button onclick="deleteNews(${n.id})" class="flex-1 py-2 text-center text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition text-sm font-medium">🗑️ Xóa</button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                `;
-            } catch (err) {
-                showToast('Lỗi tải dữ liệu', 'error');
-            }
-        }
-
-        function openNewsModal(news = null) {
-            editingId = news?.id || null;
-            document.getElementById('modalTitle').textContent = news ? 'Sửa tin tức' : 'Thêm tin tức mới';
-            document.getElementById('modalBody').innerHTML = `
-                <form id="newsForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tiêu đề *</label>
-                        <input type="text" name="title" value="${news?.title || ''}" class="input-field w-full" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Danh mục</label>
-                            <select name="category" class="input-field w-full">
-                                <option value="Thuế" ${news?.category === 'Thuế' ? 'selected' : ''}>Thuế</option>
-                                <option value="BHXH" ${news?.category === 'BHXH' ? 'selected' : ''}>Bảo hiểm XH</option>
-                                <option value="Lao động" ${news?.category === 'Lao động' ? 'selected' : ''}>Lao động</option>
-                                <option value="Doanh nghiệp" ${news?.category === 'Doanh nghiệp' ? 'selected' : ''}>Doanh nghiệp</option>
-                                <option value="Đầu tư" ${news?.category === 'Đầu tư' ? 'selected' : ''}>Đầu tư</option>
-                                <option value="Chung" ${news?.category === 'Chung' || !news?.category ? 'selected' : ''}>Chung</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Ngày đăng</label>
-                            <input type="date" name="date" value="${news?.date || new Date().toISOString().split('T')[0]}" class="input-field w-full">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tóm tắt</label>
-                        <textarea name="summary" rows="2" class="input-field w-full">${news?.summary || ''}</textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nội dung chi tiết</label>
-                        <textarea name="content" rows="4" class="input-field w-full">${news?.content || ''}</textarea>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nguồn</label>
-                            <input type="text" name="source" value="${news?.source || ''}" class="input-field w-full" placeholder="VD: Thư viện pháp luật">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Link nguồn</label>
-                            <input type="url" name="sourceUrl" value="${news?.sourceUrl || ''}" class="input-field w-full" placeholder="https://...">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Link hình ảnh</label>
-                        <input type="url" name="image" value="${news?.image || ''}" class="input-field w-full" placeholder="https://...">
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" name="isHot" id="isHot" ${news?.isHot ? 'checked' : ''}>
-                        <label for="isHot" class="text-sm text-gray-700">🔥 Đánh dấu tin nổi bật (HOT)</label>
-                    </div>
-                    <div class="flex gap-3 pt-4">
-                        <button type="button" onclick="closeModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50">Hủy</button>
-                        <button type="submit" class="flex-1 btn-primary px-4 py-3 text-white rounded-xl">Lưu</button>
-                    </div>
-                </form>
+                    `).join('')}
+                    ${allData.news.length === 0 ? '<div class="col-span-full text-center py-12 text-gray-500">Chưa có tin tức nào</div>' : ''}
+                </div>
             `;
-            document.getElementById('newsForm').addEventListener('submit', saveNews);
-            openModal();
         }
 
-        async function saveNews(e) {
-            e.preventDefault();
-            const form = e.target;
+        function showNewsModal(news = null) {
+            const isEdit = !!news;
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
+                        <div class="p-6 border-b bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-2xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa tin tức' : 'Thêm tin tức mới'}</h3>
+                                    <p class="text-green-100 text-sm mt-1">Soạn thảo bài viết pháp luật</p>
+                                </div>
+                                <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-5">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề bài viết <span class="text-red-500">*</span></label>
+                                <input type="text" id="newsTitle" value="${news?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition" placeholder="Nhập tiêu đề bài viết...">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Danh mục</label>
+                                    <select id="newsCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition">
+                                        ${NEWS_CATEGORIES.map(c => `<option ${news?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Ngày đăng</label>
+                                    <input type="text" id="newsDate" value="${news?.date || new Date().toLocaleDateString('vi-VN')}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition" placeholder="DD/MM/YYYY">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Link ảnh đại diện</label>
+                                <input type="text" id="newsImage" value="${news?.image || news?.imageUrl || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition" placeholder="https://...">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tóm tắt</label>
+                                <textarea id="newsSummary" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition" placeholder="Tóm tắt ngắn gọn nội dung bài viết...">${news?.summary || ''}</textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nội dung bài viết <span class="text-red-500">*</span></label>
+                                <div id="newsContentEditor"></div>
+                            </div>
+
+                            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                                <input type="checkbox" id="newsIsHot" ${news?.isHot ? 'checked' : ''} class="w-5 h-5 accent-orange-500">
+                                <label class="text-sm font-semibold text-gray-700">🔥 Đánh dấu là tin nổi bật</label>
+                            </div>
+                        </div>
+                        <div class="p-6 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium">Hủy</button>
+                            <button onclick="saveNews(${news?.id || 'null'})" class="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:opacity-90 transition font-medium shadow-md">${isEdit ? 'Cập nhật' : 'Đăng bài'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                quillEditor = new Quill('#newsContentEditor', {
+                    theme: 'snow',
+                    placeholder: 'Nhập nội dung bài viết...',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            [{ 'font': [] }],
+                            [{ 'size': ['small', false, 'large', 'huge'] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'script': 'sub' }, { 'script': 'super' }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            [{ 'indent': '-1' }, { 'indent': '+1' }],
+                            [{ 'direction': 'rtl' }],
+                            [{ 'align': [] }],
+                            ['link', 'image', 'video'],
+                            ['blockquote', 'code-block'],
+                            ['clean']
+                        ]
+                    }
+                });
+                if (news?.content) {
+                    quillEditor.root.innerHTML = news.content;
+                }
+            }, 100);
+        }
+
+        async function saveNews(id) {
+            const content = quillEditor ? quillEditor.root.innerHTML : '';
             const data = {
-                title: form.title.value,
-                category: form.category.value,
-                date: form.date.value,
-                summary: form.summary.value,
-                content: form.content.value,
-                source: form.source.value,
-                sourceUrl: form.sourceUrl.value,
-                image: form.image.value,
-                isHot: form.isHot.checked
+                title: document.getElementById('newsTitle').value,
+                category: document.getElementById('newsCategory').value,
+                date: document.getElementById('newsDate').value,
+                summary: document.getElementById('newsSummary').value,
+                content: content,
+                image: document.getElementById('newsImage').value,
+                isHot: document.getElementById('newsIsHot').checked
             };
 
+            if (!data.title) { alert('Vui lòng nhập tiêu đề bài viết!'); return; }
+
+            const url = id ? `${API}/admin/news/${id}` : `${API}/admin/news`;
+            const method = id ? 'PUT' : 'POST';
+
             try {
-                const url = editingId ? `${API_BASE}/api/admin/news/${editingId}` : `${API_BASE}/api/admin/news`;
-                const method = editingId ? 'PUT' : 'POST';
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (result.success) {
-                    showToast(result.message || 'Thành công', 'success');
-                    closeModal();
-                    loadNews();
-                }
-            } catch (err) {
-                showToast('Lỗi lưu dữ liệu', 'error');
-            }
+                await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                closeModal();
+                loadDashboard();
+            } catch (e) { alert('Lỗi lưu dữ liệu!'); }
         }
 
         async function deleteNews(id) {
-            if (!confirm('Bạn có chắc muốn xóa tin tức này?')) return;
+            if (!confirm('Bạn có chắc chắn muốn xóa tin tức này?')) return;
             try {
-                const res = await fetch(`${API_BASE}/api/admin/news/${id}`, { method: 'DELETE' });
-                const result = await res.json();
-                if (result.success) {
-                    showToast('Đã xóa thành công', 'success');
-                    loadNews();
-                }
-            } catch (err) {
-                showToast('Lỗi xóa dữ liệu', 'error');
-            }
+                await fetch(`${API}/admin/news/${id}`, { method: 'DELETE' });
+                loadDashboard();
+            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
         }
 
-        // =============== AGENCIES ===============
-        async function loadAgencies() {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/agencies`);
-                const data = await res.json();
-                const agencies = data.data || [];
+        // ========== AGENCIES ==========
+        function renderAgencies(el) {
+            el.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Danh bạ cơ quan / Tổ chức</h2>
+                        <p class="text-gray-500">Quản lý ${allData.agencies.length} đơn vị</p>
+                    </div>
+                    <button onclick="showAgencyModal()" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
+                        <span>+</span> Thêm cơ quan
+                    </button>
+                </div>
 
-                const typeLabels = {
-                    government: 'Cơ quan NN', law_firm: 'VP Luật sư', lawfirm: 'VP Luật sư',
-                    notary: 'Công chứng', bailiff: 'Thừa phát lại'
-                };
-
-                document.getElementById('pageContent').innerHTML = `
-                    <div class="card">
-                        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-                            <h3 class="text-lg font-bold text-gray-800">🏛️ Danh sách cơ quan (${agencies.length})</h3>
-                            <button onclick="openAgencyModal()" class="btn-primary px-4 py-2 text-white rounded-xl flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                                Thêm cơ quan
-                            </button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Tên cơ quan</th>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Loại</th>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Địa chỉ</th>
-                                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Điện thoại</th>
-                                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    ${agencies.map(a => `
-                                        <tr class="table-row">
-                                            <td class="px-6 py-4 font-medium text-gray-800">${a.name || ''}</td>
-                                            <td class="px-6 py-4"><span class="badge badge-info">${typeLabels[a.type] || typeLabels[a.category] || a.type || ''}</span></td>
-                                            <td class="px-6 py-4 text-gray-600 max-w-xs truncate">${a.address || ''}</td>
-                                            <td class="px-6 py-4 text-gray-600">${a.phone || ''}</td>
-                                            <td class="px-6 py-4 text-right">
-                                                <button onclick='openAgencyModal(${JSON.stringify(a).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3">Sửa</button>
-                                                <button onclick="deleteAgency(${a.id})" class="text-red-600 hover:text-red-800">Xóa</button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tên cơ quan</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Loại hình</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tỉnh/TP</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Địa chỉ</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Điện thoại</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                ${allData.agencies.map(a => {
+                                    const cat = AGENCY_CATEGORIES.find(c => c.id === a.category) || {};
+                                    const province = allData.provinces.find(p => p.id === a.provinceId) || {};
+                                    return `
+                                    <tr class="table-row transition">
+                                        <td class="px-4 py-3">
+                                            <p class="font-medium text-gray-900">${a.name}</p>
+                                            ${a.website ? `<p class="text-xs text-blue-600">${a.website}</p>` : ''}
+                                        </td>
+                                        <td class="px-4 py-3"><span class="px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded-full">${cat.icon || ''} ${cat.name || a.category}</span></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${province.name || a.provinceId || '-'}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">${a.address || '-'}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${a.phone || '-'}</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <button onclick='showAgencyModal(${JSON.stringify(a).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3 text-sm">Sửa</button>
+                                            <button onclick="deleteAgency(${a.id})" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
+                                        </td>
+                                    </tr>`;
+                                }).join('')}
+                                ${allData.agencies.length === 0 ? '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">Chưa có cơ quan nào</td></tr>' : ''}
+                            </tbody>
+                        </table>
                     </div>
-                `;
-            } catch (err) {
-                showToast('Lỗi tải dữ liệu', 'error');
-            }
-        }
-
-        function openAgencyModal(agency = null) {
-            editingId = agency?.id || null;
-            document.getElementById('modalTitle').textContent = agency ? 'Sửa cơ quan' : 'Thêm cơ quan mới';
-            document.getElementById('modalBody').innerHTML = `
-                <form id="agencyForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tên cơ quan *</label>
-                        <input type="text" name="name" value="${agency?.name || ''}" class="input-field w-full" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Loại cơ quan</label>
-                        <select name="type" class="input-field w-full">
-                            <option value="government" ${agency?.type === 'government' || agency?.category === 'government' ? 'selected' : ''}>Cơ quan Nhà nước</option>
-                            <option value="law_firm" ${agency?.type === 'law_firm' || agency?.type === 'lawfirm' || agency?.category === 'lawfirm' ? 'selected' : ''}>Văn phòng Luật sư</option>
-                            <option value="notary" ${agency?.type === 'notary' || agency?.category === 'notary' ? 'selected' : ''}>Văn phòng Công chứng</option>
-                            <option value="bailiff" ${agency?.type === 'bailiff' || agency?.category === 'bailiff' ? 'selected' : ''}>Văn phòng Thừa phát lại</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Địa chỉ</label>
-                        <input type="text" name="address" value="${agency?.address || ''}" class="input-field w-full">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Điện thoại</label>
-                            <input type="text" name="phone" value="${agency?.phone || ''}" class="input-field w-full">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                            <input type="email" name="email" value="${agency?.email || ''}" class="input-field w-full">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Website</label>
-                        <input type="url" name="website" value="${agency?.website || ''}" class="input-field w-full">
-                    </div>
-                    <div class="flex gap-3 pt-4">
-                        <button type="button" onclick="closeModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50">Hủy</button>
-                        <button type="submit" class="flex-1 btn-primary px-4 py-3 text-white rounded-xl">Lưu</button>
-                    </div>
-                </form>
+                </div>
             `;
-            document.getElementById('agencyForm').addEventListener('submit', saveAgency);
-            openModal();
         }
 
-        async function saveAgency(e) {
-            e.preventDefault();
-            const form = e.target;
+        function showAgencyModal(agency = null) {
+            const isEdit = !!agency;
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
+                        <div class="p-6 border-b bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-2xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa cơ quan' : 'Thêm cơ quan mới'}</h3>
+                                    <p class="text-purple-100 text-sm mt-1">Thông tin cơ quan / tổ chức</p>
+                                </div>
+                                <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên cơ quan <span class="text-red-500">*</span></label>
+                                <input type="text" id="agencyName" value="${agency?.name || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="VD: Cục Thuế TP. Hà Nội">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Loại hình</label>
+                                    <select id="agencyCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
+                                        ${AGENCY_CATEGORIES.map(c => `<option value="${c.id}" ${agency?.category === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tỉnh / Thành phố</label>
+                                    <select id="agencyProvince" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
+                                        <option value="">-- Chọn tỉnh/TP --</option>
+                                        ${allData.provinces.map(p => `<option value="${p.id}" ${agency?.provinceId === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ</label>
+                                <input type="text" id="agencyAddress" value="${agency?.address || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="Số nhà, đường, quận/huyện">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
+                                    <input type="text" id="agencyPhone" value="${agency?.phone || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="024 xxxx xxxx">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Website</label>
+                                    <input type="text" id="agencyWebsite" value="${agency?.website || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="www.example.gov.vn">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium">Hủy</button>
+                            <button onclick="saveAgency(${agency?.id || 'null'})" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:opacity-90 transition font-medium shadow-md">${isEdit ? 'Cập nhật' : 'Thêm mới'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveAgency(id) {
             const data = {
-                name: form.name.value,
-                type: form.type.value,
-                address: form.address.value,
-                phone: form.phone.value,
-                email: form.email.value,
-                website: form.website.value
+                name: document.getElementById('agencyName').value,
+                category: document.getElementById('agencyCategory').value,
+                provinceId: document.getElementById('agencyProvince').value,
+                address: document.getElementById('agencyAddress').value,
+                phone: document.getElementById('agencyPhone').value,
+                website: document.getElementById('agencyWebsite').value
             };
 
+            if (!data.name) { alert('Vui lòng nhập tên cơ quan!'); return; }
+
+            // Note: Server không có PUT cho agencies, chỉ có POST và DELETE
+            // Nếu cần sửa thì xóa cũ và thêm mới
+            const url = `${API}/admin/agencies`;
+            const method = 'POST';
+
             try {
-                const url = editingId ? `${API_BASE}/api/admin/agencies/${editingId}` : `${API_BASE}/api/admin/agencies`;
-                const method = editingId ? 'PUT' : 'POST';
-                const res = await fetch(url, {
-                    method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (result.success) {
-                    showToast(result.message || 'Thành công', 'success');
-                    closeModal();
-                    loadAgencies();
+                if (id) {
+                    // Xóa cũ trước
+                    await fetch(`${API}/admin/agencies/${id}`, { method: 'DELETE' });
                 }
-            } catch (err) {
-                showToast('Lỗi lưu dữ liệu', 'error');
-            }
+                await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                closeModal();
+                loadDashboard();
+            } catch (e) { alert('Lỗi lưu dữ liệu!'); }
         }
 
         async function deleteAgency(id) {
-            if (!confirm('Bạn có chắc muốn xóa cơ quan này?')) return;
+            if (!confirm('Bạn có chắc chắn muốn xóa cơ quan này?')) return;
             try {
-                const res = await fetch(`${API_BASE}/api/admin/agencies/${id}`, { method: 'DELETE' });
-                const result = await res.json();
-                if (result.success) {
-                    showToast('Đã xóa thành công', 'success');
-                    loadAgencies();
-                }
-            } catch (err) {
-                showToast('Lỗi xóa dữ liệu', 'error');
-            }
+                await fetch(`${API}/admin/agencies/${id}`, { method: 'DELETE' });
+                loadDashboard();
+            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
         }
 
-        // =============== CUSTOMERS ===============
-        async function loadCustomers() {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/customers`);
-                const data = await res.json();
-                const customers = data.data || [];
-
-                document.getElementById('pageContent').innerHTML = `
-                    <div class="card">
-                        <div class="p-6 border-b border-gray-200">
-                            <h3 class="text-lg font-bold text-gray-800">👥 Danh sách khách hàng đăng ký (${customers.length})</h3>
-                            <p class="text-sm text-gray-500">Khách hàng mới đăng ký từ ứng dụng hiển thị đầu tiên</p>
-                        </div>
-                        ${customers.length === 0 ? `
-                            <div class="p-12 text-center">
-                                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                </div>
-                                <p class="text-gray-500 text-lg">Chưa có khách hàng nào đăng ký</p>
-                                <p class="text-gray-400 text-sm mt-2">Khách hàng đăng ký qua ứng dụng sẽ hiển thị tại đây</p>
-                            </div>
-                        ` : `
-                            <div class="overflow-x-auto">
-                                <table class="w-full">
-                                    <thead class="bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Khách hàng</th>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Liên hệ</th>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Công ty</th>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Ngày đăng ký</th>
-                                            <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Gói</th>
-                                            <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-200">
-                                        ${customers.map(c => `
-                                            <tr class="table-row">
-                                                <td class="px-6 py-4">
-                                                    <div class="font-medium text-gray-800">${c.name || 'Chưa có tên'}</div>
-                                                    ${c.note ? `<div class="text-sm text-gray-500">${c.note}</div>` : ''}
-                                                </td>
-                                                <td class="px-6 py-4">
-                                                    <div class="text-gray-600">${c.email || ''}</div>
-                                                    <div class="text-sm text-gray-500">${c.phone || ''}</div>
-                                                </td>
-                                                <td class="px-6 py-4 text-gray-600">${c.company || '-'}</td>
-                                                <td class="px-6 py-4 text-gray-600">${c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : '-'}</td>
-                                                <td class="px-6 py-4">
-                                                    <span class="badge ${c.isPro ? 'badge-gold' : 'badge-info'}">${c.isPro ? '⭐ PRO' : 'Miễn phí'}</span>
-                                                </td>
-                                                <td class="px-6 py-4 text-right">
-                                                    <button onclick="toggleProCustomer(${c.id}, ${!c.isPro})" class="text-blue-600 hover:text-blue-800 mr-3">${c.isPro ? 'Hủy Pro' : 'Nâng Pro'}</button>
-                                                    <button onclick="deleteCustomer(${c.id})" class="text-red-600 hover:text-red-800">Xóa</button>
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        `}
+        // ========== PROVINCES ==========
+        function renderProvinces(el) {
+            el.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Danh sách Tỉnh / Thành phố</h2>
+                        <p class="text-gray-500">Quản lý ${allData.provinces.length} địa phương</p>
                     </div>
-                `;
-            } catch (err) {
-                showToast('Lỗi tải dữ liệu', 'error');
-            }
+                    <button onclick="showProvinceModal()" class="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
+                        <span>+</span> Thêm tỉnh/TP
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Mã</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tên tỉnh / thành phố</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Số cơ quan</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                ${allData.provinces.map(p => {
+                                    const agencyCount = allData.agencies.filter(a => a.provinceId === p.id).length;
+                                    return `
+                                    <tr class="table-row transition">
+                                        <td class="px-4 py-3 font-mono text-sm text-gray-600">${p.id}</td>
+                                        <td class="px-4 py-3 font-medium text-gray-900">${p.name}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${agencyCount} đơn vị</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <button onclick='showProvinceModal(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3 text-sm">Sửa</button>
+                                            <button onclick="deleteProvince('${p.id}')" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
+                                        </td>
+                                    </tr>`;
+                                }).join('')}
+                                ${allData.provinces.length === 0 ? '<tr><td colspan="4" class="px-4 py-12 text-center text-gray-500">Chưa có tỉnh/thành phố nào</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
         }
 
-        async function toggleProCustomer(id, isPro) {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/customers/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ isPro })
-                });
-                const result = await res.json();
-                if (result.success) {
-                    showToast(isPro ? 'Đã nâng cấp lên Pro' : 'Đã hủy gói Pro', 'success');
-                    loadCustomers();
-                }
-            } catch (err) {
-                showToast('Lỗi cập nhật', 'error');
-            }
-        }
-
-        async function deleteCustomer(id) {
-            if (!confirm('Bạn có chắc muốn xóa khách hàng này?')) return;
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/customers/${id}`, { method: 'DELETE' });
-                const result = await res.json();
-                if (result.success) {
-                    showToast('Đã xóa thành công', 'success');
-                    loadCustomers();
-                }
-            } catch (err) {
-                showToast('Lỗi xóa dữ liệu', 'error');
-            }
-        }
-
-        // =============== SETTINGS ===============
-        async function loadSettings() {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/settings`);
-                const data = await res.json();
-                const settings = data.data || {};
-
-                document.getElementById('pageContent').innerHTML = `
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Logo -->
-                        <div class="card p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">🖼️ Logo ứng dụng</h3>
-                            <div class="flex items-start gap-6">
-                                <div class="logo-preview" id="logoPreview">
-                                    ${settings.logo ? `<img src="${settings.logo}" alt="Logo">` : '<span class="text-gray-400 text-center text-sm">Chưa có<br>logo</span>'}
+        function showProvinceModal(province = null) {
+            const isEdit = !!province;
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
+                        <div class="p-6 border-b bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-t-2xl">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa' : 'Thêm'} Tỉnh / Thành phố</h3>
                                 </div>
-                                <div class="flex-1">
-                                    <input type="url" id="logoUrl" value="${settings.logo || ''}" placeholder="Nhập URL hình ảnh logo" class="input-field w-full mb-3">
-                                    <div class="flex gap-2">
-                                        <button onclick="saveLogo()" class="btn-primary px-4 py-2 text-white rounded-xl">Lưu logo</button>
-                                        <button onclick="deleteLogo()" class="px-4 py-2 border border-red-300 text-red-600 rounded-xl hover:bg-red-50">Xóa</button>
-                                    </div>
-                                    <p class="text-sm text-gray-500 mt-3">💡 Khuyến nghị: Ảnh vuông 200x200px, định dạng PNG hoặc SVG</p>
-                                </div>
+                                <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
                             </div>
                         </div>
-
-                        <!-- Thông tin công ty -->
-                        <div class="card p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4">🏢 Thông tin công ty</h3>
-                            <form id="settingsForm" class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tên ứng dụng</label>
-                                    <input type="text" name="appName" value="${settings.appName || 'HTIC Legal Calendar'}" class="input-field w-full">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tên công ty</label>
-                                    <input type="text" name="companyName" value="${settings.companyName || ''}" class="input-field w-full">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Địa chỉ</label>
-                                    <input type="text" name="companyAddress" value="${settings.companyAddress || ''}" class="input-field w-full">
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Điện thoại</label>
-                                        <input type="text" name="companyPhone" value="${settings.companyPhone || ''}" class="input-field w-full">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                        <input type="email" name="companyEmail" value="${settings.companyEmail || ''}" class="input-field w-full">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Website</label>
-                                    <input type="url" name="companyWebsite" value="${settings.companyWebsite || ''}" class="input-field w-full">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Giá gói Pro (VNĐ/tháng)</label>
-                                    <input type="number" name="proPrice" value="${settings.proPrice || 99000}" class="input-field w-full">
-                                </div>
-                                <button type="submit" class="btn-primary w-full py-3 text-white rounded-xl">💾 Lưu cài đặt</button>
-                            </form>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mã tỉnh/TP <span class="text-red-500">*</span></label>
+                                <input type="text" id="provinceId" value="${province?.id || ''}" ${isEdit ? 'readonly' : ''} class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition ${isEdit ? 'bg-gray-100' : ''}" placeholder="VD: hanoi, hcm, danang...">
+                                ${isEdit ? '<p class="text-xs text-gray-500 mt-1">Mã không thể thay đổi</p>' : ''}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên tỉnh/thành phố <span class="text-red-500">*</span></label>
+                                <input type="text" id="provinceName" value="${province?.name || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition" placeholder="VD: Hà Nội, TP. Hồ Chí Minh...">
+                            </div>
+                        </div>
+                        <div class="p-6 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium">Hủy</button>
+                            <button onclick="saveProvince('${province?.id || ''}')" class="px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:opacity-90 transition font-medium shadow-md">${isEdit ? 'Cập nhật' : 'Thêm mới'}</button>
                         </div>
                     </div>
-                `;
-
-                // Logo preview
-                document.getElementById('logoUrl').addEventListener('input', (e) => {
-                    const preview = document.getElementById('logoPreview');
-                    if (e.target.value) {
-                        preview.innerHTML = `<img src="${e.target.value}" alt="Logo" onerror="this.parentElement.innerHTML='<span class=\\'text-red-400 text-center text-sm\\'>URL không<br>hợp lệ</span>'">`;
-                    } else {
-                        preview.innerHTML = '<span class="text-gray-400 text-center text-sm">Chưa có<br>logo</span>';
-                    }
-                });
-
-                document.getElementById('settingsForm').addEventListener('submit', saveSettings);
-            } catch (err) {
-                showToast('Lỗi tải dữ liệu', 'error');
-            }
+                </div>
+            `;
         }
 
-        async function saveLogo() {
-            const logo = document.getElementById('logoUrl').value;
+        async function saveProvince(oldId) {
+            const id = document.getElementById('provinceId').value.trim();
+            const name = document.getElementById('provinceName').value.trim();
+
+            if (!id || !name) { alert('Vui lòng nhập đầy đủ thông tin!'); return; }
+
+            const data = { id, name };
+            const url = oldId ? `${API}/admin/provinces/${oldId}` : `${API}/admin/provinces`;
+            const method = oldId ? 'PUT' : 'POST';
+
             try {
-                const res = await fetch(`${API_BASE}/api/admin/settings/logo`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ logo })
-                });
+                const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 const result = await res.json();
-                if (result.success) {
-                    showToast('Đã lưu logo thành công', 'success');
+                if (!result.success) {
+                    alert(result.message || 'Lỗi lưu dữ liệu!');
+                    return;
                 }
-            } catch (err) {
-                showToast('Lỗi lưu logo', 'error');
-            }
+                closeModal();
+                loadDashboard();
+            } catch (e) { alert('Lỗi lưu dữ liệu!'); }
         }
 
-        async function deleteLogo() {
+        async function deleteProvince(id) {
+            const agencyCount = allData.agencies.filter(a => a.provinceId === id).length;
+            if (agencyCount > 0) {
+                alert(`Không thể xóa! Có ${agencyCount} cơ quan đang thuộc tỉnh/TP này.`);
+                return;
+            }
+            if (!confirm('Bạn có chắc chắn muốn xóa tỉnh/TP này?')) return;
             try {
-                const res = await fetch(`${API_BASE}/api/admin/settings/logo`, { method: 'DELETE' });
-                const result = await res.json();
-                if (result.success) {
-                    document.getElementById('logoUrl').value = '';
-                    document.getElementById('logoPreview').innerHTML = '<span class="text-gray-400 text-center text-sm">Chưa có<br>logo</span>';
-                    showToast('Đã xóa logo', 'success');
-                }
-            } catch (err) {
-                showToast('Lỗi xóa logo', 'error');
-            }
+                await fetch(`${API}/admin/provinces/${id}`, { method: 'DELETE' });
+                loadDashboard();
+            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
         }
 
-        async function saveSettings(e) {
-            e.preventDefault();
-            const form = e.target;
+        // ========== SETTINGS ==========
+        function renderSettings(el) {
+            const s = allData.settings || {};
+            el.innerHTML = `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Cài đặt hệ thống</h2>
+                    <p class="text-gray-500">Cấu hình thông tin công ty và ứng dụng</p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><span>🏢</span> Thông tin công ty</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tên công ty</label>
+                            <input type="text" id="settingCompanyName" value="${s.companyName || 'HTIC LAW FIRM'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Website</label>
+                            <input type="text" id="settingWebsite" value="${s.website || 'www.htic.com.vn'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Hotline</label>
+                            <input type="text" id="settingPhone" value="${s.phone || '0379 044 299'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Email liên hệ</label>
+                            <input type="text" id="settingEmail" value="${s.email || 'contact@htic.com.vn'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ</label>
+                            <textarea id="settingAddress" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">${s.address || 'Hà Nội, Việt Nam'}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="saveSettings()" class="px-8 py-3 bg-gradient-to-r from-navy-600 to-navy-700 text-white rounded-xl font-semibold hover:opacity-90 transition shadow-lg flex items-center gap-2">
+                            <span>💾</span> Lưu cài đặt
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveSettings() {
             const data = {
-                appName: form.appName.value,
-                companyName: form.companyName.value,
-                companyAddress: form.companyAddress.value,
-                companyPhone: form.companyPhone.value,
-                companyEmail: form.companyEmail.value,
-                companyWebsite: form.companyWebsite.value,
-                proPrice: parseInt(form.proPrice.value)
+                companyName: document.getElementById('settingCompanyName').value,
+                website: document.getElementById('settingWebsite').value,
+                phone: document.getElementById('settingPhone').value,
+                email: document.getElementById('settingEmail').value,
+                address: document.getElementById('settingAddress').value
             };
-
             try {
-                const res = await fetch(`${API_BASE}/api/admin/settings`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
-                if (result.success) {
-                    showToast('Đã lưu cài đặt thành công', 'success');
-                }
-            } catch (err) {
-                showToast('Lỗi lưu cài đặt', 'error');
-            }
+                await fetch(`${API}/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                alert('✓ Đã lưu cài đặt thành công!');
+                loadDashboard();
+            } catch (e) { alert('Lỗi lưu cài đặt!'); }
         }
 
-        // =============== MODAL ===============
-        function openModal() {
-            document.getElementById('modal').classList.add('active');
-        }
+        // ========== HELPERS ==========
+        function closeModal() { modalRoot.innerHTML = ''; quillEditor = null; }
+        function stripHtml(html) { const t = document.createElement('div'); t.innerHTML = html; return t.textContent || t.innerText || ''; }
+        function getFrequencyName(freq) { const f = FREQUENCIES.find(x => x.id === freq); return f ? f.name : freq; }
 
-        function closeModal() {
-            document.getElementById('modal').classList.remove('active');
-            editingId = null;
-        }
-
-        document.getElementById('modal').addEventListener('click', (e) => {
-            if (e.target.id === 'modal') closeModal();
-        });
-
-        // =============== TOAST ===============
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
+        // ========== START ==========
+        checkAuth();
     </script>
 </body>
 </html>
