@@ -5,8 +5,8 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 
-// Data file paths
-const DATA_DIR = __dirname;
+// Data file paths - trong thư mục backend/data/
+const DATA_DIR = path.join(__dirname, 'data');
 const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 const NEWS_FILE = path.join(DATA_DIR, 'news.json');
 const PROVINCES_FILE = path.join(DATA_DIR, 'provinces.json');
@@ -15,6 +15,14 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const SUBSCRIPTIONS_FILE = path.join(DATA_DIR, 'subscriptions.json');
 const COMPANY_FILE = path.join(DATA_DIR, 'company.json');
+
+// Frontend directory - thư mục frontend/
+const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
+
+// Đảm bảo thư mục data tồn tại
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 // Helper functions
 function readJSON(file) {
@@ -110,9 +118,12 @@ function serveStatic(res, filePath) {
 
 // Initialize default data
 function initializeData() {
+    // Default users
     if (!fs.existsSync(USERS_FILE)) {
         writeJSON(USERS_FILE, []);
     }
+
+    // Default subscriptions
     if (!fs.existsSync(SUBSCRIPTIONS_FILE)) {
         const defaultSubscriptions = [
             { id: 1, name: 'Miễn phí', price: 0, period: 'forever', features: ['Xem lịch pháp lý cơ bản', 'Tối đa 5 sự kiện/tháng', 'Tin tức pháp lý', 'Tra cứu cơ quan cơ bản'], notIncluded: ['Nhắc nhở tự động', 'Liên hệ luật sư', 'Tài liệu pháp lý', 'Hỗ trợ ưu tiên'], isActive: true },
@@ -121,6 +132,8 @@ function initializeData() {
         ];
         writeJSON(SUBSCRIPTIONS_FILE, defaultSubscriptions);
     }
+
+    // Default company info
     if (!fs.existsSync(COMPANY_FILE)) {
         const defaultCompany = {
             name: 'Công ty Luật HTIC',
@@ -144,8 +157,48 @@ function initializeData() {
         };
         writeJSON(COMPANY_FILE, defaultCompany);
     }
+
+    // Default settings
     if (!fs.existsSync(SETTINGS_FILE)) {
-        writeJSON(SETTINGS_FILE, { logo: null, appName: 'HTIC Legal', appVersion: '1.0.0', primaryColor: '#136DEC' });
+        writeJSON(SETTINGS_FILE, { logo: null, appName: 'HTIC Legal', appVersion: '2.0.0', primaryColor: '#136DEC' });
+    }
+
+    // Default events
+    if (!fs.existsSync(EVENTS_FILE) || readJSON(EVENTS_FILE).length === 0) {
+        const defaultEvents = [
+            { id: 1, title: 'Nộp tờ khai thuế GTGT tháng', category: 'tax', deadline: '2026-01-20', description: 'Nộp tờ khai thuế GTGT tháng trước theo mẫu 01/GTGT', legalBasis: 'Theo Điều 44 Luật Quản lý thuế 2019', penalty: 'Phạt 2-5 triệu đồng nếu nộp chậm', isActive: true },
+            { id: 2, title: 'Đóng BHXH, BHYT, BHTN tháng 1/2026', category: 'insurance', deadline: '2026-01-25', description: 'Đóng bảo hiểm xã hội, y tế, thất nghiệp hàng tháng', legalBasis: 'Luật Bảo hiểm xã hội 2014', penalty: 'Phạt 12-15% số tiền chậm đóng', isActive: true },
+            { id: 3, title: 'Nộp tờ khai thuế TNCN', category: 'tax', deadline: '2026-01-20', description: 'Nộp tờ khai thuế thu nhập cá nhân', legalBasis: 'Thông tư 111/2013/TT-BTC', penalty: 'Phạt 2-5 triệu đồng', isActive: true }
+        ];
+        writeJSON(EVENTS_FILE, defaultEvents);
+    }
+
+    // Default news
+    if (!fs.existsSync(NEWS_FILE) || readJSON(NEWS_FILE).length === 0) {
+        const defaultNews = [
+            { id: 1, title: 'Cập nhật mức đóng BHXH mới nhất 2026', category: 'insurance', date: new Date().toISOString(), summary: 'Tổng hợp các thay đổi về tỷ lệ đóng BHXH từ tháng 1/2026', content: 'Theo quy định mới, mức đóng BHXH bắt buộc sẽ được điều chỉnh từ ngày 01/01/2026.', imageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400', isHot: true },
+            { id: 2, title: 'Hạn cuối nộp tờ khai thuế GTGT quý IV/2025', category: 'tax', date: new Date(Date.now() - 86400000).toISOString(), summary: 'Doanh nghiệp cần lưu ý thời hạn nộp tờ khai thuế', content: 'Tổng cục Thuế thông báo hạn cuối nộp tờ khai thuế GTGT quý IV/2025 là ngày 30/01/2026.', imageUrl: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=400', isHot: true }
+        ];
+        writeJSON(NEWS_FILE, defaultNews);
+    }
+
+    // Default agencies
+    if (!fs.existsSync(AGENCIES_FILE) || readJSON(AGENCIES_FILE).length === 0) {
+        const defaultAgencies = [
+            { id: 1, name: 'Cục Thuế TP. Hồ Chí Minh', type: 'tax', city: 'TP. Hồ Chí Minh', address: '63 Vũ Tông Phan, Quận 2', phone: '028 3770 2288', email: 'cucthue.hcm@gdt.gov.vn', workingHours: 'Thứ 2 - Thứ 6: 7:30 - 16:30', description: 'Cục Thuế TP.HCM', services: ['Đăng ký thuế', 'Kê khai thuế', 'Hoàn thuế'] },
+            { id: 2, name: 'BHXH Quận 1', type: 'insurance', city: 'TP. Hồ Chí Minh', address: '35 Lý Tự Trọng, Quận 1', phone: '028 3827 5566', email: 'bhxh.quan1@vss.gov.vn', workingHours: 'Thứ 2 - Thứ 6: 7:30 - 16:30', description: 'Cơ quan BHXH quận 1', services: ['Đăng ký BHXH', 'Cấp sổ BHXH', 'Cấp thẻ BHYT'] }
+        ];
+        writeJSON(AGENCIES_FILE, defaultAgencies);
+    }
+
+    // Default provinces
+    if (!fs.existsSync(PROVINCES_FILE) || readJSON(PROVINCES_FILE).length === 0) {
+        const defaultProvinces = [
+            { id: 'hcm', name: 'TP. Hồ Chí Minh' },
+            { id: 'hanoi', name: 'Hà Nội' },
+            { id: 'danang', name: 'Đà Nẵng' }
+        ];
+        writeJSON(PROVINCES_FILE, defaultProvinces);
     }
 }
 
@@ -210,7 +263,7 @@ const server = http.createServer(async (req, res) => {
     // --- EVENTS ---
     if (pathname === '/api/events' && method === 'GET') {
         const events = readJSON(EVENTS_FILE);
-        return sendJSON(res, { success: true, data: events.filter(e => e.isActive) });
+        return sendJSON(res, { success: true, data: events.filter(e => e.isActive !== false) });
     }
 
     if (pathname === '/api/admin/events' && method === 'GET') {
@@ -336,7 +389,7 @@ const server = http.createServer(async (req, res) => {
     // --- SUBSCRIPTIONS ---
     if (pathname === '/api/subscriptions' && method === 'GET') {
         const subs = readJSON(SUBSCRIPTIONS_FILE);
-        return sendJSON(res, { success: true, data: subs.filter(s => s.isActive) });
+        return sendJSON(res, { success: true, data: subs.filter(s => s.isActive !== false) });
     }
 
     if (pathname === '/api/admin/subscriptions' && method === 'GET') {
@@ -354,16 +407,19 @@ const server = http.createServer(async (req, res) => {
 
     // --- COMPANY ---
     if (pathname === '/api/company' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(COMPANY_FILE) });
+        const company = readJSON(COMPANY_FILE);
+        return sendJSON(res, { success: true, data: Array.isArray(company) ? {} : company });
     }
 
     if (pathname === '/api/admin/company' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(COMPANY_FILE) });
+        const company = readJSON(COMPANY_FILE);
+        return sendJSON(res, { success: true, data: Array.isArray(company) ? {} : company });
     }
 
     if (pathname === '/api/admin/company' && method === 'POST') {
         const body = await parseBody(req);
-        const company = readJSON(COMPANY_FILE) || {};
+        let company = readJSON(COMPANY_FILE);
+        if (Array.isArray(company)) company = {};
         Object.assign(company, body);
         if (writeJSON(COMPANY_FILE, company)) return sendJSON(res, { success: true, data: company, message: 'Đã cập nhật' });
         return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
@@ -375,18 +431,26 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, { success: true, data: users.map(({ password, ...rest }) => rest) });
     }
 
+    // --- PROVINCES ---
+    if (pathname === '/api/provinces' && method === 'GET') {
+        return sendJSON(res, { success: true, data: readJSON(PROVINCES_FILE) });
+    }
+
     // --- SETTINGS ---
     if (pathname === '/api/settings' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(SETTINGS_FILE) || {} });
+        const settings = readJSON(SETTINGS_FILE);
+        return sendJSON(res, { success: true, data: Array.isArray(settings) ? {} : settings });
     }
 
     if (pathname === '/api/admin/settings' && method === 'GET') {
-        return sendJSON(res, { success: true, data: readJSON(SETTINGS_FILE) || {} });
+        const settings = readJSON(SETTINGS_FILE);
+        return sendJSON(res, { success: true, data: Array.isArray(settings) ? {} : settings });
     }
 
     if (pathname === '/api/admin/settings' && method === 'POST') {
         const body = await parseBody(req);
-        const settings = readJSON(SETTINGS_FILE) || {};
+        let settings = readJSON(SETTINGS_FILE);
+        if (Array.isArray(settings)) settings = {};
         Object.assign(settings, body);
         if (writeJSON(SETTINGS_FILE, settings)) return sendJSON(res, { success: true, data: settings });
         return sendJSON(res, { success: false, message: 'Lỗi khi lưu' }, 500);
@@ -415,16 +479,28 @@ const server = http.createServer(async (req, res) => {
     }
 
     // =============== STATIC FILES ===============
+    
+    // Serve frontend files từ thư mục ../frontend/
     if (pathname === '/' || pathname === '/index.html') {
-        return serveStatic(res, path.join(__dirname, 'index.html'));
+        return serveStatic(res, path.join(FRONTEND_DIR, 'index.html'));
     }
+    
     if (pathname === '/admin' || pathname === '/admin.html') {
-        return serveStatic(res, path.join(__dirname, 'admin.html'));
+        return serveStatic(res, path.join(FRONTEND_DIR, 'admin.html'));
     }
 
-    const staticPath = path.join(__dirname, pathname);
-    if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
-        return serveStatic(res, staticPath);
+    // Serve images từ thư mục ../frontend/images/
+    if (pathname.startsWith('/images/')) {
+        const imagePath = path.join(FRONTEND_DIR, pathname);
+        if (fs.existsSync(imagePath)) {
+            return serveStatic(res, imagePath);
+        }
+    }
+
+    // Serve other static files từ frontend
+    const frontendPath = path.join(FRONTEND_DIR, pathname);
+    if (fs.existsSync(frontendPath) && fs.statSync(frontendPath).isFile()) {
+        return serveStatic(res, frontendPath);
     }
 
     // 404
@@ -440,6 +516,9 @@ server.listen(PORT, () => {
 ║  Server: http://localhost:${PORT}                            ║
 ║  Admin:  http://localhost:${PORT}/admin                      ║
 ║  Login:  admin / htic2025                                  ║
+╠════════════════════════════════════════════════════════════╣
+║  Data:   ${DATA_DIR}
+║  Frontend: ${FRONTEND_DIR}
 ╚════════════════════════════════════════════════════════════╝
     `);
 });
