@@ -4,8 +4,12 @@ const path = require('path');
 
 const PORT = process.env.PORT || 3000;
 
+// Path configuration - Adjust for backend/frontend structure
+const BACKEND_DIR = __dirname;
+const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
+const DATA_DIR = path.join(BACKEND_DIR, 'data');
+
 // Data file paths
-const DATA_DIR = path.join(__dirname, 'data');
 const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
 const NEWS_FILE = path.join(DATA_DIR, 'news.json');
 const PROVINCES_FILE = path.join(DATA_DIR, 'provinces.json');
@@ -92,8 +96,8 @@ function serveStatic(res, filePath) {
     
     fs.readFile(filePath, (err, data) => {
         if (err) {
-            res.writeHead(404);
-            res.end('File not found');
+            res.writeHead(404, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
+            res.end('File not found: ' + filePath);
         } else {
             res.writeHead(200, { 
                 'Content-Type': contentType,
@@ -837,20 +841,26 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, { success: true, data: paymentInfo });
     }
 
-    // =============== STATIC FILES ===============
+    // =============== STATIC FILES (from frontend folder) ===============
     
     if (pathname === '/' || pathname === '/index.html') {
-        return serveStatic(res, path.join(__dirname, 'index.html'));
+        return serveStatic(res, path.join(FRONTEND_DIR, 'index.html'));
     }
     
     if (pathname === '/admin' || pathname === '/admin.html') {
-        return serveStatic(res, path.join(__dirname, 'admin.html'));
+        return serveStatic(res, path.join(FRONTEND_DIR, 'admin.html'));
     }
 
-    // Serve other static files
-    const staticPath = path.join(__dirname, pathname);
-    if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
-        return serveStatic(res, staticPath);
+    // Serve other static files from frontend folder
+    const frontendPath = path.join(FRONTEND_DIR, pathname);
+    if (fs.existsSync(frontendPath) && fs.statSync(frontendPath).isFile()) {
+        return serveStatic(res, frontendPath);
+    }
+
+    // Also try backend folder for backward compatibility
+    const backendPath = path.join(BACKEND_DIR, pathname);
+    if (fs.existsSync(backendPath) && fs.statSync(backendPath).isFile()) {
+        return serveStatic(res, backendPath);
     }
 
     // 404
@@ -858,7 +868,7 @@ const server = http.createServer(async (req, res) => {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
     });
-    res.end(JSON.stringify({ success: false, message: 'Not found' }));
+    res.end(JSON.stringify({ success: false, message: 'Not found', path: pathname }));
 });
 
 server.listen(PORT, () => {
@@ -866,9 +876,14 @@ server.listen(PORT, () => {
 ╔═══════════════════════════════════════════════════════════╗
 ║           HTIC Legal App Server v9.0                      ║
 ╠═══════════════════════════════════════════════════════════╣
-║  Server: http://localhost:${PORT}                           ║
-║  Admin:  http://localhost:${PORT}/admin                     ║
-║  Login:  admin / htic2025                                 ║
+║  Server:   http://localhost:${PORT}                         ║
+║  Admin:    http://localhost:${PORT}/admin                   ║
+║  Login:    admin / htic2025                               ║
+╠═══════════════════════════════════════════════════════════╣
+║  Paths:                                                   ║
+║  - Backend: ${BACKEND_DIR}
+║  - Frontend: ${FRONTEND_DIR}
+║  - Data: ${DATA_DIR}
 ╠═══════════════════════════════════════════════════════════╣
 ║  Test Accounts:                                           ║
 ║  - Pro: admin@htic.vn / htic2025                         ║
