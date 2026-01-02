@@ -95,7 +95,10 @@ function serveStatic(res, filePath) {
             res.writeHead(404);
             res.end('File not found');
         } else {
-            res.writeHead(200, { 'Content-Type': contentType });
+            res.writeHead(200, { 
+                'Content-Type': contentType,
+                'Access-Control-Allow-Origin': '*'
+            });
             res.end(data);
         }
     });
@@ -115,7 +118,7 @@ function initializeData() {
     // Default news
     if (!fs.existsSync(NEWS_FILE)) {
         const defaultNews = [
-            { id: 1, title: 'Nghi dinh moi ve quan ly thue 2024', category: 'tax', date: '25/12/2024', summary: 'Chinh phu ban hanh Nghi dinh moi...', content: 'Noi dung chi tiet...', imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400', isHot: true }
+            { id: 1, title: 'Nghi dinh moi ve quan ly thue 2024', category: 'Thue', date: '25/12/2024', summary: 'Chinh phu ban hanh Nghi dinh moi...', content: 'Noi dung chi tiet...', imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400', isHot: true }
         ];
         writeJSON(NEWS_FILE, defaultNews);
     }
@@ -125,7 +128,9 @@ function initializeData() {
         const defaultProvinces = [
             { id: 'hanoi', name: 'Ha Noi' },
             { id: 'hcm', name: 'TP. Ho Chi Minh' },
-            { id: 'danang', name: 'Da Nang' }
+            { id: 'danang', name: 'Da Nang' },
+            { id: 'haiphong', name: 'Hai Phong' },
+            { id: 'cantho', name: 'Can Tho' }
         ];
         writeJSON(PROVINCES_FILE, defaultProvinces);
     }
@@ -134,7 +139,10 @@ function initializeData() {
     if (!fs.existsSync(AGENCIES_FILE)) {
         const defaultAgencies = [
             { id: 1, name: 'Cuc Thue TP. Ha Noi', category: 'government', provinceId: 'hanoi', address: '20 Le Dai Hanh, Ha Noi', phone: '024 3974 2020' },
-            { id: 2, name: 'Cong ty Luat HTIC', category: 'lawfirm', provinceId: 'hanoi', address: '15 Pham Hung, Ha Noi', phone: '0379 044 299', website: 'www.htic.com.vn' }
+            { id: 2, name: 'BHXH TP. Ha Noi', category: 'government', provinceId: 'hanoi', address: '86 Tran Hung Dao, Ha Noi', phone: '024 3943 6789' },
+            { id: 3, name: 'Cong ty Luat HTIC', category: 'lawfirm', provinceId: 'hanoi', address: '15 Pham Hung, Ha Noi', phone: '0379 044 299', website: 'www.htic.com.vn' },
+            { id: 4, name: 'Cuc Thue TP. HCM', category: 'government', provinceId: 'hcm', address: '140 Nguyen Thi Minh Khai, Q3', phone: '028 3930 1999' },
+            { id: 5, name: 'VP Cong chung Nguyen Hue', category: 'notary', provinceId: 'hanoi', address: '65 Nguyen Hue, Ha Noi', phone: '024 3825 1234' }
         ];
         writeJSON(AGENCIES_FILE, defaultAgencies);
     }
@@ -146,7 +154,7 @@ function initializeData() {
             companyName: 'HTIC LAW FIRM',
             website: 'www.htic.com.vn',
             phone: '0379 044 299',
-            email: 'contact@htic.com.vn',
+            email: 'contact@htic.vn',
             address: 'Ha Noi, Viet Nam'
         };
         writeJSON(SETTINGS_FILE, defaultSettings);
@@ -336,7 +344,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/admin/news' && method === 'POST') {
         const body = await parseBody(req);
         const news = readJSON(NEWS_FILE);
-        const newNews = { id: getNextId(news), ...body, date: new Date().toISOString() };
+        const newNews = { id: getNextId(news), ...body, date: new Date().toLocaleDateString('vi-VN') };
         news.push(newNews);
         if (writeJSON(NEWS_FILE, news)) {
             return sendJSON(res, { success: true, data: newNews });
@@ -388,6 +396,30 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
+    const agencyMatch = pathname.match(/^\/api\/admin\/agencies\/(\d+)$/);
+    if (agencyMatch) {
+        const agencyId = parseInt(agencyMatch[1]);
+        const agencies = readJSON(AGENCIES_FILE);
+        const agencyIndex = agencies.findIndex(a => a.id === agencyId);
+
+        if (method === 'PUT') {
+            if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
+            const body = await parseBody(req);
+            agencies[agencyIndex] = { ...agencies[agencyIndex], ...body, id: agencyId };
+            if (writeJSON(AGENCIES_FILE, agencies)) {
+                return sendJSON(res, { success: true, data: agencies[agencyIndex] });
+            }
+        }
+
+        if (method === 'DELETE') {
+            if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
+            agencies.splice(agencyIndex, 1);
+            if (writeJSON(AGENCIES_FILE, agencies)) {
+                return sendJSON(res, { success: true, message: 'Deleted' });
+            }
+        }
+    }
+
     // --- PROVINCES ---
     if (pathname === '/api/provinces' && method === 'GET') {
         const provinces = readJSON(PROVINCES_FILE);
@@ -400,12 +432,17 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, { success: true, data: settings });
     }
 
+    if (pathname === '/api/admin/settings' && method === 'GET') {
+        const settings = readJSON(SETTINGS_FILE) || {};
+        return sendJSON(res, { success: true, data: settings });
+    }
+
     if (pathname === '/api/admin/settings' && method === 'POST') {
         const body = await parseBody(req);
         const settings = readJSON(SETTINGS_FILE) || {};
         Object.assign(settings, body);
         if (writeJSON(SETTINGS_FILE, settings)) {
-            return sendJSON(res, { success: true, message: 'Saved' });
+            return sendJSON(res, { success: true, message: 'Saved', data: settings });
         }
     }
 
@@ -419,7 +456,7 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, {
             success: true,
             data: {
-                events: { total: events.length },
+                events: { total: events.length, active: events.filter(e => e.isActive).length },
                 news: { total: news.length },
                 agencies: { total: agencies.length },
                 users: { total: users.length, pro: users.filter(u => u.isPro).length },
@@ -810,13 +847,17 @@ const server = http.createServer(async (req, res) => {
         return serveStatic(res, path.join(__dirname, 'admin.html'));
     }
 
+    // Serve other static files
     const staticPath = path.join(__dirname, pathname);
     if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
         return serveStatic(res, staticPath);
     }
 
     // 404
-    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.writeHead(404, { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+    });
     res.end(JSON.stringify({ success: false, message: 'Not found' }));
 });
 
