@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản trị - HTIC Legal App</title>
+    <title>Quản trị - HTIC Legal App v10.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Quill Rich Text Editor -->
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
     <script>
@@ -28,15 +27,12 @@
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; }
         .table-row:hover { background: #f8fafc; }
         .stat-card:hover { transform: translateY(-2px); }
-        /* Quill Editor Styling */
         .ql-toolbar.ql-snow { border-radius: 12px 12px 0 0; border-color: #e5e7eb; background: #f9fafb; }
         .ql-container.ql-snow { border-radius: 0 0 12px 12px; border-color: #e5e7eb; font-size: 16px; }
-        .ql-editor { min-height: 180px; max-height: 400px; overflow-y: auto; }
+        .ql-editor { min-height: 200px; max-height: 400px; overflow-y: auto; }
         .ql-editor.ql-blank::before { font-style: normal; color: #9ca3af; }
-        .ql-snow .ql-picker { color: #374151; }
-        .ql-snow .ql-stroke { stroke: #374151; }
-        .ql-snow .ql-fill { fill: #374151; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .tab-btn.active { background: linear-gradient(135deg, #1e3a5f, #162d4a); color: white; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -48,7 +44,7 @@
         const API = '/api';
         let token = localStorage.getItem('adminToken');
         let currentSection = 'dashboard';
-        let allData = { events: [], news: [], agencies: [], provinces: [], settings: {}, stats: {} };
+        let allData = { events: [], news: [], agencies: [], provinces: [], settings: {}, stats: {}, users: [], lawyers: [], payments: [] };
         let quillEditor = null;
 
         const app = document.getElementById('app');
@@ -74,7 +70,14 @@
             { id: 'yearly', name: 'Hàng năm' }
         ];
 
-        const NEWS_CATEGORIES = ['Thuế', 'BHXH', 'Doanh nghiệp', 'Lao động', 'Pháp luật', 'Đầu tư', 'Môi trường', 'Khác'];
+        const NEWS_CATEGORIES = [
+            { id: 'tax', name: 'Thuế' },
+            { id: 'insurance', name: 'Bảo hiểm' },
+            { id: 'labor', name: 'Lao động' },
+            { id: 'investment', name: 'Đầu tư' },
+            { id: 'environment', name: 'Môi trường' },
+            { id: 'other', name: 'Tin tức' }
+        ];
 
         const AGENCY_CATEGORIES = [
             { id: 'government', name: 'Cơ quan Nhà nước', icon: '🏛️' },
@@ -114,7 +117,7 @@
                                 Đăng nhập
                             </button>
                         </div>
-                        <p class="text-center text-gray-400 text-sm mt-6">© 2024 HTIC Law Firm</p>
+                        <p class="text-center text-gray-400 text-sm mt-6">© 2024 HTIC Law Firm - v10.0</p>
                     </div>
                 </div>
             `;
@@ -162,13 +165,16 @@
             `;
 
             try {
-                const [stats, events, news, agencies, provinces, settings] = await Promise.all([
+                const [stats, events, news, agencies, provinces, settings, users, lawyers, payments] = await Promise.all([
                     fetch(`${API}/admin/stats`).then(r => r.json()),
                     fetch(`${API}/admin/events`).then(r => r.json()),
                     fetch(`${API}/admin/news`).then(r => r.json()),
                     fetch(`${API}/admin/agencies`).then(r => r.json()),
                     fetch(`${API}/admin/provinces`).then(r => r.json()),
-                    fetch(`${API}/settings`).then(r => r.json())
+                    fetch(`${API}/settings`).then(r => r.json()),
+                    fetch(`${API}/admin/users`).then(r => r.json()).catch(() => ({ data: [] })),
+                    fetch(`${API}/admin/lawyers`).then(r => r.json()).catch(() => ({ data: [] })),
+                    fetch(`${API}/admin/payments`).then(r => r.json()).catch(() => ({ data: [] }))
                 ]);
 
                 allData = {
@@ -177,7 +183,10 @@
                     news: news.data || [],
                     agencies: agencies.data || [],
                     provinces: provinces.data || [],
-                    settings: settings.data || {}
+                    settings: settings.data || {},
+                    users: users.data || [],
+                    lawyers: lawyers.data || [],
+                    payments: payments.data || []
                 };
 
                 renderApp();
@@ -197,6 +206,10 @@
 
         // ========== MAIN APP RENDER ==========
         function renderApp() {
+            const userCount = allData.users.length;
+            const proCount = allData.users.filter(u => u.isPro).length;
+            const pendingPayments = allData.payments.filter(p => p.status === 'pending').length;
+            
             app.innerHTML = `
                 <div class="flex min-h-screen">
                     <!-- Sidebar -->
@@ -208,7 +221,7 @@
                                 </div>
                                 <div>
                                     <h1 class="text-lg font-bold">HTIC Admin</h1>
-                                    <p class="text-navy-100 text-xs">Phiên bản 9.0</p>
+                                    <p class="text-navy-100 text-xs">Phiên bản 10.0</p>
                                 </div>
                             </div>
                         </div>
@@ -234,6 +247,20 @@
                             <div onclick="setSection('provinces')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'provinces' ? 'active' : ''}">
                                 <span>🗺️</span> <span>Tỉnh / Thành phố</span>
                                 <span class="ml-auto bg-navy-600 px-2 py-0.5 rounded-full text-xs">${allData.provinces.length}</span>
+                            </div>
+
+                            <p class="px-6 py-2 text-xs text-navy-300 uppercase tracking-wider mt-4">Người dùng</p>
+                            <div onclick="setSection('users')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'users' ? 'active' : ''}">
+                                <span>👥</span> <span>Quản lý người dùng</span>
+                                <span class="ml-auto bg-green-600 px-2 py-0.5 rounded-full text-xs">${userCount}</span>
+                            </div>
+                            <div onclick="setSection('lawyers')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'lawyers' ? 'active' : ''}">
+                                <span>⚖️</span> <span>Quản lý luật sư</span>
+                                <span class="ml-auto bg-navy-600 px-2 py-0.5 rounded-full text-xs">${allData.lawyers.length}</span>
+                            </div>
+                            <div onclick="setSection('payments')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3 ${currentSection === 'payments' ? 'active' : ''}">
+                                <span>💳</span> <span>Thanh toán Pro</span>
+                                ${pendingPayments > 0 ? `<span class="ml-auto bg-orange-500 px-2 py-0.5 rounded-full text-xs animate-pulse">${pendingPayments}</span>` : ''}
                             </div>
 
                             <p class="px-6 py-2 text-xs text-navy-300 uppercase tracking-wider mt-4">Hệ thống</p>
@@ -277,6 +304,9 @@
                 case 'news': renderNews(content); break;
                 case 'agencies': renderAgencies(content); break;
                 case 'provinces': renderProvinces(content); break;
+                case 'users': renderUsers(content); break;
+                case 'lawyers': renderLawyers(content); break;
+                case 'payments': renderPayments(content); break;
                 case 'settings': renderSettings(content); break;
             }
         }
@@ -284,6 +314,9 @@
         // ========== DASHBOARD ==========
         function renderDashboard(el) {
             const s = allData.stats;
+            const pendingPayments = allData.payments.filter(p => p.status === 'pending').length;
+            const recentUsers = [...allData.users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+            
             el.innerHTML = `
                 <div class="mb-6">
                     <h2 class="text-2xl font-bold text-gray-900">Bảng điều khiển</h2>
@@ -291,50 +324,50 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-blue-500 transition">
+                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-blue-500 transition cursor-pointer" onclick="setSection('users')">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Người dùng</p>
+                                <p class="text-3xl font-bold text-gray-900">${allData.users.length}</p>
+                                <p class="text-xs text-purple-600 mt-1">${allData.users.filter(u => u.isPro).length} Pro users</p>
+                            </div>
+                            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">👥</div>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-green-500 transition cursor-pointer" onclick="setSection('events')">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-gray-500 text-sm">Sự kiện pháp lý</p>
-                                <p class="text-3xl font-bold text-gray-900">${s.events?.total || 0}</p>
-                                <p class="text-xs text-green-600 mt-1">${s.events?.active || 0} đang hoạt động</p>
+                                <p class="text-3xl font-bold text-gray-900">${allData.events.length}</p>
+                                <p class="text-xs text-green-600 mt-1">${allData.events.filter(e => e.isActive).length} đang hoạt động</p>
                             </div>
-                            <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">📅</div>
+                            <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-2xl">📅</div>
                         </div>
                     </div>
-                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-green-500 transition">
+                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500 transition cursor-pointer" onclick="setSection('news')">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-gray-500 text-sm">Tin tức</p>
-                                <p class="text-3xl font-bold text-gray-900">${s.news?.total || 0}</p>
+                                <p class="text-3xl font-bold text-gray-900">${allData.news.length}</p>
                                 <p class="text-xs text-gray-400 mt-1">bài viết</p>
                             </div>
-                            <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center text-2xl">📰</div>
+                            <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">📰</div>
                         </div>
                     </div>
-                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500 transition">
+                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-orange-500 transition cursor-pointer" onclick="setSection('payments')">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-gray-500 text-sm">Cơ quan / Tổ chức</p>
-                                <p class="text-3xl font-bold text-gray-900">${s.agencies?.total || 0}</p>
-                                <p class="text-xs text-gray-400 mt-1">đơn vị</p>
+                                <p class="text-gray-500 text-sm">Thanh toán</p>
+                                <p class="text-3xl font-bold text-gray-900">${allData.payments.length}</p>
+                                <p class="text-xs ${pendingPayments > 0 ? 'text-orange-600' : 'text-gray-400'} mt-1">${pendingPayments} chờ xác nhận</p>
                             </div>
-                            <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-2xl">🏢</div>
-                        </div>
-                    </div>
-                    <div class="stat-card bg-white rounded-xl p-6 shadow-sm border-l-4 border-orange-500 transition">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-gray-500 text-sm">Tỉnh / Thành phố</p>
-                                <p class="text-3xl font-bold text-gray-900">${allData.provinces.length}</p>
-                                <p class="text-xs text-gray-400 mt-1">địa phương</p>
-                            </div>
-                            <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">🗺️</div>
+                            <div class="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center text-2xl">💳</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h3 class="font-bold text-gray-900 mb-4">Thao tác nhanh</h3>
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-bold text-gray-900 mb-4">⚡ Thao tác nhanh</h3>
                     <div class="flex flex-wrap gap-3">
                         <button onclick="setSection('events'); setTimeout(() => showEventModal(), 100)" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition flex items-center gap-2">
                             <span>📅</span> Thêm sự kiện
@@ -342,49 +375,758 @@
                         <button onclick="setSection('news'); setTimeout(() => showNewsModal(), 100)" class="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition flex items-center gap-2">
                             <span>📰</span> Thêm tin tức
                         </button>
-                        <button onclick="setSection('agencies'); setTimeout(() => showAgencyModal(), 100)" class="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition flex items-center gap-2">
-                            <span>🏢</span> Thêm cơ quan
+                        <button onclick="setSection('lawyers'); setTimeout(() => showLawyerModal(), 100)" class="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition flex items-center gap-2">
+                            <span>⚖️</span> Thêm luật sư
                         </button>
-                        <button onclick="setSection('provinces'); setTimeout(() => showProvinceModal(), 100)" class="px-4 py-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition flex items-center gap-2">
-                            <span>🗺️</span> Thêm tỉnh/thành
+                        <button onclick="setSection('agencies'); setTimeout(() => showAgencyModal(), 100)" class="px-4 py-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition flex items-center gap-2">
+                            <span>🏢</span> Thêm cơ quan
                         </button>
                     </div>
                 </div>
 
-                <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white rounded-xl shadow-sm">
-                        <div class="p-4 border-b"><h3 class="font-bold text-gray-900">📅 Sự kiện gần đây</h3></div>
+                        <div class="p-4 border-b flex items-center justify-between">
+                            <h3 class="font-bold text-gray-900">👥 Người dùng mới đăng ký</h3>
+                            <button onclick="setSection('users')" class="text-sm text-blue-600 hover:underline">Xem tất cả</button>
+                        </div>
                         <div class="p-4 space-y-3">
-                            ${allData.events.slice(0,5).map(e => {
-                                const cat = CATEGORIES.find(c => c.id === e.category) || {};
-                                return `<div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-xl">${cat.icon || '📋'}</span>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="font-medium text-gray-900 truncate">${e.title}</p>
-                                        <p class="text-sm text-gray-500">${cat.name || e.category} • ${e.frequency === 'monthly' ? 'Ngày ' + e.dayOfMonth : getFrequencyName(e.frequency)}</p>
+                            ${recentUsers.length > 0 ? recentUsers.map(u => `
+                                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                                        ${(u.name || u.email || '?')[0].toUpperCase()}
                                     </div>
-                                    ${e.isActive ? '<span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">Hiện</span>' : '<span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Ẩn</span>'}
-                                </div>`;
-                            }).join('') || '<p class="text-gray-500 text-center py-4">Chưa có sự kiện</p>'}
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-gray-900 truncate">${u.name || 'Chưa cập nhật'}</p>
+                                        <p class="text-sm text-gray-500 truncate">${u.email}</p>
+                                    </div>
+                                    ${u.isPro ? '<span class="px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded-full font-bold">PRO</span>' : '<span class="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Free</span>'}
+                                </div>
+                            `).join('') : '<p class="text-gray-500 text-center py-4">Chưa có người dùng</p>'}
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm">
                         <div class="p-4 border-b"><h3 class="font-bold text-gray-900">📰 Tin tức mới nhất</h3></div>
                         <div class="p-4 space-y-3">
-                            ${allData.news.slice(0,5).map(n => `
+                            ${[...allData.news].sort((a, b) => b.id - a.id).slice(0, 5).map(n => `
                                 <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                                     <div class="w-12 h-12 bg-gray-200 rounded-lg bg-cover bg-center" style="background-image: url('${n.image || n.imageUrl || ''}')"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="font-medium text-gray-900 truncate">${n.title}</p>
                                         <p class="text-sm text-gray-500">${n.category} • ${n.date}</p>
                                     </div>
-                                    ${n.isHot ? '<span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">🔥 Hot</span>' : ''}
+                                    ${n.isHot ? '<span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">🔥</span>' : ''}
                                 </div>
                             `).join('') || '<p class="text-gray-500 text-center py-4">Chưa có tin tức</p>'}
                         </div>
                     </div>
                 </div>
             `;
+        }
+
+        // ========== USERS MANAGEMENT ==========
+        function renderUsers(el) {
+            const sortedUsers = [...allData.users].sort((a, b) => b.id - a.id);
+            const todayUsers = allData.users.filter(u => u.createdAt && u.createdAt.startsWith(new Date().toISOString().split('T')[0])).length;
+            
+            el.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Quản lý người dùng</h2>
+                        <p class="text-gray-500">Quản lý ${allData.users.length} người dùng đã đăng ký</p>
+                    </div>
+                    <button onclick="exportUsers()" class="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
+                        <span>📥</span> Xuất Excel
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <p class="text-gray-500 text-sm">Tổng người dùng</p>
+                        <p class="text-2xl font-bold text-gray-900">${allData.users.length}</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <p class="text-gray-500 text-sm">Pro Users</p>
+                        <p class="text-2xl font-bold text-purple-600">${allData.users.filter(u => u.isPro).length}</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <p class="text-gray-500 text-sm">Free Users</p>
+                        <p class="text-2xl font-bold text-gray-600">${allData.users.filter(u => !u.isPro).length}</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm">
+                        <p class="text-gray-500 text-sm">Đăng ký hôm nay</p>
+                        <p class="text-2xl font-bold text-green-600">${todayUsers}</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">ID</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Thông tin</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Công ty</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Điện thoại</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Loại TK</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Ngày ĐK</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                ${sortedUsers.map(u => `
+                                <tr class="table-row transition">
+                                    <td class="px-4 py-3 font-mono text-sm text-gray-500">#${u.id}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                                                ${(u.name || u.email || '?')[0].toUpperCase()}
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">${u.name || 'Chưa cập nhật'}</p>
+                                                <p class="text-sm text-gray-500">${u.email}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">${u.company || '-'}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">${u.phone || '-'}</td>
+                                    <td class="px-4 py-3 text-center">
+                                        ${u.isPro 
+                                            ? '<span class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs rounded-full font-bold">⭐ PRO</span>' 
+                                            : '<span class="px-3 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">Free</span>'}
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '-'}</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <button onclick='showUserDetail(${JSON.stringify(u).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-2 text-sm">Chi tiết</button>
+                                        <button onclick="toggleUserPro(${u.id}, ${!u.isPro})" class="text-purple-600 hover:text-purple-800 text-sm">${u.isPro ? 'Hủy Pro' : 'Nâng Pro'}</button>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                                ${allData.users.length === 0 ? '<tr><td colspan="7" class="px-4 py-12 text-center text-gray-500">Chưa có người dùng nào</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showUserDetail(user) {
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
+                        <div class="p-6 border-b bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-t-2xl">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
+                                    ${(user.name || user.email || '?')[0].toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold">${user.name || 'Chưa cập nhật'}</h3>
+                                    <p class="text-blue-100">${user.email}</p>
+                                </div>
+                                <button onclick="closeModal()" class="ml-auto text-white/80 hover:text-white text-2xl">&times;</button>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-xs text-gray-500">ID</p>
+                                    <p class="font-semibold">#${user.id}</p>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-xs text-gray-500">Loại tài khoản</p>
+                                    <p class="font-semibold">${user.isPro ? '⭐ Pro' : 'Free'}</p>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-xs text-gray-500">Điện thoại</p>
+                                    <p class="font-semibold">${user.phone || '-'}</p>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-xs text-gray-500">Đăng ký qua</p>
+                                    <p class="font-semibold">${user.provider || 'Email'}</p>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <p class="text-xs text-gray-500">Công ty</p>
+                                <p class="font-semibold">${user.company || '-'}</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <p class="text-xs text-gray-500">Mã số thuế</p>
+                                <p class="font-semibold">${user.taxCode || '-'}</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <p class="text-xs text-gray-500">Địa chỉ</p>
+                                <p class="font-semibold">${user.address || '-'}</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <p class="text-xs text-gray-500">Ngành nghề</p>
+                                <p class="font-semibold">${user.industry || '-'}</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-xs text-gray-500">Ngày đăng ký</p>
+                                    <p class="font-semibold">${user.createdAt ? new Date(user.createdAt).toLocaleString('vi-VN') : '-'}</p>
+                                </div>
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-xs text-gray-500">Pro hết hạn</p>
+                                    <p class="font-semibold">${user.proExpiry || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium">Đóng</button>
+                            <button onclick="toggleUserPro(${user.id}, ${!user.isPro}); closeModal();" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:opacity-90 transition font-medium shadow-md">${user.isPro ? 'Hủy Pro' : 'Nâng cấp Pro'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function toggleUserPro(userId, isPro) {
+            try {
+                const proExpiry = isPro ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : null;
+                await fetch(`${API}/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ isPro, proExpiry })
+                });
+                loadDashboard();
+            } catch (e) {
+                alert('Lỗi cập nhật!');
+            }
+        }
+
+        function exportUsers() {
+            let csv = 'ID,Tên,Email,Điện thoại,Công ty,Mã số thuế,Địa chỉ,Ngành nghề,Pro,Ngày ĐK\n';
+            allData.users.forEach(u => {
+                csv += `${u.id},"${u.name || ''}","${u.email}","${u.phone || ''}","${u.company || ''}","${u.taxCode || ''}","${u.address || ''}","${u.industry || ''}",${u.isPro ? 'Có' : 'Không'},"${u.createdAt || ''}"\n`;
+            });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        // ========== LAWYERS MANAGEMENT ==========
+        function renderLawyers(el) {
+            el.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Quản lý luật sư</h2>
+                        <p class="text-gray-500">Quản lý ${allData.lawyers.length} luật sư tư vấn</p>
+                    </div>
+                    <button onclick="showLawyerModal()" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
+                        <span>+</span> Thêm luật sư
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Luật sư</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Chức danh</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Chuyên môn</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Liên hệ</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Trạng thái</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                ${allData.lawyers.map(l => `
+                                <tr class="table-row transition">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold">
+                                                ${(l.name || '?')[0]}
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">${l.name}</p>
+                                                ${l.isPrimary ? '<span class="text-xs text-orange-600">⭐ Chính</span>' : ''}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">${l.title || '-'}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">${l.specialty || '-'}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">${l.phone || '-'}</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="px-2 py-1 ${l.isAvailable ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'} text-xs rounded-full">
+                                            ${l.isAvailable ? '✓ Sẵn sàng' : '○ Bận'}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <button onclick='showLawyerModal(${JSON.stringify(l).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-2 text-sm">Sửa</button>
+                                        <button onclick="deleteLawyer(${l.id})" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                                ${allData.lawyers.length === 0 ? '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">Chưa có luật sư nào</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showLawyerModal(lawyer = null) {
+            const isEdit = !!lawyer;
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
+                        <div class="p-6 border-b bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-t-2xl">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa luật sư' : 'Thêm luật sư mới'}</h3>
+                                <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
+                            </div>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Họ tên <span class="text-red-500">*</span></label>
+                                <input type="text" id="lawyerName" value="${lawyer?.name || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="VD: Luật sư Nguyễn Văn A">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Chức danh</label>
+                                <input type="text" id="lawyerTitle" value="${lawyer?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="VD: Luật sư điều hành">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Chuyên môn</label>
+                                <input type="text" id="lawyerSpecialty" value="${lawyer?.specialty || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="VD: Doanh nghiệp, Thuế, Đầu tư">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
+                                    <input type="text" id="lawyerPhone" value="${lawyer?.phone || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Zalo</label>
+                                    <input type="text" id="lawyerZalo" value="${lawyer?.zalo || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                                <input type="email" id="lawyerEmail" value="${lawyer?.email || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Kinh nghiệm</label>
+                                <input type="text" id="lawyerExperience" value="${lawyer?.experience || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="VD: 15 năm">
+                            </div>
+                            <div class="flex items-center gap-6 p-4 bg-gray-50 rounded-xl">
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" id="lawyerAvailable" ${lawyer?.isAvailable !== false ? 'checked' : ''} class="w-5 h-5 accent-purple-600">
+                                    <span class="text-sm font-semibold text-gray-700">Sẵn sàng tư vấn</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" id="lawyerPrimary" ${lawyer?.isPrimary ? 'checked' : ''} class="w-5 h-5 accent-orange-500">
+                                    <span class="text-sm font-semibold text-gray-700">⭐ Luật sư chính</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="p-6 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                            <button onclick="closeModal()" class="px-6 py-2 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium">Hủy</button>
+                            <button onclick="saveLawyer(${lawyer?.id || 'null'})" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:opacity-90 transition font-medium shadow-md">${isEdit ? 'Cập nhật' : 'Thêm mới'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveLawyer(id) {
+            const data = {
+                name: document.getElementById('lawyerName').value,
+                title: document.getElementById('lawyerTitle').value,
+                specialty: document.getElementById('lawyerSpecialty').value,
+                phone: document.getElementById('lawyerPhone').value,
+                zalo: document.getElementById('lawyerZalo').value,
+                email: document.getElementById('lawyerEmail').value,
+                experience: document.getElementById('lawyerExperience').value,
+                isAvailable: document.getElementById('lawyerAvailable').checked,
+                isPrimary: document.getElementById('lawyerPrimary').checked
+            };
+            if (!data.name) { alert('Vui lòng nhập họ tên!'); return; }
+            const url = id ? `${API}/admin/lawyers/${id}` : `${API}/admin/lawyers`;
+            const method = id ? 'PUT' : 'POST';
+            try {
+                await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                closeModal();
+                loadDashboard();
+            } catch (e) { alert('Lỗi lưu dữ liệu!'); }
+        }
+
+        async function deleteLawyer(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa luật sư này?')) return;
+            try {
+                await fetch(`${API}/admin/lawyers/${id}`, { method: 'DELETE' });
+                loadDashboard();
+            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
+        }
+
+        // ========== PAYMENTS MANAGEMENT ==========
+        function renderPayments(el) {
+            const sortedPayments = [...allData.payments].sort((a, b) => b.id - a.id);
+            const pending = sortedPayments.filter(p => p.status === 'pending');
+            const completed = sortedPayments.filter(p => p.status === 'completed');
+            const totalRevenue = completed.reduce((sum, p) => sum + (p.amount || 0), 0);
+            
+            el.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Quản lý thanh toán Pro</h2>
+                        <p class="text-gray-500">Quản lý ${allData.payments.length} giao dịch</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-orange-500">
+                        <p class="text-gray-500 text-sm">Chờ xác nhận</p>
+                        <p class="text-2xl font-bold text-orange-600">${pending.length}</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-green-500">
+                        <p class="text-gray-500 text-sm">Đã hoàn thành</p>
+                        <p class="text-2xl font-bold text-green-600">${completed.length}</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 shadow-sm border-l-4 border-purple-500">
+                        <p class="text-gray-500 text-sm">Tổng doanh thu</p>
+                        <p class="text-2xl font-bold text-purple-600">${totalRevenue.toLocaleString('vi-VN')}đ</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Mã đơn</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Người dùng</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Gói</th>
+                                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-600">Số tiền</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Trạng thái</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Ngày tạo</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                ${sortedPayments.map(p => {
+                                    const user = allData.users.find(u => u.id === p.userId) || {};
+                                    return `
+                                    <tr class="table-row transition ${p.status === 'pending' ? 'bg-orange-50' : ''}">
+                                        <td class="px-4 py-3 font-mono text-sm">${p.orderId || '#' + p.id}</td>
+                                        <td class="px-4 py-3">
+                                            <p class="font-medium text-gray-900">${user.name || user.email || 'ID: ' + p.userId}</p>
+                                            <p class="text-sm text-gray-500">${user.email || ''}</p>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span class="px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded-full">${p.package === 'monthly' ? 'Tháng' : p.package === 'yearly' ? 'Năm' : 'Trọn đời'}</span>
+                                        </td>
+                                        <td class="px-4 py-3 text-right font-semibold text-gray-900">${(p.amount || 0).toLocaleString('vi-VN')}đ</td>
+                                        <td class="px-4 py-3 text-center">
+                                            ${p.status === 'completed' 
+                                                ? '<span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">✓ Hoàn thành</span>'
+                                                : p.status === 'pending'
+                                                ? '<span class="px-2 py-1 bg-orange-100 text-orange-600 text-xs rounded-full animate-pulse">⏳ Chờ xác nhận</span>'
+                                                : '<span class="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full">✗ Hủy</span>'}
+                                        </td>
+                                        <td class="px-4 py-3 text-sm text-gray-600">${p.createdAt ? new Date(p.createdAt).toLocaleString('vi-VN') : '-'}</td>
+                                        <td class="px-4 py-3 text-center">
+                                            ${p.status === 'pending' 
+                                                ? `<button onclick="confirmPayment(${p.id})" class="px-3 py-1 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600">Xác nhận</button>`
+                                                : '<span class="text-gray-400 text-sm">-</span>'}
+                                        </td>
+                                    </tr>`;
+                                }).join('')}
+                                ${allData.payments.length === 0 ? '<tr><td colspan="7" class="px-4 py-12 text-center text-gray-500">Chưa có giao dịch nào</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function confirmPayment(paymentId) {
+            if (!confirm('Xác nhận thanh toán này? User sẽ được nâng cấp Pro.')) return;
+            try {
+                await fetch(`${API}/admin/payments/${paymentId}/confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transactionId: 'MANUAL-' + Date.now() })
+                });
+                alert('✓ Đã xác nhận thanh toán thành công!');
+                loadDashboard();
+            } catch (e) {
+                alert('Lỗi xác nhận thanh toán!');
+            }
+        }
+
+        // ========== SETTINGS ==========
+        let settingsTab = 'company';
+        
+        function renderSettings(el) {
+            const s = allData.settings || {};
+            el.innerHTML = `
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Cài đặt hệ thống</h2>
+                    <p class="text-gray-500">Cấu hình thông tin công ty và ứng dụng</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex gap-2 mb-6 bg-gray-200 p-1 rounded-xl flex-wrap">
+                    <button onclick="showSettingsTab('company')" class="tab-btn flex-1 py-2 px-4 rounded-lg font-medium text-sm ${settingsTab === 'company' ? 'active' : ''}">🏢 Công ty</button>
+                    <button onclick="showSettingsTab('splash')" class="tab-btn flex-1 py-2 px-4 rounded-lg font-medium text-sm ${settingsTab === 'splash' ? 'active' : ''}">🎨 Logo Splash</button>
+                    <button onclick="showSettingsTab('legal')" class="tab-btn flex-1 py-2 px-4 rounded-lg font-medium text-sm ${settingsTab === 'legal' ? 'active' : ''}">📜 Điều khoản</button>
+                    <button onclick="showSettingsTab('payment')" class="tab-btn flex-1 py-2 px-4 rounded-lg font-medium text-sm ${settingsTab === 'payment' ? 'active' : ''}">💳 Thanh toán</button>
+                </div>
+
+                <div id="settingsContent"></div>
+            `;
+            showSettingsTab(settingsTab);
+        }
+
+        function showSettingsTab(tab) {
+            settingsTab = tab;
+            const content = document.getElementById('settingsContent');
+            const s = allData.settings || {};
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-btn')[['company', 'splash', 'legal', 'payment'].indexOf(tab)]?.classList.add('active');
+
+            switch (tab) {
+                case 'company':
+                    content.innerHTML = `
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><span>🏢</span> Thông tin công ty</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tên công ty</label>
+                                    <input type="text" id="settingCompanyName" value="${s.companyName || 'HTIC LAW FIRM'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Website</label>
+                                    <input type="text" id="settingWebsite" value="${s.website || 'www.htic.com.vn'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Hotline</label>
+                                    <input type="text" id="settingPhone" value="${s.phone || '0379 044 299'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email liên hệ</label>
+                                    <input type="text" id="settingEmail" value="${s.email || 'contact@htic.com.vn'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ</label>
+                                    <textarea id="settingAddress" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">${s.address || 'Hà Nội, Việt Nam'}</textarea>
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-end">
+                                <button onclick="saveCompanySettings()" class="px-8 py-3 bg-gradient-to-r from-navy-600 to-navy-700 text-white rounded-xl font-semibold hover:opacity-90 transition shadow-lg flex items-center gap-2">
+                                    <span>💾</span> Lưu cài đặt
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'splash':
+                    content.innerHTML = `
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><span>🎨</span> Logo màn hình khởi động</h3>
+                            <p class="text-gray-500 text-sm mb-6">Cập nhật logo hiển thị trên màn hình splash khi mở app</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                                    <p class="font-semibold text-gray-700 mb-4">Logo hiện tại</p>
+                                    <div class="mb-4">
+                                        ${s.splashLogo 
+                                            ? `<img src="${s.splashLogo}" class="max-w-48 max-h-48 mx-auto rounded-xl shadow-lg" alt="Splash Logo">`
+                                            : '<div class="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl mx-auto flex items-center justify-center text-white text-4xl font-bold shadow-lg">H</div>'}
+                                    </div>
+                                    <p class="text-xs text-gray-400">PNG/JPG, khuyến nghị 512x512px</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">URL Logo mới</label>
+                                    <input type="text" id="settingSplashLogo" value="${s.splashLogo || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition mb-4" placeholder="https://example.com/logo.png">
+                                    
+                                    <p class="text-sm text-gray-500 mb-2">Hoặc sử dụng Base64:</p>
+                                    <textarea id="settingSplashLogoBase64" rows="4" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition text-xs" placeholder="data:image/png;base64,...">${s.splashLogo?.startsWith('data:') ? s.splashLogo : ''}</textarea>
+                                    
+                                    <div class="mt-4 p-4 bg-blue-50 rounded-xl">
+                                        <p class="text-sm text-blue-800"><strong>💡 Hướng dẫn:</strong></p>
+                                        <ul class="text-xs text-blue-700 mt-2 space-y-1">
+                                            <li>• Sử dụng ảnh PNG với nền trong suốt</li>
+                                            <li>• Kích thước khuyến nghị: 512x512 pixels</li>
+                                            <li>• Dung lượng tối đa: 2MB</li>
+                                            <li>• App sẽ tải logo từ URL hoặc Base64</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 flex justify-end">
+                                <button onclick="saveSplashSettings()" class="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:opacity-90 transition shadow-lg flex items-center gap-2">
+                                    <span>💾</span> Lưu logo
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'legal':
+                    content.innerHTML = `
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><span>📜</span> Điều khoản sử dụng & Chính sách bảo mật</h3>
+                            
+                            <div class="flex gap-2 mb-4">
+                                <button onclick="showLegalTab('tos')" id="tosTabBtn" class="px-4 py-2 bg-navy-600 text-white rounded-lg text-sm font-medium">Điều khoản sử dụng</button>
+                                <button onclick="showLegalTab('privacy')" id="privacyTabBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium">Chính sách bảo mật</button>
+                            </div>
+
+                            <div id="tosContent">
+                                <div id="tosEditor"></div>
+                            </div>
+                            <div id="privacyContent" class="hidden">
+                                <div id="privacyEditor"></div>
+                            </div>
+
+                            <div class="mt-6 flex justify-between items-center">
+                                <button onclick="previewLegal()" class="px-6 py-2 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition font-medium flex items-center gap-2">
+                                    <span>👁️</span> Xem trước
+                                </button>
+                                <button onclick="saveLegalSettings()" class="px-8 py-3 bg-gradient-to-r from-navy-600 to-navy-700 text-white rounded-xl font-semibold hover:opacity-90 transition shadow-lg flex items-center gap-2">
+                                    <span>💾</span> Lưu điều khoản
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => initLegalEditors(), 100);
+                    break;
+
+                case 'payment':
+                    content.innerHTML = `
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><span>💳</span> Thông tin thanh toán</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tên ngân hàng</label>
+                                    <input type="text" id="settingBankName" value="${s.bankName || 'Vietcombank'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Chi nhánh</label>
+                                    <input type="text" id="settingBankBranch" value="${s.bankBranch || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Số tài khoản</label>
+                                    <input type="text" id="settingBankAccount" value="${s.bankAccount || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tên tài khoản</label>
+                                    <input type="text" id="settingBankAccountName" value="${s.bankAccountName || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Nội dung chuyển khoản</label>
+                                    <input type="text" id="settingTransferContent" value="${s.transferContent || 'HTIC PRO [Mã đơn hàng]'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
+                                </div>
+                            </div>
+                            <div class="mt-6 flex justify-end">
+                                <button onclick="savePaymentSettings()" class="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-semibold hover:opacity-90 transition shadow-lg flex items-center gap-2">
+                                    <span>💾</span> Lưu thông tin
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+        }
+
+        let currentLegalTab = 'tos';
+        let tosQuill = null;
+        let privacyQuill = null;
+
+        function initLegalEditors() {
+            const s = allData.settings || {};
+            tosQuill = new Quill('#tosEditor', {
+                theme: 'snow',
+                placeholder: 'Nhập nội dung điều khoản sử dụng...',
+                modules: { toolbar: [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ 'list': 'ordered' }, { 'list': 'bullet' }], ['link'], ['clean']] }
+            });
+            if (s.termsOfService) tosQuill.root.innerHTML = s.termsOfService;
+
+            privacyQuill = new Quill('#privacyEditor', {
+                theme: 'snow',
+                placeholder: 'Nhập nội dung chính sách bảo mật...',
+                modules: { toolbar: [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ 'list': 'ordered' }, { 'list': 'bullet' }], ['link'], ['clean']] }
+            });
+            if (s.privacyPolicy) privacyQuill.root.innerHTML = s.privacyPolicy;
+        }
+
+        function showLegalTab(tab) {
+            currentLegalTab = tab;
+            document.getElementById('tosTabBtn').className = tab === 'tos' ? 'px-4 py-2 bg-navy-600 text-white rounded-lg text-sm font-medium' : 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium';
+            document.getElementById('privacyTabBtn').className = tab === 'privacy' ? 'px-4 py-2 bg-navy-600 text-white rounded-lg text-sm font-medium' : 'px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium';
+            document.getElementById('tosContent').className = tab === 'tos' ? '' : 'hidden';
+            document.getElementById('privacyContent').className = tab === 'privacy' ? '' : 'hidden';
+        }
+
+        function previewLegal() {
+            const content = currentLegalTab === 'tos' ? (tosQuill?.root.innerHTML || '') : (privacyQuill?.root.innerHTML || '');
+            const title = currentLegalTab === 'tos' ? 'Điều khoản sử dụng' : 'Chính sách bảo mật';
+            modalRoot.innerHTML = `
+                <div class="modal-overlay" onclick="closeModal()">
+                    <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
+                        <div class="p-6 border-b bg-navy-700 text-white rounded-t-2xl flex items-center justify-between">
+                            <h3 class="text-xl font-bold">📜 ${title}</h3>
+                            <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
+                        </div>
+                        <div class="p-6 prose max-w-none">${content || '<p class="text-gray-400">Chưa có nội dung</p>'}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function saveCompanySettings() {
+            const data = {
+                companyName: document.getElementById('settingCompanyName').value,
+                website: document.getElementById('settingWebsite').value,
+                phone: document.getElementById('settingPhone').value,
+                email: document.getElementById('settingEmail').value,
+                address: document.getElementById('settingAddress').value
+            };
+            await saveSettings(data);
+        }
+
+        async function saveSplashSettings() {
+            const urlLogo = document.getElementById('settingSplashLogo').value.trim();
+            const base64Logo = document.getElementById('settingSplashLogoBase64').value.trim();
+            const data = { splashLogo: base64Logo || urlLogo };
+            await saveSettings(data);
+        }
+
+        async function saveLegalSettings() {
+            const data = {
+                termsOfService: tosQuill?.root.innerHTML || '',
+                privacyPolicy: privacyQuill?.root.innerHTML || ''
+            };
+            await saveSettings(data);
+        }
+
+        async function savePaymentSettings() {
+            const data = {
+                bankName: document.getElementById('settingBankName').value,
+                bankBranch: document.getElementById('settingBankBranch').value,
+                bankAccount: document.getElementById('settingBankAccount').value,
+                bankAccountName: document.getElementById('settingBankAccountName').value,
+                transferContent: document.getElementById('settingTransferContent').value
+            };
+            await saveSettings(data);
+        }
+
+        async function saveSettings(data) {
+            try {
+                await fetch(`${API}/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                alert('✓ Đã lưu cài đặt thành công!');
+                loadDashboard();
+            } catch (e) { alert('Lỗi lưu cài đặt!'); }
         }
 
         // ========== EVENTS ==========
@@ -399,7 +1141,6 @@
                         <span>+</span> Thêm sự kiện
                     </button>
                 </div>
-
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full">
@@ -422,14 +1163,10 @@
                                             <p class="font-medium text-gray-900">${e.title}</p>
                                             <p class="text-sm text-gray-500 truncate max-w-xs">${stripHtml(e.description || '')}</p>
                                         </td>
-                                        <td class="px-4 py-3">
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full">${cat.icon || ''} ${cat.name || e.category}</span>
-                                        </td>
+                                        <td class="px-4 py-3"><span class="px-2 py-1 bg-blue-100 text-blue-600 text-xs rounded-full">${cat.icon || ''} ${cat.name || e.category}</span></td>
                                         <td class="px-4 py-3 text-sm text-gray-600">${getFrequencyName(e.frequency)}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600">${e.specificDate || (e.dayOfMonth ? 'Ngày ' + e.dayOfMonth : '-')}</td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span class="px-2 py-1 ${e.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'} text-xs rounded-full">${e.isActive ? '✓ Hiện' : '○ Ẩn'}</span>
-                                        </td>
+                                        <td class="px-4 py-3 text-center"><span class="px-2 py-1 ${e.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'} text-xs rounded-full">${e.isActive ? '✓ Hiện' : '○ Ẩn'}</span></td>
                                         <td class="px-4 py-3 text-center">
                                             <button onclick='showEventModal(${JSON.stringify(e).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3 text-sm">Sửa</button>
                                             <button onclick="deleteEvent(${e.id})" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
@@ -451,60 +1188,51 @@
                     <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
                         <div class="p-6 border-b bg-gradient-to-r from-navy-600 to-navy-700 text-white rounded-t-2xl">
                             <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa sự kiện' : 'Thêm sự kiện mới'}</h3>
-                                    <p class="text-navy-100 text-sm mt-1">Điền thông tin sự kiện pháp lý</p>
-                                </div>
+                                <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa sự kiện' : 'Thêm sự kiện mới'}</h3>
                                 <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
                             </div>
                         </div>
                         <div class="p-6 space-y-5">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề sự kiện <span class="text-red-500">*</span></label>
-                                <input type="text" id="eventTitle" value="${event?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" placeholder="VD: Nộp tờ khai thuế GTGT tháng">
+                                <input type="text" id="eventTitle" value="${event?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Danh mục <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Danh mục</label>
                                     <select id="eventCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
                                         ${CATEGORIES.map(c => `<option value="${c.id}" ${event?.category === c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tần suất <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tần suất</label>
                                     <select id="eventFrequency" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
                                         ${FREQUENCIES.map(f => `<option value="${f.id}" ${event?.frequency === f.id ? 'selected' : ''}>${f.name}</option>`).join('')}
                                     </select>
                                 </div>
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Ngày trong tháng</label>
-                                    <input type="number" id="eventDayOfMonth" min="1" max="31" value="${event?.dayOfMonth || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" placeholder="VD: 20">
+                                    <input type="number" id="eventDayOfMonth" min="1" max="31" value="${event?.dayOfMonth || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Hoặc ngày cụ thể</label>
                                     <input type="date" id="eventSpecificDate" value="${event?.specificDate || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
                                 </div>
                             </div>
-
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Mô tả chi tiết</label>
                                 <div id="eventDescriptionEditor"></div>
                             </div>
-
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Căn cứ pháp lý</label>
-                                <input type="text" id="eventLegalRef" value="${event?.legalReference || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" placeholder="VD: Theo Điều 44 Luật Quản lý thuế 2019">
+                                <input type="text" id="eventLegalRef" value="${event?.legalReference || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
                             </div>
-
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Mức phạt nếu vi phạm</label>
-                                <input type="text" id="eventPenalty" value="${event?.penalty || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition" placeholder="VD: Phạt 2-5 triệu đồng nếu nộp chậm">
+                                <input type="text" id="eventPenalty" value="${event?.penalty || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
                             </div>
-
                             <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
                                 <input type="checkbox" id="eventIsActive" ${event?.isActive !== false ? 'checked' : ''} class="w-5 h-5 accent-navy-600">
                                 <label class="text-sm font-semibold text-gray-700">Hiển thị trong ứng dụng</label>
@@ -517,123 +1245,88 @@
                     </div>
                 </div>
             `;
-
             setTimeout(() => {
-                quillEditor = new Quill('#eventDescriptionEditor', {
-                    theme: 'snow',
-                    placeholder: 'Nhập mô tả chi tiết về sự kiện...',
-                    modules: {
-                        toolbar: [
-                            [{ 'font': [] }],
-                            [{ 'size': ['small', false, 'large', 'huge'] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            [{ 'color': [] }, { 'background': [] }],
-                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                            [{ 'align': [] }],
-                            ['link'],
-                            ['clean']
-                        ]
-                    }
-                });
-                if (event?.description) {
-                    quillEditor.root.innerHTML = event.description;
-                }
+                quillEditor = new Quill('#eventDescriptionEditor', { theme: 'snow', placeholder: 'Nhập mô tả...', modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'list': 'ordered' }, { 'list': 'bullet' }], ['link'], ['clean']] } });
+                if (event?.description) quillEditor.root.innerHTML = event.description;
             }, 100);
         }
 
         async function saveEvent(id) {
-            const description = quillEditor ? quillEditor.root.innerHTML : '';
             const data = {
                 title: document.getElementById('eventTitle').value,
                 category: document.getElementById('eventCategory').value,
                 frequency: document.getElementById('eventFrequency').value,
                 dayOfMonth: parseInt(document.getElementById('eventDayOfMonth').value) || null,
                 specificDate: document.getElementById('eventSpecificDate').value || null,
-                description: description,
+                description: quillEditor ? quillEditor.root.innerHTML : '',
                 legalReference: document.getElementById('eventLegalRef').value,
                 penalty: document.getElementById('eventPenalty').value,
                 isActive: document.getElementById('eventIsActive').checked
             };
-
-            if (!data.title) { alert('Vui lòng nhập tiêu đề sự kiện!'); return; }
-
+            if (!data.title) { alert('Vui lòng nhập tiêu đề!'); return; }
             const url = id ? `${API}/admin/events/${id}` : `${API}/admin/events`;
-            const method = id ? 'PUT' : 'POST';
-
             try {
-                await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                await fetch(url, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 closeModal();
                 loadDashboard();
             } catch (e) { alert('Lỗi lưu dữ liệu!'); }
         }
 
         async function deleteEvent(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa sự kiện này?')) return;
-            try {
-                await fetch(`${API}/admin/events/${id}`, { method: 'DELETE' });
-                loadDashboard();
-            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
+            if (!confirm('Xóa sự kiện này?')) return;
+            try { await fetch(`${API}/admin/events/${id}`, { method: 'DELETE' }); loadDashboard(); } catch (e) { alert('Lỗi!'); }
         }
 
         // ========== NEWS ==========
-function renderNews(el) {
-    // Sắp xếp tin mới nhất lên đầu (theo id giảm dần)
-    const sortedNews = [...allData.news].sort((a, b) => b.id - a.id);
-    
-    el.innerHTML = `
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Tin tức pháp luật</h2>
-                <p class="text-gray-500">Quản lý ${allData.news.length} bài viết</p>
-            </div>
-            <button onclick="showNewsModal()" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
-                <span>+</span> Thêm tin tức
-            </button>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-16">Ảnh</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tiêu đề</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-28">Danh mục</th>
-                            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-28">Ngày đăng</th>
-                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600 w-20">Nổi bật</th>
-                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600 w-28">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                        ${sortedNews.map(n => `
-                        <tr class="table-row transition hover:bg-gray-50">
-                            <td class="px-4 py-3">
-                                <div class="w-14 h-14 bg-gray-200 rounded-lg bg-cover bg-center" style="background-image: url('${n.image || n.imageUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=100'}')"></div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <p class="font-medium text-gray-900 line-clamp-1">${n.title}</p>
-                                <p class="text-sm text-gray-500 line-clamp-1">${stripHtml(n.summary || n.content || '')}</p>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">${n.category}</span>
-                            </td>
-                            <td class="px-4 py-3 text-sm text-gray-600">${n.date}</td>
-                            <td class="px-4 py-3 text-center">
-                                ${n.isHot ? '<span class="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full">🔥 Hot</span>' : '<span class="text-gray-400">-</span>'}
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                                <button onclick='showNewsModal(${JSON.stringify(n).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-2 text-sm">Sửa</button>
-                                <button onclick="deleteNews(${n.id})" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
-                            </td>
-                        </tr>
-                        `).join('')}
-                        ${allData.news.length === 0 ? '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">Chưa có tin tức nào</td></tr>' : ''}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
-}
+        function renderNews(el) {
+            const sortedNews = [...allData.news].sort((a, b) => b.id - a.id);
+            el.innerHTML = `
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Tin tức pháp luật</h2>
+                        <p class="text-gray-500">Quản lý ${allData.news.length} bài viết</p>
+                    </div>
+                    <button onclick="showNewsModal()" class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-semibold hover:opacity-90 transition shadow-md flex items-center gap-2">
+                        <span>+</span> Thêm tin tức
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-16">Ảnh</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tiêu đề</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-28">Danh mục</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600 w-28">Ngày đăng</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600 w-20">Nổi bật</th>
+                                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600 w-28">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                ${sortedNews.map(n => `
+                                <tr class="table-row transition">
+                                    <td class="px-4 py-3"><div class="w-14 h-14 bg-gray-200 rounded-lg bg-cover bg-center" style="background-image: url('${n.image || n.imageUrl || ''}')"></div></td>
+                                    <td class="px-4 py-3">
+                                        <p class="font-medium text-gray-900 line-clamp-1">${n.title}</p>
+                                        <p class="text-sm text-gray-500 line-clamp-1">${stripHtml(n.summary || n.content || '')}</p>
+                                    </td>
+                                    <td class="px-4 py-3"><span class="px-2 py-1 bg-green-100 text-green-600 text-xs rounded-full">${n.category}</span></td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">${n.date}</td>
+                                    <td class="px-4 py-3 text-center">${n.isHot ? '<span class="px-2 py-1 bg-red-100 text-red-600 text-xs font-bold rounded-full">🔥</span>' : '-'}</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <button onclick='showNewsModal(${JSON.stringify(n).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-2 text-sm">Sửa</button>
+                                        <button onclick="deleteNews(${n.id})" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                                ${allData.news.length === 0 ? '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">Chưa có tin tức</td></tr>' : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
 
         function showNewsModal(news = null) {
             const isEdit = !!news;
@@ -642,50 +1335,42 @@ function renderNews(el) {
                     <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
                         <div class="p-6 border-b bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-2xl">
                             <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa tin tức' : 'Thêm tin tức mới'}</h3>
-                                    <p class="text-green-100 text-sm mt-1">Soạn thảo bài viết pháp luật</p>
-                                </div>
+                                <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa tin tức' : 'Thêm tin tức mới'}</h3>
                                 <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
                             </div>
                         </div>
                         <div class="p-6 space-y-5">
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề bài viết <span class="text-red-500">*</span></label>
-                                <input type="text" id="newsTitle" value="${news?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition" placeholder="Nhập tiêu đề bài viết...">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tiêu đề <span class="text-red-500">*</span></label>
+                                <input type="text" id="newsTitle" value="${news?.title || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition">
                             </div>
-
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Danh mục</label>
                                     <select id="newsCategory" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition">
-                                        ${NEWS_CATEGORIES.map(c => `<option ${news?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                        ${NEWS_CATEGORIES.map(c => `<option value="${c.id}" ${news?.category === c.id || news?.category === c.name ? 'selected' : ''}>${c.name}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Ngày đăng</label>
-                                    <input type="text" id="newsDate" value="${news?.date || new Date().toLocaleDateString('vi-VN')}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition" placeholder="DD/MM/YYYY">
+                                    <input type="date" id="newsDate" value="${news?.date ? formatDateForInput(news.date) : new Date().toISOString().split('T')[0]}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition">
                                 </div>
                             </div>
-
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Link ảnh đại diện</label>
                                 <input type="text" id="newsImage" value="${news?.image || news?.imageUrl || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition" placeholder="https://...">
                             </div>
-
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Tóm tắt</label>
-                                <textarea id="newsSummary" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition" placeholder="Tóm tắt ngắn gọn nội dung bài viết...">${news?.summary || ''}</textarea>
+                                <textarea id="newsSummary" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:outline-none transition">${news?.summary || ''}</textarea>
                             </div>
-
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nội dung bài viết <span class="text-red-500">*</span></label>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Nội dung</label>
                                 <div id="newsContentEditor"></div>
                             </div>
-
                             <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
                                 <input type="checkbox" id="newsIsHot" ${news?.isHot ? 'checked' : ''} class="w-5 h-5 accent-orange-500">
-                                <label class="text-sm font-semibold text-gray-700">🔥 Đánh dấu là tin nổi bật</label>
+                                <label class="text-sm font-semibold text-gray-700">🔥 Tin nổi bật</label>
                             </div>
                         </div>
                         <div class="p-6 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
@@ -695,65 +1380,45 @@ function renderNews(el) {
                     </div>
                 </div>
             `;
-
             setTimeout(() => {
-                quillEditor = new Quill('#newsContentEditor', {
-                    theme: 'snow',
-                    placeholder: 'Nhập nội dung bài viết...',
-                    modules: {
-                        toolbar: [
-                            [{ 'header': [1, 2, 3, false] }],
-                            [{ 'font': [] }],
-                            [{ 'size': ['small', false, 'large', 'huge'] }],
-                            ['bold', 'italic', 'underline', 'strike'],
-                            [{ 'color': [] }, { 'background': [] }],
-                            [{ 'script': 'sub' }, { 'script': 'super' }],
-                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                            [{ 'indent': '-1' }, { 'indent': '+1' }],
-                            [{ 'direction': 'rtl' }],
-                            [{ 'align': [] }],
-                            ['link', 'image', 'video'],
-                            ['blockquote', 'code-block'],
-                            ['clean']
-                        ]
-                    }
-                });
-                if (news?.content) {
-                    quillEditor.root.innerHTML = news.content;
-                }
+                quillEditor = new Quill('#newsContentEditor', { theme: 'snow', placeholder: 'Nhập nội dung...', modules: { toolbar: [[{ 'header': [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ 'list': 'ordered' }, { 'list': 'bullet' }], ['link', 'image'], ['clean']] } });
+                if (news?.content) quillEditor.root.innerHTML = news.content;
             }, 100);
         }
 
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('/');
+            if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            try { return new Date(dateStr).toISOString().split('T')[0]; } catch { return ''; }
+        }
+
         async function saveNews(id) {
-            const content = quillEditor ? quillEditor.root.innerHTML : '';
+            const dateInput = document.getElementById('newsDate').value;
+            const dateParts = dateInput.split('-');
+            const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : dateInput;
             const data = {
                 title: document.getElementById('newsTitle').value,
                 category: document.getElementById('newsCategory').value,
-                date: document.getElementById('newsDate').value,
+                date: formattedDate,
                 summary: document.getElementById('newsSummary').value,
-                content: content,
+                content: quillEditor ? quillEditor.root.innerHTML : '',
                 image: document.getElementById('newsImage').value,
+                imageUrl: document.getElementById('newsImage').value,
                 isHot: document.getElementById('newsIsHot').checked
             };
-
-            if (!data.title) { alert('Vui lòng nhập tiêu đề bài viết!'); return; }
-
+            if (!data.title) { alert('Vui lòng nhập tiêu đề!'); return; }
             const url = id ? `${API}/admin/news/${id}` : `${API}/admin/news`;
-            const method = id ? 'PUT' : 'POST';
-
             try {
-                await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                await fetch(url, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 closeModal();
                 loadDashboard();
             } catch (e) { alert('Lỗi lưu dữ liệu!'); }
         }
 
         async function deleteNews(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa tin tức này?')) return;
-            try {
-                await fetch(`${API}/admin/news/${id}`, { method: 'DELETE' });
-                loadDashboard();
-            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
+            if (!confirm('Xóa tin tức này?')) return;
+            try { await fetch(`${API}/admin/news/${id}`, { method: 'DELETE' }); loadDashboard(); } catch (e) { alert('Lỗi!'); }
         }
 
         // ========== AGENCIES ==========
@@ -768,7 +1433,6 @@ function renderNews(el) {
                         <span>+</span> Thêm cơ quan
                     </button>
                 </div>
-
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full">
@@ -777,7 +1441,6 @@ function renderNews(el) {
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tên cơ quan</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Loại hình</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tỉnh/TP</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Địa chỉ</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Điện thoại</th>
                                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
                                 </tr>
@@ -788,13 +1451,9 @@ function renderNews(el) {
                                     const province = allData.provinces.find(p => p.id === a.provinceId) || {};
                                     return `
                                     <tr class="table-row transition">
-                                        <td class="px-4 py-3">
-                                            <p class="font-medium text-gray-900">${a.name}</p>
-                                            ${a.website ? `<p class="text-xs text-blue-600">${a.website}</p>` : ''}
-                                        </td>
+                                        <td class="px-4 py-3"><p class="font-medium text-gray-900">${a.name}</p></td>
                                         <td class="px-4 py-3"><span class="px-2 py-1 bg-purple-100 text-purple-600 text-xs rounded-full">${cat.icon || ''} ${cat.name || a.category}</span></td>
                                         <td class="px-4 py-3 text-sm text-gray-600">${province.name || a.provinceId || '-'}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">${a.address || '-'}</td>
                                         <td class="px-4 py-3 text-sm text-gray-600">${a.phone || '-'}</td>
                                         <td class="px-4 py-3 text-center">
                                             <button onclick='showAgencyModal(${JSON.stringify(a).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3 text-sm">Sửa</button>
@@ -802,7 +1461,7 @@ function renderNews(el) {
                                         </td>
                                     </tr>`;
                                 }).join('')}
-                                ${allData.agencies.length === 0 ? '<tr><td colspan="6" class="px-4 py-12 text-center text-gray-500">Chưa có cơ quan nào</td></tr>' : ''}
+                                ${allData.agencies.length === 0 ? '<tr><td colspan="5" class="px-4 py-12 text-center text-gray-500">Chưa có cơ quan nào</td></tr>' : ''}
                             </tbody>
                         </table>
                     </div>
@@ -817,17 +1476,14 @@ function renderNews(el) {
                     <div class="bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
                         <div class="p-6 border-b bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-2xl">
                             <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa cơ quan' : 'Thêm cơ quan mới'}</h3>
-                                    <p class="text-purple-100 text-sm mt-1">Thông tin cơ quan / tổ chức</p>
-                                </div>
+                                <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa cơ quan' : 'Thêm cơ quan mới'}</h3>
                                 <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
                             </div>
                         </div>
                         <div class="p-6 space-y-4">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Tên cơ quan <span class="text-red-500">*</span></label>
-                                <input type="text" id="agencyName" value="${agency?.name || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="VD: Cục Thuế TP. Hà Nội">
+                                <input type="text" id="agencyName" value="${agency?.name || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
@@ -839,23 +1495,23 @@ function renderNews(el) {
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Tỉnh / Thành phố</label>
                                     <select id="agencyProvince" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
-                                        <option value="">-- Chọn tỉnh/TP --</option>
+                                        <option value="">-- Chọn --</option>
                                         ${allData.provinces.map(p => `<option value="${p.id}" ${agency?.provinceId === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
                                     </select>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ</label>
-                                <input type="text" id="agencyAddress" value="${agency?.address || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="Số nhà, đường, quận/huyện">
+                                <input type="text" id="agencyAddress" value="${agency?.address || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Số điện thoại</label>
-                                    <input type="text" id="agencyPhone" value="${agency?.phone || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="024 xxxx xxxx">
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Điện thoại</label>
+                                    <input type="text" id="agencyPhone" value="${agency?.phone || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Website</label>
-                                    <input type="text" id="agencyWebsite" value="${agency?.website || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition" placeholder="www.example.gov.vn">
+                                    <input type="text" id="agencyWebsite" value="${agency?.website || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition">
                                 </div>
                             </div>
                         </div>
@@ -877,31 +1533,18 @@ function renderNews(el) {
                 phone: document.getElementById('agencyPhone').value,
                 website: document.getElementById('agencyWebsite').value
             };
-
-            if (!data.name) { alert('Vui lòng nhập tên cơ quan!'); return; }
-
-            // Note: Server không có PUT cho agencies, chỉ có POST và DELETE
-            // Nếu cần sửa thì xóa cũ và thêm mới
-            const url = `${API}/admin/agencies`;
-            const method = 'POST';
-
+            if (!data.name) { alert('Vui lòng nhập tên!'); return; }
+            const url = id ? `${API}/admin/agencies/${id}` : `${API}/admin/agencies`;
             try {
-                if (id) {
-                    // Xóa cũ trước
-                    await fetch(`${API}/admin/agencies/${id}`, { method: 'DELETE' });
-                }
-                await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                await fetch(url, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 closeModal();
                 loadDashboard();
             } catch (e) { alert('Lỗi lưu dữ liệu!'); }
         }
 
         async function deleteAgency(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa cơ quan này?')) return;
-            try {
-                await fetch(`${API}/admin/agencies/${id}`, { method: 'DELETE' });
-                loadDashboard();
-            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
+            if (!confirm('Xóa cơ quan này?')) return;
+            try { await fetch(`${API}/admin/agencies/${id}`, { method: 'DELETE' }); loadDashboard(); } catch (e) { alert('Lỗi!'); }
         }
 
         // ========== PROVINCES ==========
@@ -916,33 +1559,30 @@ function renderNews(el) {
                         <span>+</span> Thêm tỉnh/TP
                     </button>
                 </div>
-
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Mã</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tên tỉnh / thành phố</th>
+                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Tên</th>
                                     <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Số cơ quan</th>
                                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y">
-                                ${allData.provinces.map(p => {
-                                    const agencyCount = allData.agencies.filter(a => a.provinceId === p.id).length;
-                                    return `
-                                    <tr class="table-row transition">
-                                        <td class="px-4 py-3 font-mono text-sm text-gray-600">${p.id}</td>
-                                        <td class="px-4 py-3 font-medium text-gray-900">${p.name}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-600">${agencyCount} đơn vị</td>
-                                        <td class="px-4 py-3 text-center">
-                                            <button onclick='showProvinceModal(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3 text-sm">Sửa</button>
-                                            <button onclick="deleteProvince('${p.id}')" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
-                                        </td>
-                                    </tr>`;
-                                }).join('')}
-                                ${allData.provinces.length === 0 ? '<tr><td colspan="4" class="px-4 py-12 text-center text-gray-500">Chưa có tỉnh/thành phố nào</td></tr>' : ''}
+                                ${allData.provinces.map(p => `
+                                <tr class="table-row transition">
+                                    <td class="px-4 py-3 font-mono text-sm text-gray-600">${p.id}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-900">${p.name}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">${allData.agencies.filter(a => a.provinceId === p.id).length} đơn vị</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <button onclick='showProvinceModal(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3 text-sm">Sửa</button>
+                                        <button onclick="deleteProvince('${p.id}')" class="text-red-600 hover:text-red-800 text-sm">Xóa</button>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                                ${allData.provinces.length === 0 ? '<tr><td colspan="4" class="px-4 py-12 text-center text-gray-500">Chưa có tỉnh/thành phố</td></tr>' : ''}
                             </tbody>
                         </table>
                     </div>
@@ -957,21 +1597,18 @@ function renderNews(el) {
                     <div class="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-auto m-4 shadow-2xl" onclick="event.stopPropagation()">
                         <div class="p-6 border-b bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-t-2xl">
                             <div class="flex items-center justify-between">
-                                <div>
-                                    <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa' : 'Thêm'} Tỉnh / Thành phố</h3>
-                                </div>
+                                <h3 class="text-xl font-bold">${isEdit ? 'Chỉnh sửa' : 'Thêm'} Tỉnh / TP</h3>
                                 <button onclick="closeModal()" class="text-white/80 hover:text-white text-2xl">&times;</button>
                             </div>
                         </div>
                         <div class="p-6 space-y-4">
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mã tỉnh/TP <span class="text-red-500">*</span></label>
-                                <input type="text" id="provinceId" value="${province?.id || ''}" ${isEdit ? 'readonly' : ''} class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition ${isEdit ? 'bg-gray-100' : ''}" placeholder="VD: hanoi, hcm, danang...">
-                                ${isEdit ? '<p class="text-xs text-gray-500 mt-1">Mã không thể thay đổi</p>' : ''}
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mã <span class="text-red-500">*</span></label>
+                                <input type="text" id="provinceId" value="${province?.id || ''}" ${isEdit ? 'readonly' : ''} class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition ${isEdit ? 'bg-gray-100' : ''}">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên tỉnh/thành phố <span class="text-red-500">*</span></label>
-                                <input type="text" id="provinceName" value="${province?.name || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition" placeholder="VD: Hà Nội, TP. Hồ Chí Minh...">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên <span class="text-red-500">*</span></label>
+                                <input type="text" id="provinceName" value="${province?.name || ''}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:outline-none transition">
                             </div>
                         </div>
                         <div class="p-6 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
@@ -986,94 +1623,22 @@ function renderNews(el) {
         async function saveProvince(oldId) {
             const id = document.getElementById('provinceId').value.trim();
             const name = document.getElementById('provinceName').value.trim();
-
-            if (!id || !name) { alert('Vui lòng nhập đầy đủ thông tin!'); return; }
-
-            const data = { id, name };
+            if (!id || !name) { alert('Vui lòng nhập đầy đủ!'); return; }
             const url = oldId ? `${API}/admin/provinces/${oldId}` : `${API}/admin/provinces`;
-            const method = oldId ? 'PUT' : 'POST';
-
             try {
-                const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const res = await fetch(url, { method: oldId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, name }) });
                 const result = await res.json();
-                if (!result.success) {
-                    alert(result.message || 'Lỗi lưu dữ liệu!');
-                    return;
-                }
+                if (!result.success) { alert(result.message || 'Lỗi!'); return; }
                 closeModal();
                 loadDashboard();
             } catch (e) { alert('Lỗi lưu dữ liệu!'); }
         }
 
         async function deleteProvince(id) {
-            const agencyCount = allData.agencies.filter(a => a.provinceId === id).length;
-            if (agencyCount > 0) {
-                alert(`Không thể xóa! Có ${agencyCount} cơ quan đang thuộc tỉnh/TP này.`);
-                return;
-            }
-            if (!confirm('Bạn có chắc chắn muốn xóa tỉnh/TP này?')) return;
-            try {
-                await fetch(`${API}/admin/provinces/${id}`, { method: 'DELETE' });
-                loadDashboard();
-            } catch (e) { alert('Lỗi xóa dữ liệu!'); }
-        }
-
-        // ========== SETTINGS ==========
-        function renderSettings(el) {
-            const s = allData.settings || {};
-            el.innerHTML = `
-                <div class="mb-6">
-                    <h2 class="text-2xl font-bold text-gray-900">Cài đặt hệ thống</h2>
-                    <p class="text-gray-500">Cấu hình thông tin công ty và ứng dụng</p>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><span>🏢</span> Thông tin công ty</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tên công ty</label>
-                            <input type="text" id="settingCompanyName" value="${s.companyName || 'HTIC LAW FIRM'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Website</label>
-                            <input type="text" id="settingWebsite" value="${s.website || 'www.htic.com.vn'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Hotline</label>
-                            <input type="text" id="settingPhone" value="${s.phone || '0379 044 299'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Email liên hệ</label>
-                            <input type="text" id="settingEmail" value="${s.email || 'contact@htic.com.vn'}" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Địa chỉ</label>
-                            <textarea id="settingAddress" rows="2" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-navy-500 focus:outline-none transition">${s.address || 'Hà Nội, Việt Nam'}</textarea>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 flex justify-end">
-                        <button onclick="saveSettings()" class="px-8 py-3 bg-gradient-to-r from-navy-600 to-navy-700 text-white rounded-xl font-semibold hover:opacity-90 transition shadow-lg flex items-center gap-2">
-                            <span>💾</span> Lưu cài đặt
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function saveSettings() {
-            const data = {
-                companyName: document.getElementById('settingCompanyName').value,
-                website: document.getElementById('settingWebsite').value,
-                phone: document.getElementById('settingPhone').value,
-                email: document.getElementById('settingEmail').value,
-                address: document.getElementById('settingAddress').value
-            };
-            try {
-                await fetch(`${API}/admin/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                alert('✓ Đã lưu cài đặt thành công!');
-                loadDashboard();
-            } catch (e) { alert('Lỗi lưu cài đặt!'); }
+            const count = allData.agencies.filter(a => a.provinceId === id).length;
+            if (count > 0) { alert(`Không thể xóa! Có ${count} cơ quan.`); return; }
+            if (!confirm('Xóa tỉnh/TP này?')) return;
+            try { await fetch(`${API}/admin/provinces/${id}`, { method: 'DELETE' }); loadDashboard(); } catch (e) { alert('Lỗi!'); }
         }
 
         // ========== HELPERS ==========
