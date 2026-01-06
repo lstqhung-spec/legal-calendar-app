@@ -18,7 +18,6 @@ const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const LAWYERS_FILE = path.join(DATA_DIR, 'lawyers.json');
 const PAYMENTS_FILE = path.join(DATA_DIR, 'payments.json');
-// ========== MỚI: Support Requests ==========
 const SUPPORT_REQUESTS_FILE = path.join(DATA_DIR, 'support_requests.json');
 
 // Ensure data directory exists
@@ -61,6 +60,14 @@ function sendJSON(res, data, status = 200) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     });
     res.end(JSON.stringify(data));
+}
+
+function sendHTML(res, html, status = 200) {
+    res.writeHead(status, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Access-Control-Allow-Origin': '*'
+    });
+    res.end(html);
 }
 
 function parseBody(req) {
@@ -112,7 +119,6 @@ function serveStatic(res, filePath) {
 
 // Initialize default data if not exists
 function initializeData() {
-    // Default events
     if (!fs.existsSync(EVENTS_FILE)) {
         const defaultEvents = [
             { id: 1, title: 'Nop to khai thue GTGT thang', category: 'tax', frequency: 'monthly', dayOfMonth: 20, description: 'Nop to khai thue GTGT thang truoc', legalReference: 'Theo Dieu 44 Luat Quan ly thue 2019', penalty: 'Phat 2-5 trieu dong neu nop cham', isActive: true },
@@ -121,7 +127,6 @@ function initializeData() {
         writeJSON(EVENTS_FILE, defaultEvents);
     }
 
-    // Default news
     if (!fs.existsSync(NEWS_FILE)) {
         const defaultNews = [
             { id: 1, title: 'Nghi dinh moi ve quan ly thue 2024', category: 'Thue', date: '25/12/2024', summary: 'Chinh phu ban hanh Nghi dinh moi...', content: 'Noi dung chi tiet...', imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400', isHot: true }
@@ -129,7 +134,6 @@ function initializeData() {
         writeJSON(NEWS_FILE, defaultNews);
     }
 
-    // Default provinces
     if (!fs.existsSync(PROVINCES_FILE)) {
         const defaultProvinces = [
             { id: 'hanoi', name: 'Ha Noi' },
@@ -141,138 +145,323 @@ function initializeData() {
         writeJSON(PROVINCES_FILE, defaultProvinces);
     }
 
-    // Default agencies
     if (!fs.existsSync(AGENCIES_FILE)) {
         const defaultAgencies = [
             { id: 1, name: 'Cuc Thue TP. Ha Noi', category: 'government', provinceId: 'hanoi', address: '20 Le Dai Hanh, Ha Noi', phone: '024 3974 2020' },
-            { id: 2, name: 'BHXH TP. Ha Noi', category: 'government', provinceId: 'hanoi', address: '86 Tran Hung Dao, Ha Noi', phone: '024 3943 6789' },
-            { id: 3, name: 'Cong ty Luat HTIC', category: 'lawfirm', provinceId: 'hanoi', address: '15 Pham Hung, Ha Noi', phone: '0379 044 299', website: 'www.htic.com.vn' },
-            { id: 4, name: 'Cuc Thue TP. HCM', category: 'government', provinceId: 'hcm', address: '140 Nguyen Thi Minh Khai, Q3', phone: '028 3930 1999' },
-            { id: 5, name: 'VP Cong chung Nguyen Hue', category: 'notary', provinceId: 'hanoi', address: '65 Nguyen Hue, Ha Noi', phone: '024 3825 1234' }
+            { id: 2, name: 'BHXH TP. Ha Noi', category: 'government', provinceId: 'hanoi', address: '86 Tran Hung Dao, Ha Noi', phone: '024 3943 6789' }
         ];
         writeJSON(AGENCIES_FILE, defaultAgencies);
     }
 
-    // Default settings
     if (!fs.existsSync(SETTINGS_FILE)) {
         const defaultSettings = {
             logo: null,
             companyName: 'HTIC LAW FIRM',
             website: 'www.htic.com.vn',
-            phone: '0379 044 299',
-            email: 'contact@htic.vn',
-            address: 'Ha Noi, Viet Nam'
+            phone: '0918 682 879',
+            email: 'contact@htic.com.vn',
+            address: '79/6 Hoang Van Thai, P. Tan My, TP.HCM'
         };
         writeJSON(SETTINGS_FILE, defaultSettings);
     }
 
-    // Default users
     if (!fs.existsSync(USERS_FILE)) {
         const defaultUsers = [
-            {
-                id: 1,
-                email: 'admin@htic.vn',
-                password: 'htic2025',
-                name: 'HTIC Admin',
-                phone: '0379044299',
-                avatar: null,
-                company: 'HTIC Law Firm',
-                taxCode: '0123456789',
-                address: '15 Pham Hung, Nam Tu Liem, Ha Noi',
-                industry: 'Dich vu phap ly',
-                contactInfo: 'Hotline: 0379044299',
-                isPro: true,
-                proExpiry: '2026-12-31',
-                provider: 'email',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            },
-            {
-                id: 2,
-                email: 'test@gmail.com',
-                password: '123456',
-                name: 'Test User',
-                phone: '0901234567',
-                avatar: null,
-                company: '',
-                taxCode: '',
-                address: '',
-                industry: '',
-                contactInfo: '',
-                isPro: false,
-                proExpiry: null,
-                provider: 'email',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            },
-            {
-                id: 3,
-                email: 'pro@test.com',
-                password: 'pro123',
-                name: 'Pro User Test',
-                phone: '0909999888',
-                avatar: null,
-                company: 'Test Company',
-                taxCode: '9876543210',
-                address: 'TP.HCM',
-                industry: 'Thuong mai',
-                contactInfo: '',
-                isPro: true,
-                proExpiry: '2026-06-30',
-                provider: 'email',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            }
+            { id: 1, email: 'admin@htic.vn', password: 'htic2025', name: 'HTIC Admin', phone: '0918682879', isPro: true, proExpiry: '2026-12-31', provider: 'email', createdAt: new Date().toISOString() }
         ];
         writeJSON(USERS_FILE, defaultUsers);
     }
 
-    // Default lawyers
     if (!fs.existsSync(LAWYERS_FILE)) {
         const defaultLawyers = [
-            {
-                id: 1,
-                name: 'Luat su Tran Van A',
-                title: 'Luat su dieu hanh',
-                specialty: 'Doanh nghiep, Thue, Dau tu',
-                phone: '0379044299',
-                zalo: '0379044299',
-                email: 'lawyer.a@htic.vn',
-                avatar: null,
-                experience: '15 nam',
-                isAvailable: true,
-                isPrimary: true
-            },
-            {
-                id: 2,
-                name: 'Luat su Nguyen Thi B',
-                title: 'Luat su thanh vien',
-                specialty: 'Lao dong, Bao hiem xa hoi',
-                phone: '0901234567',
-                zalo: '0901234567',
-                email: 'lawyer.b@htic.vn',
-                avatar: null,
-                experience: '10 nam',
-                isAvailable: true,
-                isPrimary: false
-            }
+            { id: 1, name: 'Luật sư Trần Văn Hùng', title: 'Luật sư điều hành', specialty: 'Doanh nghiệp, Thuế, Đầu tư', phone: '0918682879', email: 'contact@htic.com.vn', experience: '15 năm', isAvailable: true, isPrimary: true }
         ];
         writeJSON(LAWYERS_FILE, defaultLawyers);
     }
 
-    // Default payments
     if (!fs.existsSync(PAYMENTS_FILE)) {
         writeJSON(PAYMENTS_FILE, []);
     }
 
-    // ========== MỚI: Default support requests ==========
     if (!fs.existsSync(SUPPORT_REQUESTS_FILE)) {
         writeJSON(SUPPORT_REQUESTS_FILE, []);
     }
 }
 
-// Initialize data
 initializeData();
+
+// =============== LEGAL PAGES HTML ===============
+
+function getPrivacyPolicyHTML() {
+    return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chính Sách Bảo Mật - Lịch Pháp Lý HTIC</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; line-height: 1.8; color: #333; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        h1 { color: #3B82F6; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+        h2 { color: #1e3a5f; margin: 30px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #3B82F6; font-size: 20px; }
+        h3 { color: #2563EB; margin: 20px 0 10px 0; font-size: 16px; }
+        p { margin-bottom: 15px; text-align: justify; }
+        ul { margin: 15px 0 15px 30px; }
+        li { margin-bottom: 8px; }
+        .highlight { background: #EFF6FF; padding: 15px 20px; border-left: 4px solid #3B82F6; border-radius: 0 8px 8px 0; margin: 20px 0; }
+        .contact-box { background: linear-gradient(135deg, #3B82F6, #60A5FA); color: white; padding: 25px; border-radius: 12px; margin-top: 30px; }
+        .contact-box h3 { color: white; margin-top: 0; }
+        .contact-box a { color: #FEF08A; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Chính Sách Bảo Mật</h1>
+        <p class="subtitle">Ứng dụng Lịch Pháp Lý - HTIC | Cập nhật: Tháng 1/2026</p>
+        <div class="highlight"><strong>Cam kết:</strong> CÔNG TY LUẬT TNHH HTIC cam kết bảo vệ quyền riêng tư và dữ liệu cá nhân của người dùng.</div>
+        
+        <h2>1. Thông Tin Thu Thập</h2>
+        <h3>1.1 Thông tin bạn cung cấp</h3>
+        <ul>
+            <li><strong>Thông tin liên hệ:</strong> Họ tên, số điện thoại, email khi gửi yêu cầu tư vấn</li>
+            <li><strong>Nội dung yêu cầu:</strong> Các câu hỏi, vấn đề pháp lý cần tư vấn</li>
+        </ul>
+        <h3>1.2 Thông tin tự động</h3>
+        <ul>
+            <li><strong>Dữ liệu thiết bị:</strong> Loại thiết bị, hệ điều hành, phiên bản app</li>
+            <li><strong>Dữ liệu sử dụng:</strong> Các tính năng sử dụng, thời gian dùng</li>
+        </ul>
+        <h3>1.3 KHÔNG thu thập</h3>
+        <ul>
+            <li>Thông tin tài chính, số tài khoản ngân hàng</li>
+            <li>Vị trí GPS chính xác</li>
+        </ul>
+
+        <h2>2. Mục Đích Sử Dụng</h2>
+        <ul>
+            <li>Cung cấp và cải thiện dịch vụ</li>
+            <li>Gửi thông báo nhắc nhở deadline</li>
+            <li>Phản hồi yêu cầu tư vấn và hỗ trợ</li>
+        </ul>
+
+        <h2>3. Chia Sẻ Thông Tin</h2>
+        <p>Chúng tôi <strong>KHÔNG</strong> bán, cho thuê hoặc chia sẻ thông tin cá nhân với bên thứ ba vì mục đích thương mại.</p>
+
+        <h2>4. Bảo Mật</h2>
+        <ul>
+            <li>Mã hóa dữ liệu (SSL/TLS)</li>
+            <li>Lưu trữ trên máy chủ bảo mật</li>
+            <li>Hạn chế quyền truy cập</li>
+        </ul>
+
+        <h2>5. Quyền Người Dùng</h2>
+        <ul>
+            <li><strong>Truy cập:</strong> Yêu cầu xem thông tin lưu trữ</li>
+            <li><strong>Chỉnh sửa:</strong> Yêu cầu sửa thông tin không chính xác</li>
+            <li><strong>Xóa:</strong> Yêu cầu xóa dữ liệu cá nhân</li>
+        </ul>
+
+        <h2>6. Trẻ Em</h2>
+        <p>Ứng dụng không dành cho trẻ em dưới 13 tuổi.</p>
+
+        <h2>7. Thay Đổi</h2>
+        <p>Chúng tôi có thể cập nhật Chính sách này. Thay đổi sẽ được thông báo qua ứng dụng.</p>
+
+        <h2>8. Liên Hệ</h2>
+        <div class="contact-box">
+            <h3>📞 CÔNG TY LUẬT TNHH HTIC</h3>
+            <p>📍 79/6 Hoàng Văn Thái, Khu TTTM Tài chính Quốc tế C4-1, Kp 1, P. Tân Mỹ, TP.HCM</p>
+            <p>📧 <a href="mailto:contact@htic.com.vn">contact@htic.com.vn</a></p>
+            <p>📱 <a href="tel:0918682879">0918 682 879</a></p>
+            <p>🌐 <a href="https://htic.com.vn">htic.com.vn</a></p>
+        </div>
+        <div class="footer">© 2026 CÔNG TY LUẬT TNHH HTIC | Lịch Pháp Lý v1.0.0</div>
+    </div>
+</body>
+</html>`;
+}
+
+function getTermsHTML() {
+    return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điều Khoản Sử Dụng - Lịch Pháp Lý HTIC</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; line-height: 1.8; color: #333; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+        h1 { color: #3B82F6; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+        h2 { color: #1e3a5f; margin: 30px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #3B82F6; font-size: 20px; }
+        p { margin-bottom: 15px; text-align: justify; }
+        ul { margin: 15px 0 15px 30px; }
+        li { margin-bottom: 8px; }
+        .highlight { background: #EFF6FF; padding: 15px 20px; border-left: 4px solid #3B82F6; border-radius: 0 8px 8px 0; margin: 20px 0; }
+        .warning { background: #FEF3C7; padding: 15px 20px; border-left: 4px solid #F59E0B; border-radius: 0 8px 8px 0; margin: 20px 0; }
+        .contact-box { background: linear-gradient(135deg, #3B82F6, #60A5FA); color: white; padding: 25px; border-radius: 12px; margin-top: 30px; }
+        .contact-box h3 { color: white; margin-top: 0; }
+        .contact-box a { color: #FEF08A; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Điều Khoản Sử Dụng</h1>
+        <p class="subtitle">Ứng dụng Lịch Pháp Lý - HTIC | Cập nhật: Tháng 1/2026</p>
+        <div class="highlight"><strong>Lưu ý:</strong> Bằng việc sử dụng ứng dụng, bạn đồng ý tuân thủ các điều khoản dưới đây.</div>
+
+        <h2>1. Giới Thiệu</h2>
+        <p>Ứng dụng Lịch Pháp Lý được phát triển bởi CÔNG TY LUẬT TNHH HTIC, cung cấp công cụ quản lý nghĩa vụ pháp lý, nhắc nhở deadline và cập nhật tin tức pháp luật.</p>
+
+        <h2>2. Chấp Nhận Điều Khoản</h2>
+        <p>Khi tải, cài đặt hoặc sử dụng Ứng dụng, bạn xác nhận đã đọc, hiểu và đồng ý tuân thủ các Điều khoản này.</p>
+
+        <h2>3. Dịch Vụ</h2>
+        <ul>
+            <li>Lịch các nghĩa vụ pháp lý doanh nghiệp</li>
+            <li>Nhắc nhở deadline trước 1, 3, 7 ngày</li>
+            <li>Cập nhật tin tức pháp luật mới</li>
+            <li>Kết nối tư vấn với luật sư HTIC</li>
+        </ul>
+
+        <h2>4. Tài Khoản</h2>
+        <ul>
+            <li>Có thể sử dụng không cần đăng ký</li>
+            <li>Một số tính năng yêu cầu đăng nhập</li>
+            <li>Bạn chịu trách nhiệm bảo mật tài khoản</li>
+        </ul>
+
+        <h2>5. Sở Hữu Trí Tuệ</h2>
+        <p>Tất cả nội dung trong Ứng dụng thuộc quyền sở hữu của HTIC hoặc được cấp phép hợp pháp.</p>
+
+        <h2>6. Giới Hạn Trách Nhiệm</h2>
+        <div class="warning"><strong>⚠️ Quan trọng:</strong> Thông tin trong Ứng dụng chỉ mang tính chất tham khảo, không thay thế tư vấn pháp lý chuyên nghiệp.</div>
+        <ul>
+            <li>Ứng dụng cung cấp "nguyên trạng"</li>
+            <li>Không đảm bảo hoạt động không gián đoạn</li>
+            <li>Người dùng tự kiểm tra với cơ quan có thẩm quyền</li>
+        </ul>
+
+        <h2>7. Hành Vi Bị Cấm</h2>
+        <ul>
+            <li>Sử dụng cho mục đích bất hợp pháp</li>
+            <li>Truy cập trái phép hệ thống</li>
+            <li>Phát tán virus, malware</li>
+            <li>Thu thập thông tin người dùng khác</li>
+        </ul>
+
+        <h2>8. Thay Đổi</h2>
+        <p>Chúng tôi có quyền thay đổi Điều khoản bất cứ lúc nào. Tiếp tục sử dụng đồng nghĩa chấp nhận thay đổi.</p>
+
+        <h2>9. Luật Áp Dụng</h2>
+        <p>Điều khoản được điều chỉnh bởi pháp luật Việt Nam. Tranh chấp giải quyết tại Tòa án TP. Hồ Chí Minh.</p>
+
+        <h2>10. Liên Hệ</h2>
+        <div class="contact-box">
+            <h3>📞 CÔNG TY LUẬT TNHH HTIC</h3>
+            <p>📍 79/6 Hoàng Văn Thái, Khu TTTM Tài chính Quốc tế C4-1, Kp 1, P. Tân Mỹ, TP.HCM</p>
+            <p>📧 <a href="mailto:contact@htic.com.vn">contact@htic.com.vn</a></p>
+            <p>📱 <a href="tel:0918682879">0918 682 879</a></p>
+            <p>🌐 <a href="https://htic.com.vn">htic.com.vn</a></p>
+        </div>
+        <div class="footer">© 2026 CÔNG TY LUẬT TNHH HTIC | Lịch Pháp Lý v1.0.0</div>
+    </div>
+</body>
+</html>`;
+}
+
+function getAboutHTML() {
+    return `<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giới Thiệu - Lịch Pháp Lý HTIC</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; line-height: 1.8; color: #333; background: linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { text-align: center; color: white; padding: 40px 20px; }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 16px; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin-bottom: 20px; }
+        .card h2 { color: #3B82F6; margin-bottom: 15px; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        .card p { margin-bottom: 12px; color: #4B5563; }
+        .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .feature { background: #F0F9FF; padding: 20px; border-radius: 12px; text-align: center; }
+        .feature-icon { font-size: 32px; margin-bottom: 10px; }
+        .feature h3 { color: #1E40AF; font-size: 14px; margin-bottom: 5px; }
+        .feature p { font-size: 12px; color: #6B7280; }
+        .contact-info { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 25px; border-radius: 12px; margin-top: 20px; }
+        .contact-info h3 { margin-bottom: 15px; }
+        .contact-info p { margin-bottom: 8px; opacity: 0.95; }
+        .contact-info a { color: #FEF08A; }
+        .version { text-align: center; color: white; opacity: 0.8; margin-top: 30px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Lịch Pháp Lý</h1>
+            <p>Ứng dụng quản lý nghĩa vụ pháp lý cho doanh nghiệp</p>
+        </div>
+
+        <div class="card">
+            <h2>🏢 Về HTIC Group</h2>
+            <p><strong>HTIC GROUP</strong> là tập đoàn đa ngành tại Việt Nam, hoạt động trong hai lĩnh vực cốt lõi: <strong>Tư vấn Pháp lý</strong> và <strong>Giải pháp Công nghệ</strong>.</p>
+            <p>Với đội ngũ luật sư giàu kinh nghiệm hơn <strong>15 năm</strong>, HTIC Law Firm chuyên cung cấp dịch vụ tư vấn pháp luật doanh nghiệp, M&A, thuế và hỗ trợ pháp lý cho doanh nghiệp FDI.</p>
+        </div>
+
+        <div class="card">
+            <h2>📱 Về Ứng Dụng</h2>
+            <p>Lịch Pháp Lý giúp doanh nghiệp không bao giờ bỏ lỡ deadline quan trọng về thuế, bảo hiểm xã hội, báo cáo lao động và các nghĩa vụ pháp lý khác.</p>
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">📅</div>
+                    <h3>Lịch Pháp Lý</h3>
+                    <p>Đầy đủ deadline thuế, BHXH</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔔</div>
+                    <h3>Nhắc Nhở</h3>
+                    <p>Thông báo 1, 3, 7 ngày</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📰</div>
+                    <h3>Tin Tức</h3>
+                    <p>Pháp luật mới nhất</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">👨‍⚖️</div>
+                    <h3>Tư Vấn</h3>
+                    <p>Kết nối luật sư</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📞 Liên Hệ</h2>
+            <div class="contact-info">
+                <h3>CÔNG TY LUẬT TNHH HTIC</h3>
+                <p>📍 79/6 Hoàng Văn Thái, Khu TTTM Tài chính Quốc tế C4-1, Kp 1, P. Tân Mỹ, TP.HCM</p>
+                <p>📧 <a href="mailto:contact@htic.com.vn">contact@htic.com.vn</a></p>
+                <p>📱 <a href="tel:0918682879">0918 682 879</a></p>
+                <p>🌐 <a href="https://htic.com.vn">htic.com.vn</a></p>
+            </div>
+        </div>
+
+        <div class="version">
+            <p>Phiên bản 1.0.0 | © 2026 HTIC Group</p>
+        </div>
+    </div>
+</body>
+</html>`;
+}
 
 // Request handler
 const server = http.createServer(async (req, res) => {
@@ -292,6 +481,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     console.log(`${method} ${pathname}`);
+
+    // =============== LEGAL PAGES (PUBLIC) ===============
+    
+    if (pathname === '/privacy-policy' && method === 'GET') {
+        return sendHTML(res, getPrivacyPolicyHTML());
+    }
+
+    if (pathname === '/terms' && method === 'GET') {
+        return sendHTML(res, getTermsHTML());
+    }
+
+    if (pathname === '/about' && method === 'GET') {
+        return sendHTML(res, getAboutHTML());
+    }
 
     // =============== API ROUTES ===============
 
@@ -392,90 +595,10 @@ const server = http.createServer(async (req, res) => {
         return sendJSON(res, { success: true, data: agencies });
     }
 
-    if (pathname === '/api/admin/agencies' && method === 'GET') {
-        const agencies = readJSON(AGENCIES_FILE);
-        return sendJSON(res, { success: true, data: agencies });
-    }
-
-    if (pathname === '/api/admin/agencies' && method === 'POST') {
-        const body = await parseBody(req);
-        const agencies = readJSON(AGENCIES_FILE);
-        const newAgency = { id: getNextId(agencies), ...body };
-        agencies.push(newAgency);
-        if (writeJSON(AGENCIES_FILE, agencies)) {
-            return sendJSON(res, { success: true, data: newAgency });
-        }
-    }
-
-    const agencyMatch = pathname.match(/^\/api\/admin\/agencies\/(\d+)$/);
-    if (agencyMatch) {
-        const agencyId = parseInt(agencyMatch[1]);
-        const agencies = readJSON(AGENCIES_FILE);
-        const agencyIndex = agencies.findIndex(a => a.id === agencyId);
-
-        if (method === 'PUT') {
-            if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
-            const body = await parseBody(req);
-            agencies[agencyIndex] = { ...agencies[agencyIndex], ...body, id: agencyId };
-            if (writeJSON(AGENCIES_FILE, agencies)) {
-                return sendJSON(res, { success: true, data: agencies[agencyIndex] });
-            }
-        }
-
-        if (method === 'DELETE') {
-            if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
-            agencies.splice(agencyIndex, 1);
-            if (writeJSON(AGENCIES_FILE, agencies)) {
-                return sendJSON(res, { success: true, message: 'Deleted' });
-            }
-        }
-    }
-
     // --- PROVINCES ---
     if (pathname === '/api/provinces' && method === 'GET') {
         const provinces = readJSON(PROVINCES_FILE);
         return sendJSON(res, { success: true, data: provinces });
-    }
-
-    if (pathname === '/api/admin/provinces' && method === 'GET') {
-        const provinces = readJSON(PROVINCES_FILE);
-        return sendJSON(res, { success: true, data: provinces });
-    }
-
-    if (pathname === '/api/admin/provinces' && method === 'POST') {
-        const body = await parseBody(req);
-        const provinces = readJSON(PROVINCES_FILE);
-        if (provinces.find(p => p.id === body.id)) {
-            return sendJSON(res, { success: false, message: 'ID already exists' }, 400);
-        }
-        provinces.push(body);
-        if (writeJSON(PROVINCES_FILE, provinces)) {
-            return sendJSON(res, { success: true, data: body });
-        }
-    }
-
-    const provinceMatch = pathname.match(/^\/api\/admin\/provinces\/(.+)$/);
-    if (provinceMatch) {
-        const provinceId = provinceMatch[1];
-        const provinces = readJSON(PROVINCES_FILE);
-        const provinceIndex = provinces.findIndex(p => p.id === provinceId);
-
-        if (method === 'PUT') {
-            if (provinceIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
-            const body = await parseBody(req);
-            provinces[provinceIndex] = { ...provinces[provinceIndex], ...body };
-            if (writeJSON(PROVINCES_FILE, provinces)) {
-                return sendJSON(res, { success: true, data: provinces[provinceIndex] });
-            }
-        }
-
-        if (method === 'DELETE') {
-            if (provinceIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
-            provinces.splice(provinceIndex, 1);
-            if (writeJSON(PROVINCES_FILE, provinces)) {
-                return sendJSON(res, { success: true, message: 'Deleted' });
-            }
-        }
     }
 
     // --- SETTINGS ---
@@ -498,7 +621,7 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
-    // --- STATS (CẬP NHẬT: thêm support requests) ---
+    // --- STATS ---
     if (pathname === '/api/admin/stats' && method === 'GET') {
         const events = readJSON(EVENTS_FILE);
         const news = readJSON(NEWS_FILE);
@@ -530,13 +653,11 @@ const server = http.createServer(async (req, res) => {
 
     // =============== USER AUTHENTICATION ===============
 
-    // --- ĐĂNG KÝ ---
     if (pathname === '/api/auth/register' && method === 'POST') {
         const body = await parseBody(req);
         const users = readJSON(USERS_FILE);
         
-        const existingUser = users.find(u => u.email === body.email);
-        if (existingUser) {
+        if (users.find(u => u.email === body.email)) {
             return sendJSON(res, { success: false, message: 'Email da duoc su dung' }, 400);
         }
         
@@ -546,354 +667,53 @@ const server = http.createServer(async (req, res) => {
             password: body.password,
             name: body.name || '',
             phone: body.phone || '',
-            avatar: null,
-            company: body.company || '',
-            taxCode: body.taxCode || '',
-            address: body.address || '',
-            industry: body.industry || '',
-            contactInfo: body.contactInfo || '',
             isPro: false,
             proExpiry: null,
             provider: body.provider || 'email',
-            providerId: body.providerId || null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            createdAt: new Date().toISOString()
         };
         
         users.push(newUser);
         if (writeJSON(USERS_FILE, users)) {
             const { password, ...userWithoutPassword } = newUser;
-            return sendJSON(res, { 
-                success: true, 
-                data: userWithoutPassword,
-                token: 'user-token-' + newUser.id + '-' + Date.now(),
-                message: 'Dang ky thanh cong' 
-            });
+            return sendJSON(res, { success: true, data: userWithoutPassword, token: 'user-token-' + newUser.id });
         }
         return sendJSON(res, { success: false, message: 'Loi luu du lieu' }, 500);
     }
 
-    // --- ĐĂNG NHẬP ---
     if (pathname === '/api/auth/login' && method === 'POST') {
         const body = await parseBody(req);
         const users = readJSON(USERS_FILE);
-        
         const user = users.find(u => u.email === body.email && u.password === body.password);
         if (user) {
             const { password, ...userWithoutPassword } = user;
-            return sendJSON(res, { 
-                success: true, 
-                data: userWithoutPassword,
-                token: 'user-token-' + user.id + '-' + Date.now(),
-                message: 'Dang nhap thanh cong'
-            });
+            return sendJSON(res, { success: true, data: userWithoutPassword, token: 'user-token-' + user.id });
         }
         return sendJSON(res, { success: false, message: 'Email hoac mat khau khong dung' }, 401);
-    }
-
-    // --- ĐĂNG NHẬP/ĐĂNG KÝ VỚI GOOGLE/APPLE ---
-    if (pathname === '/api/auth/social' && method === 'POST') {
-        const body = await parseBody(req);
-        const users = readJSON(USERS_FILE);
-        
-        let user = users.find(u => u.email === body.email || 
-            (u.provider === body.provider && u.providerId === body.providerId));
-        
-        if (user) {
-            const { password, ...userWithoutPassword } = user;
-            return sendJSON(res, { 
-                success: true, 
-                data: userWithoutPassword,
-                token: 'user-token-' + user.id + '-' + Date.now(),
-                isNewUser: false,
-                message: 'Dang nhap thanh cong'
-            });
-        } else {
-            const newUser = {
-                id: getNextId(users),
-                email: body.email,
-                password: '',
-                name: body.name || '',
-                phone: body.phone || '',
-                avatar: body.avatar || null,
-                company: '',
-                taxCode: '',
-                address: '',
-                industry: '',
-                contactInfo: '',
-                isPro: false,
-                proExpiry: null,
-                provider: body.provider,
-                providerId: body.providerId,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            
-            users.push(newUser);
-            if (writeJSON(USERS_FILE, users)) {
-                const { password, ...userWithoutPassword } = newUser;
-                return sendJSON(res, { 
-                    success: true, 
-                    data: userWithoutPassword,
-                    token: 'user-token-' + newUser.id + '-' + Date.now(),
-                    isNewUser: true,
-                    message: 'Tao tai khoan thanh cong'
-                });
-            }
-        }
-        return sendJSON(res, { success: false, message: 'Loi xu ly' }, 500);
-    }
-
-    // --- LẤY THÔNG TIN USER ---
-    const userGetMatch = pathname.match(/^\/api\/users\/(\d+)$/);
-    if (userGetMatch && method === 'GET') {
-        const userId = parseInt(userGetMatch[1]);
-        const users = readJSON(USERS_FILE);
-        const user = users.find(u => u.id === userId);
-        
-        if (user) {
-            const { password, ...userWithoutPassword } = user;
-            return sendJSON(res, { success: true, data: userWithoutPassword });
-        }
-        return sendJSON(res, { success: false, message: 'User khong ton tai' }, 404);
-    }
-
-    // --- CẬP NHẬT PROFILE ---
-    const userPutMatch = pathname.match(/^\/api\/users\/(\d+)$/);
-    if (userPutMatch && method === 'PUT') {
-        const userId = parseInt(userPutMatch[1]);
-        const body = await parseBody(req);
-        const users = readJSON(USERS_FILE);
-        const userIndex = users.findIndex(u => u.id === userId);
-        
-        if (userIndex === -1) {
-            return sendJSON(res, { success: false, message: 'User khong ton tai' }, 404);
-        }
-        
-        const allowedFields = ['name', 'phone', 'avatar', 'company', 'taxCode', 'address', 'industry', 'contactInfo'];
-        allowedFields.forEach(field => {
-            if (body[field] !== undefined) {
-                users[userIndex][field] = body[field];
-            }
-        });
-        users[userIndex].updatedAt = new Date().toISOString();
-        
-        if (writeJSON(USERS_FILE, users)) {
-            const { password, ...userWithoutPassword } = users[userIndex];
-            return sendJSON(res, { success: true, data: userWithoutPassword, message: 'Cap nhat thanh cong' });
-        }
-        return sendJSON(res, { success: false, message: 'Loi luu du lieu' }, 500);
-    }
-
-    // --- UPLOAD AVATAR ---
-    const avatarMatch = pathname.match(/^\/api\/users\/(\d+)\/avatar$/);
-    if (avatarMatch && method === 'POST') {
-        const userId = parseInt(avatarMatch[1]);
-        const body = await parseBody(req);
-        const users = readJSON(USERS_FILE);
-        const userIndex = users.findIndex(u => u.id === userId);
-        
-        if (userIndex === -1) {
-            return sendJSON(res, { success: false, message: 'User khong ton tai' }, 404);
-        }
-        
-        users[userIndex].avatar = body.avatar;
-        users[userIndex].updatedAt = new Date().toISOString();
-        
-        if (writeJSON(USERS_FILE, users)) {
-            return sendJSON(res, { success: true, avatar: body.avatar, message: 'Upload thanh cong' });
-        }
-        return sendJSON(res, { success: false, message: 'Loi luu du lieu' }, 500);
     }
 
     // =============== LAWYERS ===============
 
     if (pathname === '/api/lawyers' && method === 'GET') {
         const lawyers = readJSON(LAWYERS_FILE);
-        const availableLawyers = lawyers.filter(l => l.isAvailable);
-        return sendJSON(res, { success: true, data: availableLawyers });
+        return sendJSON(res, { success: true, data: lawyers.filter(l => l.isAvailable) });
     }
 
     if (pathname === '/api/lawyers/primary' && method === 'GET') {
         const lawyers = readJSON(LAWYERS_FILE);
-        const primaryLawyer = lawyers.find(l => l.isPrimary && l.isAvailable);
-        return sendJSON(res, { success: true, data: primaryLawyer || lawyers.find(l => l.isAvailable) || null });
-    }
-
-    if (pathname === '/api/admin/lawyers' && method === 'GET') {
-        const lawyers = readJSON(LAWYERS_FILE);
-        return sendJSON(res, { success: true, data: lawyers });
-    }
-
-    if (pathname === '/api/admin/lawyers' && method === 'POST') {
-        const body = await parseBody(req);
-        const lawyers = readJSON(LAWYERS_FILE);
-        const newLawyer = { id: getNextId(lawyers), ...body, isAvailable: true };
-        lawyers.push(newLawyer);
-        if (writeJSON(LAWYERS_FILE, lawyers)) {
-            return sendJSON(res, { success: true, data: newLawyer });
-        }
-    }
-
-    const lawyerMatch = pathname.match(/^\/api\/admin\/lawyers\/(\d+)$/);
-    if (lawyerMatch) {
-        const lawyerId = parseInt(lawyerMatch[1]);
-        const lawyers = readJSON(LAWYERS_FILE);
-        const lawyerIndex = lawyers.findIndex(l => l.id === lawyerId);
-
-        if (method === 'PUT') {
-            if (lawyerIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
-            const body = await parseBody(req);
-            lawyers[lawyerIndex] = { ...lawyers[lawyerIndex], ...body, id: lawyerId };
-            if (writeJSON(LAWYERS_FILE, lawyers)) {
-                return sendJSON(res, { success: true, data: lawyers[lawyerIndex] });
-            }
-        }
-
-        if (method === 'DELETE') {
-            if (lawyerIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
-            lawyers.splice(lawyerIndex, 1);
-            if (writeJSON(LAWYERS_FILE, lawyers)) {
-                return sendJSON(res, { success: true, message: 'Deleted' });
-            }
-        }
+        const primary = lawyers.find(l => l.isPrimary && l.isAvailable);
+        return sendJSON(res, { success: true, data: primary || lawyers[0] || null });
     }
 
     // =============== ADMIN: USERS ===============
 
     if (pathname === '/api/admin/users' && method === 'GET') {
         const users = readJSON(USERS_FILE);
-        const usersWithoutPassword = users.map(u => {
-            const { password, ...rest } = u;
-            return rest;
-        });
-        return sendJSON(res, { success: true, data: usersWithoutPassword });
+        return sendJSON(res, { success: true, data: users.map(u => { const { password, ...rest } = u; return rest; }) });
     }
 
-    const userAdminMatch = pathname.match(/^\/api\/admin\/users\/(\d+)$/);
-    if (userAdminMatch) {
-        const userId = parseInt(userAdminMatch[1]);
-        const users = readJSON(USERS_FILE);
-        const userIndex = users.findIndex(u => u.id === userId);
+    // =============== SUPPORT REQUESTS ===============
 
-        if (method === 'PUT') {
-            if (userIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
-            const body = await parseBody(req);
-            users[userIndex] = { ...users[userIndex], ...body, id: userId, updatedAt: new Date().toISOString() };
-            if (writeJSON(USERS_FILE, users)) {
-                const { password, ...userWithoutPassword } = users[userIndex];
-                return sendJSON(res, { success: true, data: userWithoutPassword });
-            }
-        }
-
-        if (method === 'DELETE') {
-            if (userIndex === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
-            users.splice(userIndex, 1);
-            if (writeJSON(USERS_FILE, users)) {
-                return sendJSON(res, { success: true, message: 'Deleted' });
-            }
-        }
-    }
-
-    // =============== PAYMENTS ===============
-
-    if (pathname === '/api/payments/create' && method === 'POST') {
-        const body = await parseBody(req);
-        const payments = readJSON(PAYMENTS_FILE);
-        
-        const newPayment = {
-            id: getNextId(payments),
-            orderId: 'HTIC' + Date.now(),
-            userId: body.userId,
-            amount: body.amount,
-            package: body.package,
-            method: body.method,
-            status: 'pending',
-            createdAt: new Date().toISOString(),
-            completedAt: null,
-            transactionId: null,
-            note: body.note || ''
-        };
-        
-        payments.push(newPayment);
-        if (writeJSON(PAYMENTS_FILE, payments)) {
-            return sendJSON(res, { success: true, data: newPayment });
-        }
-    }
-
-    const paymentConfirmMatch = pathname.match(/^\/api\/admin\/payments\/(\d+)\/confirm$/);
-    if (paymentConfirmMatch && method === 'POST') {
-        const paymentId = parseInt(paymentConfirmMatch[1]);
-        const payments = readJSON(PAYMENTS_FILE);
-        const paymentIndex = payments.findIndex(p => p.id === paymentId);
-        
-        if (paymentIndex === -1) {
-            return sendJSON(res, { success: false, message: 'Not found' }, 404);
-        }
-        
-        const body = await parseBody(req);
-        payments[paymentIndex].status = 'completed';
-        payments[paymentIndex].completedAt = new Date().toISOString();
-        payments[paymentIndex].transactionId = body.transactionId || ('TXN' + Date.now());
-        
-        // Update user isPro
-        const users = readJSON(USERS_FILE);
-        const userIndex = users.findIndex(u => u.id === payments[paymentIndex].userId);
-        if (userIndex !== -1) {
-            users[userIndex].isPro = true;
-            const now = new Date();
-            switch (payments[paymentIndex].package) {
-                case 'monthly': now.setMonth(now.getMonth() + 1); break;
-                case 'yearly': now.setFullYear(now.getFullYear() + 1); break;
-                case 'lifetime': now.setFullYear(now.getFullYear() + 100); break;
-            }
-            users[userIndex].proExpiry = now.toISOString().split('T')[0];
-            writeJSON(USERS_FILE, users);
-        }
-        
-        if (writeJSON(PAYMENTS_FILE, payments)) {
-            return sendJSON(res, { success: true, data: payments[paymentIndex] });
-        }
-    }
-
-    const paymentUserMatch = pathname.match(/^\/api\/payments\/user\/(\d+)$/);
-    if (paymentUserMatch && method === 'GET') {
-        const userId = parseInt(paymentUserMatch[1]);
-        const payments = readJSON(PAYMENTS_FILE);
-        const userPayments = payments.filter(p => p.userId === userId);
-        return sendJSON(res, { success: true, data: userPayments });
-    }
-
-    if (pathname === '/api/admin/payments' && method === 'GET') {
-        const payments = readJSON(PAYMENTS_FILE);
-        return sendJSON(res, { success: true, data: payments });
-    }
-
-    if (pathname === '/api/packages' && method === 'GET') {
-        const packages = [
-            { id: 'monthly', name: 'Goi thang', price: 99000, originalPrice: 149000, duration: '1 thang', features: ['Ket noi luat su 24/7', 'Tu van qua chat, goi dien', 'Uu tien ho tro'] },
-            { id: 'yearly', name: 'Goi nam', price: 799000, originalPrice: 1188000, duration: '12 thang', features: ['Tat ca tinh nang goi thang', 'Tiet kiem 33%', 'Soan thao hop dong mien phi'], isBestValue: true },
-            { id: 'lifetime', name: 'Tron doi', price: 1990000, originalPrice: 2990000, duration: 'Vinh vien', features: ['Tat ca tinh nang', 'Khong gioi han thoi gian', 'Ho tro VIP'] }
-        ];
-        return sendJSON(res, { success: true, data: packages });
-    }
-
-    if (pathname === '/api/payment-info' && method === 'GET') {
-        const paymentInfo = {
-            bankName: 'Vietcombank',
-            bankBranch: 'Chi nhanh Ha Noi',
-            accountNumber: '1234567890123',
-            accountName: 'CONG TY LUAT TNHH HTIC',
-            transferContent: 'HTIC PRO [Ma don hang]',
-            qrCode: null,
-            momo: { phone: '0379044299', name: 'HTIC LAW FIRM' }
-        };
-        return sendJSON(res, { success: true, data: paymentInfo });
-    }
-
-    // =============== MỚI: SUPPORT REQUESTS ===============
-
-    // [PUBLIC] Gửi yêu cầu hỗ trợ từ app
     if (pathname === '/api/support-requests' && method === 'POST') {
         const body = await parseBody(req);
         const requests = readJSON(SUPPORT_REQUESTS_FILE) || [];
@@ -906,116 +726,49 @@ const server = http.createServer(async (req, res) => {
             category: body.category || 'general',
             subject: body.subject || '',
             message: body.message || '',
-            status: 'pending', // pending, in-progress, resolved, closed
-            adminNote: '',
-            adminResponse: '',
-            createdAt: body.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            resolvedAt: null
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
         };
         
         requests.push(newRequest);
-        
         if (writeJSON(SUPPORT_REQUESTS_FILE, requests)) {
-            return sendJSON(res, { 
-                success: true, 
-                data: newRequest, 
-                message: 'Yêu cầu hỗ trợ đã được gửi thành công' 
-            });
+            return sendJSON(res, { success: true, data: newRequest, message: 'Yêu cầu đã được gửi' });
         }
-        return sendJSON(res, { success: false, message: 'Không thể lưu yêu cầu' }, 500);
+        return sendJSON(res, { success: false, message: 'Lỗi' }, 500);
     }
 
-    // [ADMIN] Lấy tất cả support requests
     if (pathname === '/api/admin/support-requests' && method === 'GET') {
         const requests = readJSON(SUPPORT_REQUESTS_FILE) || [];
-        // Sắp xếp theo mới nhất
         requests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         return sendJSON(res, { success: true, data: requests });
     }
 
-    // [ADMIN] Lấy thống kê support requests
-    if (pathname === '/api/admin/support-requests/stats' && method === 'GET') {
+    const supportMatch = pathname.match(/^\/api\/admin\/support-requests\/(\d+)$/);
+    if (supportMatch) {
+        const reqId = parseInt(supportMatch[1]);
         const requests = readJSON(SUPPORT_REQUESTS_FILE) || [];
-        
-        const stats = {
-            total: requests.length,
-            pending: requests.filter(r => r.status === 'pending').length,
-            inProgress: requests.filter(r => r.status === 'in-progress').length,
-            resolved: requests.filter(r => r.status === 'resolved').length,
-            closed: requests.filter(r => r.status === 'closed').length,
-            byCategory: {}
-        };
-        
-        // Đếm theo category
-        requests.forEach(r => {
-            stats.byCategory[r.category] = (stats.byCategory[r.category] || 0) + 1;
-        });
-        
-        return sendJSON(res, { success: true, data: stats });
-    }
+        const idx = requests.findIndex(r => r.id === reqId);
 
-    // [ADMIN] Xử lý support request theo ID
-    const supportRequestMatch = pathname.match(/^\/api\/admin\/support-requests\/(\d+)$/);
-    if (supportRequestMatch) {
-        const requestId = parseInt(supportRequestMatch[1]);
-        const requests = readJSON(SUPPORT_REQUESTS_FILE) || [];
-        const requestIndex = requests.findIndex(r => r.id === requestId);
-
-        // GET - Lấy chi tiết
-        if (method === 'GET') {
-            if (requestIndex === -1) {
-                return sendJSON(res, { success: false, message: 'Không tìm thấy yêu cầu' }, 404);
-            }
-            return sendJSON(res, { success: true, data: requests[requestIndex] });
-        }
-
-        // PUT - Cập nhật (status, admin response, etc.)
         if (method === 'PUT') {
-            if (requestIndex === -1) {
-                return sendJSON(res, { success: false, message: 'Không tìm thấy yêu cầu' }, 404);
-            }
-            
+            if (idx === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
             const body = await parseBody(req);
-            const updatedRequest = {
-                ...requests[requestIndex],
-                ...body,
-                updatedAt: new Date().toISOString()
-            };
-            
-            // Nếu status chuyển sang resolved, set resolvedAt
-            if (body.status === 'resolved' && requests[requestIndex].status !== 'resolved') {
-                updatedRequest.resolvedAt = new Date().toISOString();
-            }
-            
-            requests[requestIndex] = updatedRequest;
-            
+            requests[idx] = { ...requests[idx], ...body, updatedAt: new Date().toISOString() };
             if (writeJSON(SUPPORT_REQUESTS_FILE, requests)) {
-                return sendJSON(res, { 
-                    success: true, 
-                    data: updatedRequest, 
-                    message: 'Đã cập nhật yêu cầu hỗ trợ' 
-                });
+                return sendJSON(res, { success: true, data: requests[idx] });
             }
-            return sendJSON(res, { success: false, message: 'Không thể cập nhật' }, 500);
         }
 
-        // DELETE - Xóa
         if (method === 'DELETE') {
-            if (requestIndex === -1) {
-                return sendJSON(res, { success: false, message: 'Không tìm thấy yêu cầu' }, 404);
-            }
-            
-            requests.splice(requestIndex, 1);
-            
+            if (idx === -1) return sendJSON(res, { success: false, message: 'Not found' }, 404);
+            requests.splice(idx, 1);
             if (writeJSON(SUPPORT_REQUESTS_FILE, requests)) {
-                return sendJSON(res, { success: true, message: 'Đã xóa yêu cầu hỗ trợ' });
+                return sendJSON(res, { success: true, message: 'Deleted' });
             }
-            return sendJSON(res, { success: false, message: 'Không thể xóa' }, 500);
         }
     }
 
-    // =============== STATIC FILES (from frontend folder) ===============
+    // =============== STATIC FILES ===============
     
     if (pathname === '/' || pathname === '/index.html') {
         return serveStatic(res, path.join(FRONTEND_DIR, 'index.html'));
@@ -1025,45 +778,38 @@ const server = http.createServer(async (req, res) => {
         return serveStatic(res, path.join(FRONTEND_DIR, 'admin.html'));
     }
 
-    // Serve other static files from frontend folder
     const frontendPath = path.join(FRONTEND_DIR, pathname);
     if (fs.existsSync(frontendPath) && fs.statSync(frontendPath).isFile()) {
         return serveStatic(res, frontendPath);
     }
 
-    // Also try backend folder for backward compatibility
     const backendPath = path.join(BACKEND_DIR, pathname);
     if (fs.existsSync(backendPath) && fs.statSync(backendPath).isFile()) {
         return serveStatic(res, backendPath);
     }
 
     // 404
-    res.writeHead(404, { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-    });
+    res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     res.end(JSON.stringify({ success: false, message: 'Not found', path: pathname }));
 });
 
 server.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════════════════════╗
-║           HTIC Legal App Server v10.0                     ║
+║           HTIC Legal App Server v10.1                     ║
 ╠═══════════════════════════════════════════════════════════╣
 ║  Server:   http://localhost:${PORT}                         ║
 ║  Admin:    http://localhost:${PORT}/admin                   ║
 ║  Login:    admin / htic2025                               ║
 ╠═══════════════════════════════════════════════════════════╣
-║  NEW: Support Requests API                                ║
-║  - POST /api/support-requests (public)                    ║
-║  - GET  /api/admin/support-requests                       ║
-║  - PUT  /api/admin/support-requests/:id                   ║
-║  - DELETE /api/admin/support-requests/:id                 ║
+║  NEW: Legal Pages (for App Store/Play Store)              ║
+║  - GET /privacy-policy                                    ║
+║  - GET /terms                                             ║
+║  - GET /about                                             ║
 ╠═══════════════════════════════════════════════════════════╣
-║  Test Accounts:                                           ║
-║  - Pro: admin@htic.vn / htic2025                         ║
-║  - Pro: pro@test.com / pro123                            ║
-║  - Free: test@gmail.com / 123456                         ║
+║  Support Requests API                                     ║
+║  - POST /api/support-requests                             ║
+║  - GET  /api/admin/support-requests                       ║
 ╚═══════════════════════════════════════════════════════════╝
     `);
 });
