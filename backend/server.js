@@ -52,6 +52,23 @@ function getNextId(items) {
     return Math.max(...items.map(i => i.id || 0)) + 1;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// HÀM PARSE NGÀY TIẾNG VIỆT (dd/mm/yyyy) VÀ ISO
+// ═══════════════════════════════════════════════════════════════════
+function parseVietnameseDate(dateStr) {
+    if (!dateStr) return new Date(0);
+    // Xử lý format dd/mm/yyyy
+    if (typeof dateStr === 'string' && dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+        }
+    }
+    // Xử lý ISO format
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? new Date(0) : parsed;
+}
+
 function sendJSON(res, data, status = 200) {
     res.writeHead(status, {
         'Content-Type': 'application/json',
@@ -544,21 +561,35 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
-    // --- NEWS ---
+    // ═══════════════════════════════════════════════════════════════════
+    // NEWS - ĐÃ SỬA: SẮP XẾP TIN MỚI NHẤT LÊN ĐẦU
+    // ═══════════════════════════════════════════════════════════════════
     if (pathname === '/api/news' && method === 'GET') {
         const news = readJSON(NEWS_FILE);
+        // Sắp xếp tin mới nhất lên đầu
+        news.sort((a, b) => {
+            const dateA = parseVietnameseDate(a.date);
+            const dateB = parseVietnameseDate(b.date);
+            return dateB - dateA;
+        });
         return sendJSON(res, { success: true, data: news });
     }
 
     if (pathname === '/api/admin/news' && method === 'GET') {
         const news = readJSON(NEWS_FILE);
+        // Sắp xếp tin mới nhất lên đầu
+        news.sort((a, b) => {
+            const dateA = parseVietnameseDate(a.date);
+            const dateB = parseVietnameseDate(b.date);
+            return dateB - dateA;
+        });
         return sendJSON(res, { success: true, data: news });
     }
 
     if (pathname === '/api/admin/news' && method === 'POST') {
         const body = await parseBody(req);
         const news = readJSON(NEWS_FILE);
-        const newNews = { id: getNextId(news), ...body, date: new Date().toLocaleDateString('vi-VN') };
+        const newNews = { id: getNextId(news), ...body, date: body.date || new Date().toLocaleDateString('vi-VN') };
         news.push(newNews);
         if (writeJSON(NEWS_FILE, news)) {
             return sendJSON(res, { success: true, data: newNews });
@@ -589,16 +620,128 @@ const server = http.createServer(async (req, res) => {
         }
     }
 
-    // --- AGENCIES ---
+    // ═══════════════════════════════════════════════════════════════════
+    // AGENCIES - ĐÃ THÊM CRUD CHO ADMIN
+    // ═══════════════════════════════════════════════════════════════════
     if (pathname === '/api/agencies' && method === 'GET') {
         const agencies = readJSON(AGENCIES_FILE);
         return sendJSON(res, { success: true, data: agencies });
     }
 
-    // --- PROVINCES ---
+    if (pathname === '/api/admin/agencies' && method === 'GET') {
+        const agencies = readJSON(AGENCIES_FILE);
+        return sendJSON(res, { success: true, data: agencies });
+    }
+
+    if (pathname === '/api/admin/agencies' && method === 'POST') {
+        const body = await parseBody(req);
+        const agencies = readJSON(AGENCIES_FILE);
+        const newAgency = { 
+            id: getNextId(agencies), 
+            name: body.name || '',
+            category: body.category || 'government',
+            provinceId: body.provinceId || '',
+            address: body.address || '',
+            phone: body.phone || '',
+            email: body.email || '',
+            website: body.website || '',
+            createdAt: new Date().toISOString()
+        };
+        agencies.push(newAgency);
+        if (writeJSON(AGENCIES_FILE, agencies)) {
+            return sendJSON(res, { success: true, data: newAgency, message: 'Đã thêm cơ quan' });
+        }
+        return sendJSON(res, { success: false, message: 'Lỗi lưu dữ liệu' }, 500);
+    }
+
+    const agencyMatch = pathname.match(/^\/api\/admin\/agencies\/(\d+)$/);
+    if (agencyMatch) {
+        const agencyId = parseInt(agencyMatch[1]);
+        const agencies = readJSON(AGENCIES_FILE);
+        const agencyIndex = agencies.findIndex(a => a.id === agencyId);
+
+        if (method === 'PUT') {
+            if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
+            const body = await parseBody(req);
+            agencies[agencyIndex] = { ...agencies[agencyIndex], ...body, id: agencyId, updatedAt: new Date().toISOString() };
+            if (writeJSON(AGENCIES_FILE, agencies)) {
+                return sendJSON(res, { success: true, data: agencies[agencyIndex], message: 'Đã cập nhật' });
+            }
+        }
+
+        if (method === 'DELETE') {
+            if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
+            agencies.splice(agencyIndex, 1);
+            if (writeJSON(AGENCIES_FILE, agencies)) {
+                return sendJSON(res, { success: true, message: 'Đã xóa' });
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PROVINCES - ĐÃ THÊM CRUD CHO ADMIN
+    // ═══════════════════════════════════════════════════════════════════
     if (pathname === '/api/provinces' && method === 'GET') {
         const provinces = readJSON(PROVINCES_FILE);
         return sendJSON(res, { success: true, data: provinces });
+    }
+
+    if (pathname === '/api/admin/provinces' && method === 'GET') {
+        const provinces = readJSON(PROVINCES_FILE);
+        return sendJSON(res, { success: true, data: provinces });
+    }
+
+    if (pathname === '/api/admin/provinces' && method === 'POST') {
+        const body = await parseBody(req);
+        const provinces = readJSON(PROVINCES_FILE);
+        
+        // Tạo ID từ tên (vd: "Hà Nội" -> "hanoi")
+        const generateId = (name) => {
+            return name.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                .replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+        };
+        
+        const newProvince = { 
+            id: body.id || generateId(body.name || 'province' + Date.now()),
+            name: body.name || ''
+        };
+        
+        // Kiểm tra trùng
+        if (provinces.find(p => p.id === newProvince.id)) {
+            return sendJSON(res, { success: false, message: 'Tỉnh/thành đã tồn tại' }, 400);
+        }
+        
+        provinces.push(newProvince);
+        if (writeJSON(PROVINCES_FILE, provinces)) {
+            return sendJSON(res, { success: true, data: newProvince, message: 'Đã thêm tỉnh/thành' });
+        }
+        return sendJSON(res, { success: false, message: 'Lỗi lưu dữ liệu' }, 500);
+    }
+
+    const provinceMatch = pathname.match(/^\/api\/admin\/provinces\/([a-zA-Z0-9_-]+)$/);
+    if (provinceMatch) {
+        const provinceId = provinceMatch[1];
+        const provinces = readJSON(PROVINCES_FILE);
+        const provinceIndex = provinces.findIndex(p => p.id === provinceId);
+
+        if (method === 'PUT') {
+            if (provinceIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
+            const body = await parseBody(req);
+            provinces[provinceIndex] = { ...provinces[provinceIndex], name: body.name || provinces[provinceIndex].name };
+            if (writeJSON(PROVINCES_FILE, provinces)) {
+                return sendJSON(res, { success: true, data: provinces[provinceIndex], message: 'Đã cập nhật' });
+            }
+        }
+
+        if (method === 'DELETE') {
+            if (provinceIndex === -1) return sendJSON(res, { success: false, message: 'Không tìm thấy' }, 404);
+            provinces.splice(provinceIndex, 1);
+            if (writeJSON(PROVINCES_FILE, provinces)) {
+                return sendJSON(res, { success: true, message: 'Đã xóa' });
+            }
+        }
     }
 
     // --- SETTINGS ---
@@ -626,6 +769,7 @@ const server = http.createServer(async (req, res) => {
         const events = readJSON(EVENTS_FILE);
         const news = readJSON(NEWS_FILE);
         const agencies = readJSON(AGENCIES_FILE);
+        const provinces = readJSON(PROVINCES_FILE);
         const users = readJSON(USERS_FILE);
         const payments = readJSON(PAYMENTS_FILE);
         const supportRequests = readJSON(SUPPORT_REQUESTS_FILE);
@@ -635,6 +779,7 @@ const server = http.createServer(async (req, res) => {
                 events: { total: events.length, active: events.filter(e => e.isActive).length },
                 news: { total: news.length },
                 agencies: { total: agencies.length },
+                provinces: { total: provinces.length },
                 users: { total: users.length, pro: users.filter(u => u.isPro).length },
                 payments: { total: payments.length, completed: payments.filter(p => p.status === 'completed').length },
                 supportRequests: { total: supportRequests.length, pending: supportRequests.filter(r => r.status === 'pending').length }
@@ -796,20 +941,21 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
     console.log(`
 ╔═══════════════════════════════════════════════════════════╗
-║           HTIC Legal App Server v10.1                     ║
+║           HTIC Legal App Server v10.2                     ║
 ╠═══════════════════════════════════════════════════════════╣
 ║  Server:   http://localhost:${PORT}                         ║
 ║  Admin:    http://localhost:${PORT}/admin                   ║
 ║  Login:    admin / htic2025                               ║
 ╠═══════════════════════════════════════════════════════════╣
-║  NEW: Legal Pages (for App Store/Play Store)              ║
-║  - GET /privacy-policy                                    ║
-║  - GET /terms                                             ║
-║  - GET /about                                             ║
+║  ✅ FIX: News sorted by newest first                      ║
+║  ✅ FIX: Agencies CRUD API added                          ║
+║  ✅ FIX: Provinces CRUD API added                         ║
 ╠═══════════════════════════════════════════════════════════╣
-║  Support Requests API                                     ║
-║  - POST /api/support-requests                             ║
-║  - GET  /api/admin/support-requests                       ║
+║  API Endpoints:                                           ║
+║  - GET/POST /api/admin/agencies                           ║
+║  - PUT/DELETE /api/admin/agencies/:id                     ║
+║  - GET/POST /api/admin/provinces                          ║
+║  - PUT/DELETE /api/admin/provinces/:id                    ║
 ╚═══════════════════════════════════════════════════════════╝
     `);
 });
