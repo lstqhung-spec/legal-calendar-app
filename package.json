@@ -1,7 +1,7 @@
 {
   "name": "htic-legal-calendar-api",
-  "version": "11.0.0",
-  "description": "HTIC Legal Calendar Backend API with PostgreSQL",
+  "version": "12.0.0",
+  "description": "HTIC Legal Calendar Backend API v12 - Full Features with PostgreSQL",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -19,7 +19,6 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["legal", "calendar", "vietnam", "htic"],
   "author": "HTIC Law Firm",
   "license": "ISC"
 }
