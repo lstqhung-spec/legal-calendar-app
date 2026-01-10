@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTIC Legal Calendar - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .sidebar-link.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="app"></div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // HTIC LEGAL CALENDAR - ADMIN DASHBOARD v11.0
+        // ═══════════════════════════════════════════════════════════════
+        
+        const API_URL = '';
+        
+        // State management
+        let state = {
+            isLoggedIn: false,
+            currentPage: 'dashboard',
+            user: null,
+            events: [],
+            news: [],
+            agencies: [],
+            provinces: [],
+            stats: { events: 0, news: 0, agencies: 0, provinces: 0 },
+            loading: false,
+            modal: { show: false, type: '', data: null }
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // API FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data) options.body = JSON.stringify(data);
+            
+            try {
+                const res = await fetch(API_URL + endpoint, options);
+                return await res.json();
+            } catch (err) {
+                console.error('API Error:', err);
+                return { success: false, error: err.message };
+            }
+        }
+
+        async function login(username, password) {
+            const result = await apiCall('/api/admin/login', 'POST', { username, password });
+            if (result.success) {
+                state.isLoggedIn = true;
+                state.user = result.user;
+                localStorage.setItem('htic_admin', JSON.stringify({ username }));
+                await loadAllData();
+            }
+            return result;
+        }
+
+        function logout() {
+            state.isLoggedIn = false;
+            state.user = null;
+            localStorage.removeItem('htic_admin');
+            render();
+        }
+
+        async function loadAllData() {
+            state.loading = true;
+            render();
+            
+            const [events, news, agencies, provinces, stats] = await Promise.all([
+                apiCall('/api/admin/events'),
+                apiCall('/api/admin/news'),
+                apiCall('/api/admin/agencies'),
+                apiCall('/api/admin/provinces'),
+                apiCall('/api/admin/stats')
+            ]);
+            
+            state.events = Array.isArray(events) ? events : [];
+            state.news = Array.isArray(news) ? news : [];
+            state.agencies = Array.isArray(agencies) ? agencies : [];
+            state.provinces = Array.isArray(provinces) ? provinces : [];
+            state.stats = stats || { events: 0, news: 0, agencies: 0, provinces: 0 };
+            state.loading = false;
+            render();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CRUD FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function saveEvent(data) {
+            const endpoint = data.id ? `/api/admin/events/${data.id}` : '/api/admin/events';
+            const method = data.id ? 'PUT' : 'POST';
+            const result = await apiCall(endpoint, method, data);
+            if (result.success) {
+                closeModal();
+                await loadAllData();
+                showToast('Lưu nghĩa vụ thành công!', 'success');
+            } else {
+                showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
+            }
+        }
+
+        async function deleteEvent(id) {
+            if (!confirm('Bạn có chắc muốn xóa nghĩa vụ này?')) return;
+            const result = await apiCall(`/api/admin/events/${id}`, 'DELETE');
+            if (result.success) {
+                await loadAllData();
+                showToast('Đã xóa nghĩa vụ!', 'success');
+            }
+        }
+
+        async function saveNews(data) {
+            const endpoint = data.id ? `/api/admin/news/${data.id}` : '/api/admin/news';
+            const method = data.id ? 'PUT' : 'POST';
+            const result = await apiCall(endpoint, method, data);
+            if (result.success) {
+                closeModal();
+                await loadAllData();
+                showToast('Lưu tin tức thành công!', 'success');
+            } else {
+                showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
+            }
+        }
+
+        async function deleteNews(id) {
+            if (!confirm('Bạn có chắc muốn xóa tin tức này?')) return;
+            const result = await apiCall(`/api/admin/news/${id}`, 'DELETE');
+            if (result.success) {
+                await loadAllData();
+                showToast('Đã xóa tin tức!', 'success');
+            }
+        }
+
+        async function saveAgency(data) {
+            const endpoint = data.id && data.isEdit ? `/api/admin/agencies/${data.id}` : '/api/admin/agencies';
+            const method = data.isEdit ? 'PUT' : 'POST';
+            const result = await apiCall(endpoint, method, data);
+            if (result.success) {
+                closeModal();
+                await loadAllData();
+                showToast('Lưu cơ quan thành công!', 'success');
+            } else {
+                showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
+            }
+        }
+
+        async function deleteAgency(id) {
+            if (!confirm('Bạn có chắc muốn xóa cơ quan này?')) return;
+            const result = await apiCall(`/api/admin/agencies/${id}`, 'DELETE');
+            if (result.success) {
+                await loadAllData();
+                showToast('Đã xóa cơ quan!', 'success');
+            }
+        }
+
+        async function saveProvince(data) {
+            const endpoint = data.id && data.isEdit ? `/api/admin/provinces/${data.id}` : '/api/admin/provinces';
+            const method = data.isEdit ? 'PUT' : 'POST';
+            const result = await apiCall(endpoint, method, data);
+            if (result.success) {
+                closeModal();
+                await loadAllData();
+                showToast('Lưu tỉnh/thành phố thành công!', 'success');
+            } else {
+                showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
+            }
+        }
+
+        async function deleteProvince(id) {
+            if (!confirm('Bạn có chắc muốn xóa tỉnh/thành phố này?')) return;
+            const result = await apiCall(`/api/admin/provinces/${id}`, 'DELETE');
+            if (result.success) {
+                await loadAllData();
+                showToast('Đã xóa tỉnh/thành phố!', 'success');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // UI HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function showModal(type, data = null) {
+            state.modal = { show: true, type, data };
+            render();
+        }
+
+        function closeModal() {
+            state.modal = { show: false, type: '', data: null };
+            render();
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 fade-in ${
+                type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function navigate(page) {
+            state.currentPage = page;
+            render();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // RENDER FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = state.isLoggedIn ? renderDashboard() : renderLogin();
+            attachEventListeners();
+        }
+
+        function renderLogin() {
+            return `
+                <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800">
+                    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md fade-in">
+                        <div class="text-center mb-8">
+                            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                                </svg>
+                            </div>
+                            <h1 class="text-2xl font-bold text-gray-800">HTIC Legal Calendar</h1>
+                            <p class="text-gray-500 mt-2">Admin Dashboard v11.0</p>
+                        </div>
+                        <form id="loginForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tài khoản</label>
+                                <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="admin" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                                <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="••••••••" required>
+                            </div>
+                            <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-800 transition-all">
+                                Đăng nhập
+                            </button>
+                        </form>
+                        <p class="text-center text-gray-400 text-sm mt-6">© 2024 HTIC Law Firm</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDashboard() {
+            return `
+                <div class="flex h-screen">
+                    <!-- Sidebar -->
+                    <div class="w-64 bg-white shadow-lg flex flex-col">
+                        <div class="p-6 border-b">
+                            <h1 class="text-xl font-bold text-gray-800">🏛️ HTIC Admin</h1>
+                            <p class="text-sm text-gray-500 mt-1">Legal Calendar v11.0</p>
+                        </div>
+                        <nav class="flex-1 p-4 space-y-2">
+                            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 ${state.currentPage === 'dashboard' ? 'active' : ''}" data-page="dashboard">
+                                <span>📊</span> Dashboard
+                            </a>
+                            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 ${state.currentPage === 'events' ? 'active' : ''}" data-page="events">
+                                <span>📋</span> Nghĩa vụ pháp lý
+                            </a>
+                            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 ${state.currentPage === 'news' ? 'active' : ''}" data-page="news">
+                                <span>📰</span> Tin tức
+                            </a>
+                            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 ${state.currentPage === 'agencies' ? 'active' : ''}" data-page="agencies">
+                                <span>🏢</span> Cơ quan ban hành
+                            </a>
+                            <a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 ${state.currentPage === 'provinces' ? 'active' : ''}" data-page="provinces">
+                                <span>📍</span> Tỉnh/Thành phố
+                            </a>
+                        </nav>
+                        <div class="p-4 border-t">
+                            <button id="logoutBtn" class="w-full py-2 text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                                🚪 Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Content -->
+                    <div class="flex-1 overflow-auto bg-gray-100">
+                        <div class="p-8">
+                            ${renderCurrentPage()}
+                        </div>
+                    </div>
+                </div>
+                ${renderModal()}
+            `;
+        }
+
+        function renderCurrentPage() {
+            if (state.loading) {
+                return `<div class="flex items-center justify-center h-64"><div class="text-gray-500">Đang tải dữ liệu...</div></div>`;
+            }
+            
+            switch (state.currentPage) {
+                case 'dashboard': return renderDashboardPage();
+                case 'events': return renderEventsPage();
+                case 'news': return renderNewsPage();
+                case 'agencies': return renderAgenciesPage();
+                case 'provinces': return renderProvincesPage();
+                default: return renderDashboardPage();
+            }
+        }
+
+        function renderDashboardPage() {
+            return `
+                <div class="fade-in">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+                            <div class="text-gray-500 text-sm">Nghĩa vụ pháp lý</div>
+                            <div class="text-3xl font-bold text-gray-800 mt-2">${state.stats.events || 0}</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+                            <div class="text-gray-500 text-sm">Tin tức</div>
+                            <div class="text-3xl font-bold text-gray-800 mt-2">${state.stats.news || 0}</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
+                            <div class="text-gray-500 text-sm">Cơ quan ban hành</div>
+                            <div class="text-3xl font-bold text-gray-800 mt-2">${state.stats.agencies || 0}</div>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                            <div class="text-gray-500 text-sm">Tỉnh/Thành phố</div>
+                            <div class="text-3xl font-bold text-gray-800 mt-2">${state.stats.provinces || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">📌 Thông tin hệ thống</h3>
+                        <div class="space-y-3 text-gray-600">
+                            <p>✅ Server: <span class="text-green-600 font-medium">Railway (Online)</span></p>
+                            <p>✅ Database: <span class="text-green-600 font-medium">PostgreSQL</span></p>
+                            <p>✅ Version: <span class="font-medium">11.0</span></p>
+                            <p>✅ API: <span class="text-green-600 font-medium">Hoạt động</span></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEventsPage() {
+            return `
+                <div class="fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">📋 Nghĩa vụ pháp lý</h2>
+                        <button id="addEventBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                            + Thêm mới
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tiêu đề</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Deadline</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Cơ quan</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Mức độ</th>
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                ${state.events.length === 0 ? `
+                                    <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">Chưa có dữ liệu</td></tr>
+                                ` : state.events.map(e => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4"><div class="font-medium text-gray-800 line-clamp-2">${e.title || ''}</div></td>
+                                        <td class="px-6 py-4 text-gray-600">${e.deadline || '-'}</td>
+                                        <td class="px-6 py-4 text-gray-600">${e.agency_name || '-'}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 text-xs rounded-full ${
+                                                e.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                                e.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-green-100 text-green-700'
+                                            }">${e.priority === 'high' ? 'Cao' : e.priority === 'medium' ? 'Trung bình' : 'Thấp'}</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <button class="edit-event-btn text-blue-600 hover:text-blue-800 mr-3" data-id="${e.id}">✏️</button>
+                                            <button class="delete-event-btn text-red-600 hover:text-red-800" data-id="${e.id}">🗑️</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNewsPage() {
+            return `
+                <div class="fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">📰 Tin tức pháp luật</h2>
+                        <button id="addNewsBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                            + Thêm mới
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tiêu đề</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Ngày</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Nguồn</th>
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                ${state.news.length === 0 ? `
+                                    <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">Chưa có dữ liệu</td></tr>
+                                ` : state.news.map(n => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4"><div class="font-medium text-gray-800 line-clamp-2">${n.title || ''}</div></td>
+                                        <td class="px-6 py-4 text-gray-600">${n.date || '-'}</td>
+                                        <td class="px-6 py-4 text-gray-600">${n.source || '-'}</td>
+                                        <td class="px-6 py-4 text-center">
+                                            <button class="edit-news-btn text-blue-600 hover:text-blue-800 mr-3" data-id="${n.id}">✏️</button>
+                                            <button class="delete-news-btn text-red-600 hover:text-red-800" data-id="${n.id}">🗑️</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAgenciesPage() {
+            return `
+                <div class="fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">🏢 Cơ quan ban hành</h2>
+                        <button id="addAgencyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                            + Thêm mới
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">ID</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tên cơ quan</th>
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                ${state.agencies.length === 0 ? `
+                                    <tr><td colspan="3" class="px-6 py-8 text-center text-gray-500">Chưa có dữ liệu</td></tr>
+                                ` : state.agencies.map(a => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 font-mono text-sm text-gray-600">${a.id}</td>
+                                        <td class="px-6 py-4 font-medium text-gray-800">${a.name}</td>
+                                        <td class="px-6 py-4 text-center">
+                                            <button class="edit-agency-btn text-blue-600 hover:text-blue-800 mr-3" data-id="${a.id}" data-name="${a.name}">✏️</button>
+                                            <button class="delete-agency-btn text-red-600 hover:text-red-800" data-id="${a.id}">🗑️</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProvincesPage() {
+            return `
+                <div class="fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">📍 Tỉnh/Thành phố</h2>
+                        <button id="addProvinceBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all">
+                            + Thêm mới
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">ID</th>
+                                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Tên tỉnh/thành phố</th>
+                                    <th class="px-6 py-4 text-center text-sm font-semibold text-gray-700">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                ${state.provinces.length === 0 ? `
+                                    <tr><td colspan="3" class="px-6 py-8 text-center text-gray-500">Chưa có dữ liệu</td></tr>
+                                ` : state.provinces.map(p => `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 font-mono text-sm text-gray-600">${p.id}</td>
+                                        <td class="px-6 py-4 font-medium text-gray-800">${p.name}</td>
+                                        <td class="px-6 py-4 text-center">
+                                            <button class="edit-province-btn text-blue-600 hover:text-blue-800 mr-3" data-id="${p.id}" data-name="${p.name}">✏️</button>
+                                            <button class="delete-province-btn text-red-600 hover:text-red-800" data-id="${p.id}">🗑️</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderModal() {
+            if (!state.modal.show) return '';
+            
+            let content = '';
+            switch (state.modal.type) {
+                case 'event':
+                    content = renderEventForm(state.modal.data);
+                    break;
+                case 'news':
+                    content = renderNewsForm(state.modal.data);
+                    break;
+                case 'agency':
+                    content = renderAgencyForm(state.modal.data);
+                    break;
+                case 'province':
+                    content = renderProvinceForm(state.modal.data);
+                    break;
+            }
+            
+            return `
+                <div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50">
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto fade-in">
+                        ${content}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderEventForm(data) {
+            const isEdit = !!data;
+            return `
+                <div class="p-6 border-b">
+                    <h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Nghĩa vụ pháp lý</h3>
+                </div>
+                <form id="eventForm" class="p-6 space-y-4">
+                    <input type="hidden" name="id" value="${data?.id || ''}">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề *</label>
+                        <input type="text" name="title" value="${data?.title || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                        <textarea name="description" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.description || ''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                            <input type="text" name="deadline" value="${data?.deadline || ''}" placeholder="VD: 20/01 hàng năm" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tần suất</label>
+                            <input type="text" name="frequency" value="${data?.frequency || ''}" placeholder="VD: Hàng tháng" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cơ quan ban hành</label>
+                            <select name="agency_id" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Chọn cơ quan --</option>
+                                ${state.agencies.map(a => `<option value="${a.id}" ${data?.agency_id === a.id ? 'selected' : ''}>${a.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố</label>
+                            <select name="province_id" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">-- Chọn tỉnh/TP --</option>
+                                ${state.provinces.map(p => `<option value="${p.id}" ${data?.province_id === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Căn cứ pháp lý</label>
+                        <textarea name="legal_base" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.legal_base || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mức phạt</label>
+                        <textarea name="penalty" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.penalty || ''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mức độ ưu tiên</label>
+                            <select name="priority" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="low" ${data?.priority === 'low' ? 'selected' : ''}>Thấp</option>
+                                <option value="medium" ${data?.priority === 'medium' || !data?.priority ? 'selected' : ''}>Trung bình</option>
+                                <option value="high" ${data?.priority === 'high' ? 'selected' : ''}>Cao</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Danh mục</label>
+                            <input type="text" name="category" value="${data?.category || ''}" placeholder="VD: tax, insurance" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function renderNewsForm(data) {
+            const isEdit = !!data;
+            return `
+                <div class="p-6 border-b">
+                    <h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Tin tức</h3>
+                </div>
+                <form id="newsForm" class="p-6 space-y-4">
+                    <input type="hidden" name="id" value="${data?.id || ''}">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề *</label>
+                        <input type="text" name="title" value="${data?.title || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tóm tắt</label>
+                        <textarea name="summary" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.summary || ''}</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung</label>
+                        <textarea name="content" rows="4" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.content || ''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ngày đăng</label>
+                            <input type="text" name="date" value="${data?.date || ''}" placeholder="VD: 09/01/2026" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nguồn</label>
+                            <input type="text" name="source" value="${data?.source || ''}" placeholder="VD: Bộ Tài chính" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Link bài viết gốc</label>
+                        <input type="url" name="url" value="${data?.url || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Link hình ảnh</label>
+                        <input type="url" name="image_url" value="${data?.image_url || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function renderAgencyForm(data) {
+            const isEdit = !!data;
+            return `
+                <div class="p-6 border-b">
+                    <h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Cơ quan ban hành</h3>
+                </div>
+                <form id="agencyForm" class="p-6 space-y-4">
+                    <input type="hidden" name="id" value="${data?.id || ''}">
+                    <input type="hidden" name="isEdit" value="${isEdit}">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên cơ quan *</label>
+                        <input type="text" name="name" value="${data?.name || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function renderProvinceForm(data) {
+            const isEdit = !!data;
+            return `
+                <div class="p-6 border-b">
+                    <h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Tỉnh/Thành phố</h3>
+                </div>
+                <form id="provinceForm" class="p-6 space-y-4">
+                    <input type="hidden" name="id" value="${data?.id || ''}">
+                    <input type="hidden" name="isEdit" value="${isEdit}">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên tỉnh/thành phố *</label>
+                        <input type="text" name="name" value="${data?.name || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button>
+                    </div>
+                </form>
+            `;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EVENT LISTENERS
+        // ═══════════════════════════════════════════════════════════════
+        
+        function attachEventListeners() {
+            // Login form
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+                    const result = await login(username, password);
+                    if (!result.success) {
+                        showToast(result.message || 'Đăng nhập thất bại', 'error');
+                    }
+                });
+            }
+
+            // Logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', logout);
+            }
+
+            // Sidebar navigation
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigate(e.currentTarget.dataset.page);
+                });
+            });
+
+            // Add buttons
+            document.getElementById('addEventBtn')?.addEventListener('click', () => showModal('event'));
+            document.getElementById('addNewsBtn')?.addEventListener('click', () => showModal('news'));
+            document.getElementById('addAgencyBtn')?.addEventListener('click', () => showModal('agency'));
+            document.getElementById('addProvinceBtn')?.addEventListener('click', () => showModal('province'));
+
+            // Edit/Delete buttons
+            document.querySelectorAll('.edit-event-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const event = state.events.find(e => e.id === btn.dataset.id);
+                    showModal('event', event);
+                });
+            });
+            document.querySelectorAll('.delete-event-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteEvent(btn.dataset.id));
+            });
+            document.querySelectorAll('.edit-news-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const news = state.news.find(n => n.id === btn.dataset.id);
+                    showModal('news', news);
+                });
+            });
+            document.querySelectorAll('.delete-news-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteNews(btn.dataset.id));
+            });
+            document.querySelectorAll('.edit-agency-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showModal('agency', { id: btn.dataset.id, name: btn.dataset.name });
+                });
+            });
+            document.querySelectorAll('.delete-agency-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteAgency(btn.dataset.id));
+            });
+            document.querySelectorAll('.edit-province-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showModal('province', { id: btn.dataset.id, name: btn.dataset.name });
+                });
+            });
+            document.querySelectorAll('.delete-province-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteProvince(btn.dataset.id));
+            });
+
+            // Modal cancel button
+            document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);
+
+            // Forms
+            const eventForm = document.getElementById('eventForm');
+            if (eventForm) {
+                eventForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(eventForm);
+                    const data = Object.fromEntries(formData);
+                    saveEvent(data);
+                });
+            }
+            
+            const newsForm = document.getElementById('newsForm');
+            if (newsForm) {
+                newsForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(newsForm);
+                    const data = Object.fromEntries(formData);
+                    saveNews(data);
+                });
+            }
+            
+            const agencyForm = document.getElementById('agencyForm');
+            if (agencyForm) {
+                agencyForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(agencyForm);
+                    const data = Object.fromEntries(formData);
+                    data.isEdit = data.isEdit === 'true';
+                    saveAgency(data);
+                });
+            }
+            
+            const provinceForm = document.getElementById('provinceForm');
+            if (provinceForm) {
+                provinceForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(provinceForm);
+                    const data = Object.fromEntries(formData);
+                    data.isEdit = data.isEdit === 'true';
+                    saveProvince(data);
+                });
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INITIALIZE
+        // ═══════════════════════════════════════════════════════════════
+        
+        async function init() {
+            // Check if already logged in
+            const saved = localStorage.getItem('htic_admin');
+            if (saved) {
+                state.isLoggedIn = true;
+                state.user = JSON.parse(saved);
+                await loadAllData();
+            }
+            render();
+        }
+
+        init();
+    </script>
+</body>
+</html>
