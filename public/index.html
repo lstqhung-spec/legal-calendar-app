@@ -1,930 +1,1419 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTIC Legal Calendar - Admin Dashboard v12</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * { font-family: 'Inter', sans-serif; }
-        .sidebar-link.active { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .toggle-switch { position: relative; width: 44px; height: 24px; background: #cbd5e1; border-radius: 12px; cursor: pointer; transition: background 0.3s; }
-        .toggle-switch.active { background: #3b82f6; }
-        .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        .toggle-switch.active::after { transform: translateX(20px); }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTIC Legal Calendar - Admin v14</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #3B82F6;
+      --primary-dark: #2563EB;
+      --success: #10B981;
+      --warning: #F97316;
+      --danger: #EF4444;
+      --sidebar-width: 260px;
+    }
+    body { background: #F1F5F9; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-width);
+      background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+      padding: 20px 0; z-index: 1000; overflow-y: auto;
+    }
+    .sidebar-brand {
+      padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 20px; text-align: center;
+    }
+    .sidebar-brand h4 { color: #fff; font-weight: 700; margin: 0; font-size: 18px; }
+    .sidebar-brand small { color: #94A3B8; font-size: 11px; }
+    .nav-item { padding: 3px 15px; }
+    .nav-link {
+      color: #CBD5E1; padding: 12px 15px; border-radius: 10px;
+      display: flex; align-items: center; gap: 12px; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .nav-link:hover, .nav-link.active { background: var(--primary); color: #fff; }
+    .nav-link i { font-size: 18px; width: 24px; text-align: center; }
+    .nav-link .badge { margin-left: auto; }
+    .main-content { margin-left: var(--sidebar-width); padding: 30px; }
+    .page-header { margin-bottom: 25px; }
+    .page-header h2 { font-weight: 700; color: #1E293B; margin: 0; }
+    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .card-header { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 16px 20px; border-radius: 16px 16px 0 0 !important; }
+    .card-header h5 { margin: 0; font-weight: 600; color: #1E293B; }
+    .stat-card { border-radius: 16px; padding: 20px; color: #fff; }
+    .stat-card.events { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+    .stat-card.news { background: linear-gradient(135deg, #10B981, #34D399); }
+    .stat-card.orgs { background: linear-gradient(135deg, #F97316, #FB923C); }
+    .stat-card.requests { background: linear-gradient(135deg, #EF4444, #F87171); }
+    .stat-card .stat-icon { font-size: 40px; opacity: 0.3; position: absolute; right: 20px; top: 20px; }
+    .stat-card .stat-value { font-size: 32px; font-weight: 700; }
+    .stat-card .stat-label { opacity: 0.9; font-size: 14px; }
+    .table th { font-weight: 600; color: #475569; font-size: 13px; text-transform: uppercase; }
+    .table td { vertical-align: middle; }
+    .btn-action { padding: 6px 10px; font-size: 14px; }
+    .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .status-pending { background: #FEF3C7; color: #D97706; }
+    .status-processing { background: #DBEAFE; color: #2563EB; }
+    .status-completed { background: #D1FAE5; color: #059669; }
+    .status-cancelled { background: #FEE2E2; color: #DC2626; }
+    .category-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+    .form-label { font-weight: 600; color: #475569; font-size: 13px; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .modal-header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
+    .modal-header .btn-close { filter: brightness(0) invert(1); }
+    .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #3B82F6, #1E40AF); }
+    .login-card { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .login-card h3 { font-weight: 700; color: #1E293B; }
+    /* Rich Text Editor */
+    .editor-toolbar { background: #F8FAFC; border: 1px solid #E2E8F0; border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px; display: flex; gap: 5px; flex-wrap: wrap; }
+    .editor-toolbar button { background: #fff; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; }
+    .editor-toolbar button:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .editor-toolbar button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .editor-content { border: 1px solid #E2E8F0; border-radius: 0 0 8px 8px; min-height: 200px; padding: 15px; background: #fff; }
+    .editor-content:focus { outline: none; border-color: var(--primary); }
+    .priority-high { color: #DC2626; }
+    .priority-medium { color: #F97316; }
+    .priority-low { color: #10B981; }
+    .hidden { display: none !important; }
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; position: relative; }
+      .main-content { margin-left: 0; }
+    }
+  </style>
 </head>
-<body class="bg-gray-100">
-    <div id="app"></div>
+<body>
+  <!-- Login Screen -->
+  <div id="loginScreen" class="login-container">
+    <div class="login-card text-center">
+      <i class="bi bi-shield-lock-fill text-primary" style="font-size: 50px;"></i>
+      <h3 class="mt-3 mb-4">HTIC Admin</h3>
+      <form id="loginForm">
+        <div class="mb-3">
+          <input type="text" class="form-control form-control-lg" id="username" placeholder="Tên đăng nhập" required>
+        </div>
+        <div class="mb-4">
+          <input type="password" class="form-control form-control-lg" id="password" placeholder="Mật khẩu" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-100">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+        </button>
+      </form>
+      <p class="text-muted mt-3 mb-0" style="font-size: 12px;">Admin Dashboard v14.0</p>
+    </div>
+  </div>
 
-    <script>
-        const API_URL = '';
+  <!-- Main Admin -->
+  <div id="adminPanel" class="hidden">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <h4>⚖️ HTIC Admin</h4>
+        <small>Legal Calendar v14.0</small>
+      </div>
+      <ul class="nav flex-column">
+        <li class="nav-item"><a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2-fill"></i>Tổng quan</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-page="events"><i class="bi bi-calendar-event-fill"></i>Lịch pháp lý</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-page="news"><i class="bi bi-newspaper"></i>Tin tức</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-page="organizations"><i class="bi bi-building"></i>Cơ quan tra cứu</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-page="lawyers"><i class="bi bi-person-badge-fill"></i>Luật sư hỗ trợ</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-page="requests"><i class="bi bi-chat-left-text-fill"></i>Yêu cầu tư vấn<span id="pendingBadge" class="badge bg-danger rounded-pill ms-2">0</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-page="settings"><i class="bi bi-gear-fill"></i>Cài đặt App</a></li>
+        <li class="nav-item mt-4"><a class="nav-link text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-left"></i>Đăng xuất</a></li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Dashboard Page -->
+      <div id="page-dashboard" class="page-content">
+        <div class="page-header"><h2>📊 Tổng quan</h2></div>
+        <div class="row g-4 mb-4">
+          <div class="col-md-3">
+            <div class="stat-card events position-relative">
+              <i class="bi bi-calendar-event stat-icon"></i>
+              <div class="stat-value" id="statEvents">0</div>
+              <div class="stat-label">Lịch pháp lý</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card news position-relative">
+              <i class="bi bi-newspaper stat-icon"></i>
+              <div class="stat-value" id="statNews">0</div>
+              <div class="stat-label">Tin tức</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card orgs position-relative">
+              <i class="bi bi-building stat-icon"></i>
+              <div class="stat-value" id="statOrgs">0</div>
+              <div class="stat-label">Cơ quan</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card requests position-relative">
+              <i class="bi bi-chat-left-text stat-icon"></i>
+              <div class="stat-value" id="statRequests">0</div>
+              <div class="stat-label">Yêu cầu chờ xử lý</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h5>📌 Hướng dẫn sử dụng</h5></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-primary"><i class="bi bi-calendar-event me-2"></i>Lịch pháp lý</h6>
+                <p class="text-muted">Quản lý các nghĩa vụ pháp lý, deadline với đầy đủ thông tin: căn cứ pháp lý, mức phạt...</p>
+                <h6 class="text-success"><i class="bi bi-newspaper me-2"></i>Tin tức</h6>
+                <p class="text-muted">Đăng tin tức pháp luật với trình soạn thảo hỗ trợ định dạng văn bản.</p>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-warning"><i class="bi bi-building me-2"></i>Cơ quan tra cứu</h6>
+                <p class="text-muted">Danh sách cơ quan nhà nước, công ty luật, văn phòng công chứng...</p>
+                <h6 class="text-danger"><i class="bi bi-chat-left-text me-2"></i>Yêu cầu tư vấn</h6>
+                <p class="text-muted">Xử lý các yêu cầu tư vấn từ người dùng app.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Events Page -->
+      <div id="page-events" class="page-content hidden">
+        <div class="page-header d-flex justify-content-between align-items-center">
+          <h2>📅 Quản lý Lịch pháp lý</h2>
+          <button class="btn btn-primary" onclick="openEventModal()"><i class="bi bi-plus-lg me-2"></i>Thêm mới</button>
+        </div>
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Tiêu đề</th>
+                    <th>Danh mục</th>
+                    <th>Hạn nộp</th>
+                    <th>Ưu tiên</th>
+                    <th>Trạng thái</th>
+                    <th width="120">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="eventsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- News Page -->
+      <div id="page-news" class="page-content hidden">
+        <div class="page-header d-flex justify-content-between align-items-center">
+          <h2>📰 Quản lý Tin tức</h2>
+          <button class="btn btn-primary" onclick="openNewsModal()"><i class="bi bi-plus-lg me-2"></i>Thêm tin mới</button>
+        </div>
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Tiêu đề</th>
+                    <th>Danh mục</th>
+                    <th>Ngày đăng</th>
+                    <th>Nổi bật</th>
+                    <th>Trạng thái</th>
+                    <th width="120">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="newsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Organizations Page -->
+      <div id="page-organizations" class="page-content hidden">
+        <div class="page-header d-flex justify-content-between align-items-center">
+          <h2>🏢 Quản lý Cơ quan tra cứu</h2>
+          <button class="btn btn-primary" onclick="openOrgModal()"><i class="bi bi-plus-lg me-2"></i>Thêm mới</button>
+        </div>
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Tên cơ quan</th>
+                    <th>Loại</th>
+                    <th>Địa chỉ</th>
+                    <th>Điện thoại</th>
+                    <th>Trạng thái</th>
+                    <th width="120">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="orgsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lawyers Page -->
+      <div id="page-lawyers" class="page-content hidden">
+        <div class="page-header d-flex justify-content-between align-items-center">
+          <h2>👨‍⚖️ Quản lý Luật sư hỗ trợ</h2>
+          <button class="btn btn-primary" onclick="openLawyerModal()"><i class="bi bi-plus-lg me-2"></i>Thêm mới</button>
+        </div>
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Họ tên</th>
+                    <th>Chức danh</th>
+                    <th>Công ty</th>
+                    <th>Điện thoại</th>
+                    <th>Online</th>
+                    <th width="120">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="lawyersTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Support Requests Page -->
+      <div id="page-requests" class="page-content hidden">
+        <div class="page-header"><h2>💬 Yêu cầu tư vấn từ người dùng</h2></div>
+        <div class="card">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Họ tên</th>
+                    <th>Liên hệ</th>
+                    <th>Nội dung</th>
+                    <th>Ngày gửi</th>
+                    <th>Trạng thái</th>
+                    <th width="140">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody id="requestsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Page -->
+      <div id="page-settings" class="page-content hidden">
+        <div class="page-header"><h2>⚙️ Cài đặt ứng dụng</h2></div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header"><h5><i class="bi bi-app me-2"></i>Thông tin ứng dụng</h5></div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label">Tên ứng dụng</label>
+                  <input type="text" class="form-control" id="setting_app_name">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Phiên bản</label>
+                  <input type="text" class="form-control" id="setting_app_version">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">URL Logo (để trống nếu dùng mặc định)</label>
+                  <input type="text" class="form-control" id="setting_app_logo" placeholder="https://example.com/logo.png">
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h5><i class="bi bi-clock me-2"></i>Giờ làm việc</h5></div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label">Ngày làm việc</label>
+                  <input type="text" class="form-control" id="setting_working_days">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Giờ làm việc</label>
+                  <input type="text" class="form-control" id="setting_working_hours">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card mb-4">
+              <div class="card-header"><h5><i class="bi bi-building me-2"></i>Thông tin công ty</h5></div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label">Tên công ty</label>
+                  <input type="text" class="form-control" id="setting_company_name">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Slogan</label>
+                  <input type="text" class="form-control" id="setting_company_slogan">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Địa chỉ</label>
+                  <input type="text" class="form-control" id="setting_address">
+                </div>
+              </div>
+            </div>
+            <div class="card mb-4">
+              <div class="card-header"><h5><i class="bi bi-telephone me-2"></i>Thông tin liên hệ</h5></div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label">Hotline</label>
+                  <input type="text" class="form-control" id="setting_hotline">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Email liên hệ</label>
+                  <input type="email" class="form-control" id="setting_contact_email">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Link Zalo</label>
+                  <input type="text" class="form-control" id="setting_zalo_link">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Website</label>
+                  <input type="text" class="form-control" id="setting_website">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Facebook</label>
+                  <input type="text" class="form-control" id="setting_facebook">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-4">
+          <div class="card-header"><h5><i class="bi bi-info-circle me-2"></i>Giới thiệu công ty</h5></div>
+          <div class="card-body">
+            <textarea class="form-control" id="setting_about_content" rows="4"></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="saveSettings()"><i class="bi bi-save me-2"></i>Lưu cài đặt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Modal -->
+  <div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="eventModalTitle">Thêm lịch pháp lý</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="eventId">
+          <div class="row">
+            <div class="col-md-8 mb-3">
+              <label class="form-label">Tiêu đề *</label>
+              <input type="text" class="form-control" id="eventTitle" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Danh mục</label>
+              <select class="form-select" id="eventCategory">
+                <option value="tax">Thuế</option>
+                <option value="labor">Lao động</option>
+                <option value="insurance">Bảo hiểm</option>
+                <option value="finance">Tài chính</option>
+                <option value="investment">Đầu tư</option>
+                <option value="other">Khác</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Hạn nộp *</label>
+              <input type="date" class="form-control" id="eventDeadline" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Mức ưu tiên</label>
+              <select class="form-select" id="eventPriority">
+                <option value="high">Cao</option>
+                <option value="medium" selected>Trung bình</option>
+                <option value="low">Thấp</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Tần suất</label>
+              <select class="form-select" id="eventFrequency">
+                <option value="">Một lần</option>
+                <option value="monthly">Hàng tháng</option>
+                <option value="quarterly">Hàng quý</option>
+                <option value="yearly">Hàng năm</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mô tả chi tiết</label>
+            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Căn cứ pháp lý</label>
+            <input type="text" class="form-control" id="eventLegalBasis" placeholder="VD: Thông tư 80/2021/TT-BTC">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mức phạt vi phạm</label>
+            <textarea class="form-control" id="eventPenalty" rows="2" placeholder="VD: Phạt chậm nộp 0.03%/ngày"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Áp dụng cho</label>
+              <select class="form-select" id="eventAppliesTo">
+                <option value="business">Doanh nghiệp</option>
+                <option value="individual">Cá nhân</option>
+                <option value="both">Cả hai</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nhắc trước (ngày)</label>
+              <input type="number" class="form-control" id="eventReminderDays" value="7">
+            </div>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="eventActive" checked>
+            <label class="form-check-label" for="eventActive">Kích hoạt</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" onclick="saveEvent()"><i class="bi bi-save me-2"></i>Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- News Modal -->
+  <div class="modal fade" id="newsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newsModalTitle">Thêm tin tức</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="newsId">
+          <div class="row">
+            <div class="col-md-8 mb-3">
+              <label class="form-label">Tiêu đề *</label>
+              <input type="text" class="form-control" id="newsTitle" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Danh mục</label>
+              <select class="form-select" id="newsCategory">
+                <option value="tax">Thuế</option>
+                <option value="labor">Lao động</option>
+                <option value="insurance">Bảo hiểm</option>
+                <option value="investment">Đầu tư</option>
+                <option value="general">Tin chung</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tóm tắt</label>
+            <textarea class="form-control" id="newsSummary" rows="2"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nội dung chi tiết</label>
+            <div class="editor-toolbar">
+              <button type="button" onclick="formatText('bold')" title="In đậm"><i class="bi bi-type-bold"></i></button>
+              <button type="button" onclick="formatText('italic')" title="In nghiêng"><i class="bi bi-type-italic"></i></button>
+              <button type="button" onclick="formatText('underline')" title="Gạch dưới"><i class="bi bi-type-underline"></i></button>
+              <button type="button" onclick="formatText('strikeThrough')" title="Gạch ngang"><i class="bi bi-type-strikethrough"></i></button>
+              <span class="mx-2 border-start"></span>
+              <button type="button" onclick="formatText('insertUnorderedList')" title="Danh sách"><i class="bi bi-list-ul"></i></button>
+              <button type="button" onclick="formatText('insertOrderedList')" title="Danh sách số"><i class="bi bi-list-ol"></i></button>
+              <span class="mx-2 border-start"></span>
+              <button type="button" onclick="formatText('justifyLeft')" title="Căn trái"><i class="bi bi-text-left"></i></button>
+              <button type="button" onclick="formatText('justifyCenter')" title="Căn giữa"><i class="bi bi-text-center"></i></button>
+              <button type="button" onclick="formatText('justifyRight')" title="Căn phải"><i class="bi bi-text-right"></i></button>
+            </div>
+            <div class="editor-content" id="newsContent" contenteditable="true"></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">URL Hình ảnh</label>
+              <input type="text" class="form-control" id="newsImageUrl" placeholder="https://example.com/image.jpg">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Nguồn</label>
+              <input type="text" class="form-control" id="newsSource">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Ngày đăng</label>
+              <input type="datetime-local" class="form-control" id="newsPublishedAt">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="newsFeatured">
+                <label class="form-check-label" for="newsFeatured">Tin nổi bật</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="newsActive" checked>
+                <label class="form-check-label" for="newsActive">Kích hoạt</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" onclick="saveNews()"><i class="bi bi-save me-2"></i>Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Organization Modal -->
+  <div class="modal fade" id="orgModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="orgModalTitle">Thêm cơ quan</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="orgId">
+          <div class="row">
+            <div class="col-md-8 mb-3">
+              <label class="form-label">Tên cơ quan *</label>
+              <input type="text" class="form-control" id="orgName" required>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Loại cơ quan</label>
+              <select class="form-select" id="orgCategory">
+                <option value="government">Cơ quan nhà nước</option>
+                <option value="lawfirm">Công ty luật</option>
+                <option value="notary">Văn phòng công chứng</option>
+                <option value="bailiff">Thừa phát lại</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Loại chi tiết</label>
+              <select class="form-select" id="orgTypeId"></select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Tỉnh/Thành phố</label>
+              <select class="form-select" id="orgProvinceId"></select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Địa chỉ</label>
+            <input type="text" class="form-control" id="orgAddress">
+          </div>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Điện thoại</label>
+              <input type="text" class="form-control" id="orgPhone">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="orgEmail">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Website</label>
+              <input type="text" class="form-control" id="orgWebsite">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Giờ làm việc</label>
+            <input type="text" class="form-control" id="orgWorkingHours" placeholder="VD: 7:30 - 16:30">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mô tả / Dịch vụ</label>
+            <textarea class="form-control" id="orgDescription" rows="2"></textarea>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="orgActive" checked>
+            <label class="form-check-label" for="orgActive">Kích hoạt</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" onclick="saveOrg()"><i class="bi bi-save me-2"></i>Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lawyer Modal -->
+  <div class="modal fade" id="lawyerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="lawyerModalTitle">Thêm luật sư</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="lawyerId">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Họ tên *</label>
+              <input type="text" class="form-control" id="lawyerName" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Chức danh</label>
+              <input type="text" class="form-control" id="lawyerTitle" placeholder="VD: Luật sư điều hành">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Công ty</label>
+            <input type="text" class="form-control" id="lawyerCompany">
+          </div>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Điện thoại</label>
+              <input type="text" class="form-control" id="lawyerPhone">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Zalo</label>
+              <input type="text" class="form-control" id="lawyerZalo">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="lawyerEmail">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Giờ làm việc</label>
+              <input type="text" class="form-control" id="lawyerWorkingHours" placeholder="VD: 8:00 - 18:00">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Ngày làm việc</label>
+              <input type="text" class="form-control" id="lawyerWorkingDays" placeholder="VD: Thứ 2 - Thứ 6">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Chuyên môn</label>
+            <input type="text" class="form-control" id="lawyerSpecialization" placeholder="VD: Thuế, M&A, Lao động">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Giới thiệu</label>
+            <textarea class="form-control" id="lawyerBio" rows="2"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="lawyerOnline" checked>
+                <label class="form-check-label" for="lawyerOnline">Đang online</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="lawyerPrimary">
+                <label class="form-check-label" for="lawyerPrimary">Luật sư chính</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="lawyerActive" checked>
+                <label class="form-check-label" for="lawyerActive">Kích hoạt</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-primary" onclick="saveLawyer()"><i class="bi bi-save me-2"></i>Lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Request Detail Modal -->
+  <div class="modal fade" id="requestModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Chi tiết yêu cầu tư vấn</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="requestId">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label text-muted">Họ tên</label>
+              <p class="fw-bold" id="requestName"></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted">Công ty</label>
+              <p class="fw-bold" id="requestCompany"></p>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label text-muted">Điện thoại</label>
+              <p class="fw-bold" id="requestPhone"></p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-muted">Email</label>
+              <p class="fw-bold" id="requestEmail"></p>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted">Nội dung yêu cầu</label>
+            <div class="p-3 bg-light rounded" id="requestMessage"></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Trạng thái</label>
+              <select class="form-select" id="requestStatus">
+                <option value="pending">Chờ xử lý</option>
+                <option value="processing">Đang xử lý</option>
+                <option value="completed">Đã hoàn thành</option>
+                <option value="cancelled">Đã hủy</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Người xử lý</label>
+              <input type="text" class="form-control" id="requestAssignedTo">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Ghi chú nội bộ</label>
+            <textarea class="form-control" id="requestNotes" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="button" class="btn btn-primary" onclick="saveRequest()"><i class="bi bi-save me-2"></i>Cập nhật</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ═══════════════════════════════════════════════════════════════════════
+    // GLOBAL VARIABLES
+    // ═══════════════════════════════════════════════════════════════════════
+    let authHeader = '';
+    let orgTypes = [];
+    let provinces = [];
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // AUTHENTICATION
+    // ═══════════════════════════════════════════════════════════════════════
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      authHeader = 'Basic ' + btoa(username + ':' + password);
+      
+      try {
+        const res = await fetch('/api/admin/stats', { headers: { 'Authorization': authHeader } });
+        if (res.ok) {
+          document.getElementById('loginScreen').classList.add('hidden');
+          document.getElementById('adminPanel').classList.remove('hidden');
+          loadDashboard();
+          loadOrgTypes();
+          loadProvinces();
+        } else {
+          alert('Sai tên đăng nhập hoặc mật khẩu!');
+        }
+      } catch (err) {
+        alert('Lỗi kết nối server!');
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      authHeader = '';
+      document.getElementById('adminPanel').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ═══════════════════════════════════════════════════════════════════════
+    document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = link.dataset.page;
         
-        let state = {
-            isLoggedIn: false,
-            currentPage: 'dashboard',
-            user: null,
-            events: [],
-            news: [],
-            categories: [],
-            agencies: [],
-            provinces: [],
-            stats: {},
-            loading: false,
-            modal: { show: false, type: '', data: null }
-        };
-
-        // ═══════════════════════════════════════════════════════════════
-        // API FUNCTIONS
-        // ═══════════════════════════════════════════════════════════════
-        async function apiCall(endpoint, method = 'GET', data = null) {
-            const options = { method, headers: { 'Content-Type': 'application/json' } };
-            if (data) options.body = JSON.stringify(data);
-            try {
-                const res = await fetch(API_URL + endpoint, options);
-                return await res.json();
-            } catch (err) {
-                console.error('API Error:', err);
-                return { success: false, error: err.message };
-            }
-        }
-
-        async function login(username, password) {
-            const result = await apiCall('/api/admin/login', 'POST', { username, password });
-            if (result.success) {
-                state.isLoggedIn = true;
-                state.user = result.user;
-                localStorage.setItem('htic_admin', JSON.stringify({ username }));
-                await loadAllData();
-            }
-            return result;
-        }
-
-        function logout() {
-            state.isLoggedIn = false;
-            state.user = null;
-            localStorage.removeItem('htic_admin');
-            render();
-        }
-
-        async function loadAllData() {
-            state.loading = true;
-            render();
-            
-            const [events, news, categories, agencies, provinces, stats] = await Promise.all([
-                apiCall('/api/admin/events'),
-                apiCall('/api/admin/news'),
-                apiCall('/api/admin/categories'),
-                apiCall('/api/admin/agencies'),
-                apiCall('/api/admin/provinces'),
-                apiCall('/api/admin/stats')
-            ]);
-            
-            state.events = Array.isArray(events) ? events : [];
-            state.news = Array.isArray(news) ? news : [];
-            state.categories = Array.isArray(categories) ? categories : [];
-            state.agencies = Array.isArray(agencies) ? agencies : [];
-            state.provinces = Array.isArray(provinces) ? provinces : [];
-            state.stats = stats || {};
-            state.loading = false;
-            render();
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // CRUD FUNCTIONS
-        // ═══════════════════════════════════════════════════════════════
-        async function saveEvent(data) {
-            const endpoint = data.id && !data.id.startsWith('evt_') ? `/api/admin/events/${data.id}` : (data.originalId ? `/api/admin/events/${data.originalId}` : '/api/admin/events');
-            const method = data.originalId ? 'PUT' : 'POST';
-            delete data.originalId;
-            const result = await apiCall(endpoint, method, data);
-            if (result.success) { closeModal(); await loadAllData(); showToast('Lưu nghĩa vụ thành công!', 'success'); }
-            else showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
-        }
-
-        async function deleteEvent(id) {
-            if (!confirm('Bạn có chắc muốn xóa?')) return;
-            const result = await apiCall(`/api/admin/events/${id}`, 'DELETE');
-            if (result.success) { await loadAllData(); showToast('Đã xóa!', 'success'); }
-        }
-
-        async function saveNews(data) {
-            const endpoint = data.originalId ? `/api/admin/news/${data.originalId}` : '/api/admin/news';
-            const method = data.originalId ? 'PUT' : 'POST';
-            delete data.originalId;
-            const result = await apiCall(endpoint, method, data);
-            if (result.success) { closeModal(); await loadAllData(); showToast('Lưu tin tức thành công!', 'success'); }
-            else showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
-        }
-
-        async function deleteNews(id) {
-            if (!confirm('Bạn có chắc muốn xóa?')) return;
-            const result = await apiCall(`/api/admin/news/${id}`, 'DELETE');
-            if (result.success) { await loadAllData(); showToast('Đã xóa!', 'success'); }
-        }
-
-        async function saveCategory(data) {
-            const endpoint = data.isEdit ? `/api/admin/categories/${data.id}` : '/api/admin/categories';
-            const method = data.isEdit ? 'PUT' : 'POST';
-            delete data.isEdit;
-            const result = await apiCall(endpoint, method, data);
-            if (result.success) { closeModal(); await loadAllData(); showToast('Lưu thành công!', 'success'); }
-            else showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
-        }
-
-        async function deleteCategory(id) {
-            if (!confirm('Bạn có chắc muốn xóa?')) return;
-            const result = await apiCall(`/api/admin/categories/${id}`, 'DELETE');
-            if (result.success) { await loadAllData(); showToast('Đã xóa!', 'success'); }
-        }
-
-        async function saveAgency(data) {
-            const endpoint = data.isEdit ? `/api/admin/agencies/${data.id}` : '/api/admin/agencies';
-            const method = data.isEdit ? 'PUT' : 'POST';
-            delete data.isEdit;
-            const result = await apiCall(endpoint, method, data);
-            if (result.success) { closeModal(); await loadAllData(); showToast('Lưu thành công!', 'success'); }
-            else showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
-        }
-
-        async function deleteAgency(id) {
-            if (!confirm('Bạn có chắc muốn xóa?')) return;
-            const result = await apiCall(`/api/admin/agencies/${id}`, 'DELETE');
-            if (result.success) { await loadAllData(); showToast('Đã xóa!', 'success'); }
-        }
-
-        async function saveProvince(data) {
-            const endpoint = data.isEdit ? `/api/admin/provinces/${data.id}` : '/api/admin/provinces';
-            const method = data.isEdit ? 'PUT' : 'POST';
-            delete data.isEdit;
-            const result = await apiCall(endpoint, method, data);
-            if (result.success) { closeModal(); await loadAllData(); showToast('Lưu thành công!', 'success'); }
-            else showToast('Lỗi: ' + (result.message || 'Không thể lưu'), 'error');
-        }
-
-        async function deleteProvince(id) {
-            if (!confirm('Bạn có chắc muốn xóa?')) return;
-            const result = await apiCall(`/api/admin/provinces/${id}`, 'DELETE');
-            if (result.success) { await loadAllData(); showToast('Đã xóa!', 'success'); }
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // UI HELPERS
-        // ═══════════════════════════════════════════════════════════════
-        function showModal(type, data = null) { state.modal = { show: true, type, data }; render(); }
-        function closeModal() { state.modal = { show: false, type: '', data: null }; render(); }
-        function navigate(page) { state.currentPage = page; render(); }
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
         
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 fade-in ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+        document.getElementById('page-' + page).classList.remove('hidden');
+        
+        switch(page) {
+          case 'dashboard': loadDashboard(); break;
+          case 'events': loadEvents(); break;
+          case 'news': loadNews(); break;
+          case 'organizations': loadOrganizations(); break;
+          case 'lawyers': loadLawyers(); break;
+          case 'requests': loadRequests(); break;
+          case 'settings': loadSettings(); break;
         }
+      });
+    });
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            try {
-                const d = new Date(dateStr);
-                if (isNaN(d.getTime())) return dateStr;
-                return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            } catch { return dateStr; }
-        }
+    // ═══════════════════════════════════════════════════════════════════════
+    // API HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+    async function api(url, options = {}) {
+      const res = await fetch(url, {
+        ...options,
+        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json', ...options.headers }
+      });
+      return res.json();
+    }
 
-        function formatDateTimeLocal(dateStr) {
-            if (!dateStr) return '';
-            try {
-                const d = new Date(dateStr);
-                if (isNaN(d.getTime())) return '';
-                return d.toISOString().slice(0, 16);
-            } catch { return ''; }
-        }
+    // ═══════════════════════════════════════════════════════════════════════
+    // DASHBOARD
+    // ═══════════════════════════════════════════════════════════════════════
+    async function loadDashboard() {
+      const data = await api('/api/admin/stats');
+      if (data.success) {
+        document.getElementById('statEvents').textContent = data.data.events;
+        document.getElementById('statNews').textContent = data.data.news;
+        document.getElementById('statOrgs').textContent = data.data.organizations;
+        document.getElementById('statRequests').textContent = data.data.pendingRequests;
+        document.getElementById('pendingBadge').textContent = data.data.pendingRequests;
+      }
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // RENDER FUNCTIONS
-        // ═══════════════════════════════════════════════════════════════
-        function render() {
-            document.getElementById('app').innerHTML = state.isLoggedIn ? renderDashboard() : renderLogin();
-            attachEventListeners();
-        }
+    async function loadOrgTypes() {
+      const data = await api('/api/admin/org-types');
+      if (data.success) {
+        orgTypes = data.data;
+        updateOrgTypeSelect();
+      }
+    }
 
-        function renderLogin() {
-            return `
-                <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800">
-                    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md fade-in">
-                        <div class="text-center mb-8">
-                            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                </svg>
-                            </div>
-                            <h1 class="text-2xl font-bold text-gray-800">HTIC Legal Calendar</h1>
-                            <p class="text-gray-500 mt-2">Admin Dashboard v12.0</p>
-                        </div>
-                        <form id="loginForm" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Tài khoản</label>
-                                <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="admin" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
-                                <input type="password" id="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="••••••••" required>
-                            </div>
-                            <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-800">Đăng nhập</button>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
+    async function loadProvinces() {
+      const data = await api('/api/admin/provinces');
+      if (data.success) {
+        provinces = data.data;
+        updateProvinceSelect();
+      }
+    }
 
-        function renderDashboard() {
-            return `
-                <div class="flex h-screen">
-                    <div class="w-64 bg-white shadow-lg flex flex-col">
-                        <div class="p-6 border-b">
-                            <h1 class="text-xl font-bold text-gray-800">🏛️ HTIC Admin</h1>
-                            <p class="text-sm text-gray-500 mt-1">Legal Calendar v12.0</p>
-                        </div>
-                        <nav class="flex-1 p-4 space-y-1 custom-scrollbar overflow-y-auto">
-                            ${['dashboard|📊|Dashboard', 'events|📋|Nghĩa vụ pháp lý', 'news|📰|Tin tức', 'categories|🏷️|Danh mục', 'agencies|🏢|Cơ quan ban hành', 'provinces|📍|Tỉnh/Thành phố'].map(item => {
-                                const [page, icon, label] = item.split('|');
-                                return `<a href="#" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-100 ${state.currentPage === page ? 'active' : ''}" data-page="${page}">${icon} ${label}</a>`;
-                            }).join('')}
-                        </nav>
-                        <div class="p-4 border-t">
-                            <button id="logoutBtn" class="w-full py-2 text-red-600 hover:bg-red-50 rounded-lg">🚪 Đăng xuất</button>
-                        </div>
-                    </div>
-                    <div class="flex-1 overflow-auto bg-gray-100 custom-scrollbar">
-                        <div class="p-8">${renderCurrentPage()}</div>
-                    </div>
-                </div>
-                ${renderModal()}
-            `;
-        }
+    function updateOrgTypeSelect() {
+      const sel = document.getElementById('orgTypeId');
+      sel.innerHTML = '<option value="">-- Chọn loại --</option>' + 
+        orgTypes.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    }
 
-        function renderCurrentPage() {
-            if (state.loading) return `<div class="flex items-center justify-center h-64"><div class="text-gray-500">Đang tải...</div></div>`;
-            switch (state.currentPage) {
-                case 'dashboard': return renderDashboardPage();
-                case 'events': return renderEventsPage();
-                case 'news': return renderNewsPage();
-                case 'categories': return renderCategoriesPage();
-                case 'agencies': return renderAgenciesPage();
-                case 'provinces': return renderProvincesPage();
-                default: return renderDashboardPage();
-            }
-        }
+    function updateProvinceSelect() {
+      const sel = document.getElementById('orgProvinceId');
+      sel.innerHTML = '<option value="">-- Chọn tỉnh/TP --</option>' + 
+        provinces.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
 
-        function renderDashboardPage() {
-            const statCards = [
-                { label: 'Nghĩa vụ pháp lý', value: state.stats.events || 0, color: 'blue', icon: '📋' },
-                { label: 'Tin tức', value: state.stats.news || 0, color: 'green', icon: '📰' },
-                { label: 'Danh mục', value: state.stats.categories || 0, color: 'purple', icon: '🏷️' },
-                { label: 'Cơ quan', value: state.stats.agencies || 0, color: 'yellow', icon: '🏢' },
-                { label: 'Tỉnh/TP', value: state.stats.provinces || 0, color: 'pink', icon: '📍' }
-            ];
-            return `
-                <div class="fade-in">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                        ${statCards.map(s => `
-                            <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-${s.color}-500">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="text-gray-500 text-sm">${s.label}</div>
-                                        <div class="text-2xl font-bold text-gray-800 mt-1">${s.value}</div>
-                                    </div>
-                                    <div class="text-2xl">${s.icon}</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-white rounded-xl shadow-sm p-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">📌 Thông tin hệ thống</h3>
-                            <div class="space-y-3 text-gray-600">
-                                <p>✅ Server: <span class="text-green-600 font-medium">Railway (Online)</span></p>
-                                <p>✅ Database: <span class="text-green-600 font-medium">PostgreSQL</span></p>
-                                <p>✅ Version: <span class="font-medium">12.0 (Full Features)</span></p>
-                                <p>✅ API: <span class="text-green-600 font-medium">Hoạt động</span></p>
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-sm p-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">📱 Hướng dẫn</h3>
-                            <div class="space-y-2 text-gray-600 text-sm">
-                                <p>• <strong>Nghĩa vụ pháp lý:</strong> Quản lý các deadline, mức phạt, căn cứ pháp lý</p>
-                                <p>• <strong>Tin tức:</strong> Đăng tin tức pháp luật mới</p>
-                                <p>• <strong>Danh mục:</strong> Thuế, Bảo hiểm, Lao động...</p>
-                                <p>• <strong>Cơ quan:</strong> Bộ Tài chính, Tổng cục Thuế...</p>
-                                <p>• <strong>Tỉnh/TP:</strong> Phạm vi áp dụng địa phương</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+    // ═══════════════════════════════════════════════════════════════════════
+    // EVENTS
+    // ═══════════════════════════════════════════════════════════════════════
+    async function loadEvents() {
+      const data = await api('/api/admin/events');
+      const tbody = document.getElementById('eventsTable');
+      if (data.success) {
+        tbody.innerHTML = data.data.map(e => `
+          <tr>
+            <td><strong>${e.title}</strong></td>
+            <td><span class="category-badge" style="background: ${getCategoryColor(e.category)}20; color: ${getCategoryColor(e.category)}">${getCategoryName(e.category)}</span></td>
+            <td>${formatDate(e.deadline)}</td>
+            <td><span class="priority-${e.priority}">${getPriorityName(e.priority)}</span></td>
+            <td>${e.is_active ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-secondary">Tắt</span>'}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary btn-action" onclick="editEvent(${e.id})"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteEvent(${e.id})"><i class="bi bi-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // EVENTS PAGE
-        // ═══════════════════════════════════════════════════════════════
-        function renderEventsPage() {
-            return `
-                <div class="fade-in">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800">📋 Nghĩa vụ pháp lý</h2>
-                        <button id="addEventBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">+ Thêm mới</button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tiêu đề</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Danh mục</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Deadline</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Cơ quan</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ưu tiên</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Trạng thái</th>
-                                        <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Thao tác</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    ${state.events.length === 0 ? '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">Chưa có dữ liệu</td></tr>' : 
-                                    state.events.map(e => `
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-4 py-3"><div class="font-medium text-gray-800 max-w-xs truncate">${e.title || ''}</div></td>
-                                            <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">${e.category_name || e.category || '-'}</span></td>
-                                            <td class="px-4 py-3 text-gray-600 text-sm">${formatDate(e.deadline)}</td>
-                                            <td class="px-4 py-3 text-gray-600 text-sm">${e.agency_name || '-'}</td>
-                                            <td class="px-4 py-3">
-                                                <span class="px-2 py-1 text-xs rounded-full ${e.priority === 'high' ? 'bg-red-100 text-red-700' : e.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">${e.priority === 'high' ? 'Cao' : e.priority === 'medium' ? 'TB' : 'Thấp'}</span>
-                                            </td>
-                                            <td class="px-4 py-3">
-                                                <span class="px-2 py-1 text-xs rounded-full ${e.is_active !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">${e.is_active !== false ? 'Hoạt động' : 'Ẩn'}</span>
-                                            </td>
-                                            <td class="px-4 py-3 text-center">
-                                                <button class="edit-event-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${e.id}">✏️</button>
-                                                <button class="delete-event-btn text-red-600 hover:text-red-800" data-id="${e.id}">🗑️</button>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+    function openEventModal(id = null) {
+      document.getElementById('eventId').value = '';
+      document.getElementById('eventTitle').value = '';
+      document.getElementById('eventCategory').value = 'tax';
+      document.getElementById('eventDeadline').value = '';
+      document.getElementById('eventPriority').value = 'medium';
+      document.getElementById('eventFrequency').value = '';
+      document.getElementById('eventDescription').value = '';
+      document.getElementById('eventLegalBasis').value = '';
+      document.getElementById('eventPenalty').value = '';
+      document.getElementById('eventAppliesTo').value = 'business';
+      document.getElementById('eventReminderDays').value = '7';
+      document.getElementById('eventActive').checked = true;
+      document.getElementById('eventModalTitle').textContent = 'Thêm lịch pháp lý';
+      new bootstrap.Modal(document.getElementById('eventModal')).show();
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // NEWS PAGE
-        // ═══════════════════════════════════════════════════════════════
-        function renderNewsPage() {
-            return `
-                <div class="fade-in">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800">📰 Tin tức pháp luật</h2>
-                        <button id="addNewsBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">+ Thêm mới</button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tiêu đề</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Danh mục</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Ngày</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nguồn</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nổi bật</th>
-                                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                ${state.news.length === 0 ? '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">Chưa có dữ liệu</td></tr>' : 
-                                state.news.map(n => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3"><div class="font-medium text-gray-800 max-w-xs truncate">${n.title || ''}</div></td>
-                                        <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">${n.category_name || n.category || '-'}</span></td>
-                                        <td class="px-4 py-3 text-gray-600 text-sm">${formatDate(n.date)}</td>
-                                        <td class="px-4 py-3 text-gray-600 text-sm">${n.source || '-'}</td>
-                                        <td class="px-4 py-3">
-                                            <span class="px-2 py-1 text-xs rounded-full ${n.is_featured ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}">${n.is_featured ? '⭐ Có' : 'Không'}</span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <button class="edit-news-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${n.id}">✏️</button>
-                                            <button class="delete-news-btn text-red-600 hover:text-red-800" data-id="${n.id}">🗑️</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        }
+    async function editEvent(id) {
+      const data = await api('/api/admin/events');
+      const event = data.data.find(e => e.id === id);
+      if (event) {
+        document.getElementById('eventId').value = event.id;
+        document.getElementById('eventTitle').value = event.title || '';
+        document.getElementById('eventCategory').value = event.category || 'tax';
+        document.getElementById('eventDeadline').value = event.deadline?.split('T')[0] || '';
+        document.getElementById('eventPriority').value = event.priority || 'medium';
+        document.getElementById('eventFrequency').value = event.frequency || '';
+        document.getElementById('eventDescription').value = event.description || '';
+        document.getElementById('eventLegalBasis').value = event.legal_basis || '';
+        document.getElementById('eventPenalty').value = event.penalty || '';
+        document.getElementById('eventAppliesTo').value = event.applies_to || 'business';
+        document.getElementById('eventReminderDays').value = event.reminder_days || 7;
+        document.getElementById('eventActive').checked = event.is_active;
+        document.getElementById('eventModalTitle').textContent = 'Sửa lịch pháp lý';
+        new bootstrap.Modal(document.getElementById('eventModal')).show();
+      }
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // CATEGORIES PAGE
-        // ═══════════════════════════════════════════════════════════════
-        function renderCategoriesPage() {
-            return `
-                <div class="fade-in">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800">🏷️ Danh mục</h2>
-                        <button id="addCategoryBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">+ Thêm mới</button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        ${state.categories.map(c => `
-                            <div class="bg-white rounded-xl shadow-sm p-4 border-l-4" style="border-color: ${c.color || '#3b82f6'}">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: ${c.color || '#3b82f6'}20">
-                                            <span class="text-lg">🏷️</span>
-                                        </div>
-                                        <div>
-                                            <div class="font-semibold text-gray-800">${c.name}</div>
-                                            <div class="text-xs text-gray-500">ID: ${c.id}</div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <button class="edit-category-btn text-blue-600 hover:text-blue-800 mr-1" data-id="${c.id}" data-name="${c.name}" data-icon="${c.icon || ''}" data-color="${c.color || ''}">✏️</button>
-                                        <button class="delete-category-btn text-red-600 hover:text-red-800" data-id="${c.id}">🗑️</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
+    async function saveEvent() {
+      const id = document.getElementById('eventId').value;
+      const data = {
+        title: document.getElementById('eventTitle').value,
+        category: document.getElementById('eventCategory').value,
+        deadline: document.getElementById('eventDeadline').value,
+        priority: document.getElementById('eventPriority').value,
+        frequency: document.getElementById('eventFrequency').value,
+        description: document.getElementById('eventDescription').value,
+        legal_basis: document.getElementById('eventLegalBasis').value,
+        penalty: document.getElementById('eventPenalty').value,
+        applies_to: document.getElementById('eventAppliesTo').value,
+        reminder_days: parseInt(document.getElementById('eventReminderDays').value) || 7,
+        is_active: document.getElementById('eventActive').checked
+      };
+      
+      const url = id ? `/api/admin/events/${id}` : '/api/admin/events';
+      const method = id ? 'PUT' : 'POST';
+      await api(url, { method, body: JSON.stringify(data) });
+      bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+      loadEvents();
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // AGENCIES PAGE
-        // ═══════════════════════════════════════════════════════════════
-        function renderAgenciesPage() {
-            return `
-                <div class="fade-in">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800">🏢 Cơ quan ban hành</h2>
-                        <button id="addAgencyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">+ Thêm mới</button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ID</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tên cơ quan</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tên viết tắt</th>
-                                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                ${state.agencies.map(a => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 font-mono text-sm text-gray-600">${a.id}</td>
-                                        <td class="px-4 py-3 font-medium text-gray-800">${a.name}</td>
-                                        <td class="px-4 py-3 text-gray-600">${a.short_name || '-'}</td>
-                                        <td class="px-4 py-3 text-center">
-                                            <button class="edit-agency-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${a.id}" data-name="${a.name}" data-short="${a.short_name || ''}">✏️</button>
-                                            <button class="delete-agency-btn text-red-600 hover:text-red-800" data-id="${a.id}">🗑️</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        }
+    async function deleteEvent(id) {
+      if (confirm('Bạn có chắc muốn xóa?')) {
+        await api(`/api/admin/events/${id}`, { method: 'DELETE' });
+        loadEvents();
+      }
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // PROVINCES PAGE
-        // ═══════════════════════════════════════════════════════════════
-        function renderProvincesPage() {
-            return `
-                <div class="fade-in">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800">📍 Tỉnh/Thành phố</h2>
-                        <button id="addProvinceBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">+ Thêm mới</button>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <table class="w-full">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">ID</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Tên tỉnh/TP</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Vùng miền</th>
-                                    <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                ${state.provinces.map(p => `
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 font-mono text-sm text-gray-600">${p.id}</td>
-                                        <td class="px-4 py-3 font-medium text-gray-800">${p.name}</td>
-                                        <td class="px-4 py-3 text-gray-600">${p.region === 'north' ? 'Miền Bắc' : p.region === 'central' ? 'Miền Trung' : p.region === 'south' ? 'Miền Nam' : p.region || '-'}</td>
-                                        <td class="px-4 py-3 text-center">
-                                            <button class="edit-province-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${p.id}" data-name="${p.name}" data-region="${p.region || ''}">✏️</button>
-                                            <button class="delete-province-btn text-red-600 hover:text-red-800" data-id="${p.id}">🗑️</button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        }
+    // ═══════════════════════════════════════════════════════════════════════
+    // NEWS
+    // ═══════════════════════════════════════════════════════════════════════
+    async function loadNews() {
+      const data = await api('/api/admin/news');
+      const tbody = document.getElementById('newsTable');
+      if (data.success) {
+        tbody.innerHTML = data.data.map(n => `
+          <tr>
+            <td><strong>${n.title}</strong></td>
+            <td><span class="category-badge" style="background: ${getCategoryColor(n.category)}20; color: ${getCategoryColor(n.category)}">${getCategoryName(n.category)}</span></td>
+            <td>${formatDateTime(n.published_at)}</td>
+            <td>${n.is_featured ? '<i class="bi bi-star-fill text-warning"></i>' : ''}</td>
+            <td>${n.is_active ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-secondary">Tắt</span>'}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary btn-action" onclick="editNews(${n.id})"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteNews(${n.id})"><i class="bi bi-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // MODAL RENDER
-        // ═══════════════════════════════════════════════════════════════
-        function renderModal() {
-            if (!state.modal.show) return '';
-            let content = '';
-            switch (state.modal.type) {
-                case 'event': content = renderEventForm(state.modal.data); break;
-                case 'news': content = renderNewsForm(state.modal.data); break;
-                case 'category': content = renderCategoryForm(state.modal.data); break;
-                case 'agency': content = renderAgencyForm(state.modal.data); break;
-                case 'province': content = renderProvinceForm(state.modal.data); break;
-            }
-            return `<div class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto fade-in custom-scrollbar">${content}</div></div>`;
-        }
+    function openNewsModal() {
+      document.getElementById('newsId').value = '';
+      document.getElementById('newsTitle').value = '';
+      document.getElementById('newsCategory').value = 'general';
+      document.getElementById('newsSummary').value = '';
+      document.getElementById('newsContent').innerHTML = '';
+      document.getElementById('newsImageUrl').value = '';
+      document.getElementById('newsSource').value = '';
+      document.getElementById('newsPublishedAt').value = new Date().toISOString().slice(0, 16);
+      document.getElementById('newsFeatured').checked = false;
+      document.getElementById('newsActive').checked = true;
+      document.getElementById('newsModalTitle').textContent = 'Thêm tin tức';
+      new bootstrap.Modal(document.getElementById('newsModal')).show();
+    }
 
-        function renderEventForm(data) {
-            const isEdit = !!data;
-            return `
-                <div class="p-6 border-b bg-gradient-to-r from-blue-50 to-white">
-                    <h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Nghĩa vụ pháp lý</h3>
-                </div>
-                <form id="eventForm" class="p-6 space-y-4">
-                    <input type="hidden" name="originalId" value="${data?.id || ''}">
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề <span class="text-red-500">*</span></label>
-                        <input type="text" name="title" value="${data?.title || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả chi tiết</label>
-                        <textarea name="description" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.description || ''}</textarea>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Danh mục</label>
-                            <select name="category" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">-- Chọn danh mục --</option>
-                                ${state.categories.map(c => `<option value="${c.id}" ${data?.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
-                            <input type="datetime-local" name="deadline" value="${formatDateTimeLocal(data?.deadline)}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tần suất</label>
-                            <select name="frequency" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">-- Chọn --</option>
-                                <option value="Hàng tháng" ${data?.frequency === 'Hàng tháng' ? 'selected' : ''}>Hàng tháng</option>
-                                <option value="Hàng quý" ${data?.frequency === 'Hàng quý' ? 'selected' : ''}>Hàng quý</option>
-                                <option value="6 tháng/lần" ${data?.frequency === '6 tháng/lần' ? 'selected' : ''}>6 tháng/lần</option>
-                                <option value="Hàng năm" ${data?.frequency === 'Hàng năm' ? 'selected' : ''}>Hàng năm</option>
-                                <option value="Một lần" ${data?.frequency === 'Một lần' ? 'selected' : ''}>Một lần</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Cơ quan ban hành</label>
-                            <select name="agency_id" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">-- Chọn cơ quan --</option>
-                                ${state.agencies.map(a => `<option value="${a.id}" ${data?.agency_id === a.id ? 'selected' : ''}>${a.name}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Căn cứ pháp lý</label>
-                        <textarea name="legal_basis" rows="2" placeholder="VD: Thông tư 80/2021/TT-BTC, Nghị định 145/2020/NĐ-CP" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.legal_basis || ''}</textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mức phạt vi phạm</label>
-                        <textarea name="penalty" rows="2" placeholder="VD: Phạt từ 5-10 triệu đồng, phạt chậm nộp 0.03%/ngày" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.penalty || ''}</textarea>
-                    </div>
-                    
-                    <div class="grid grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Áp dụng cho</label>
-                            <select name="applies_to" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="all" ${data?.applies_to === 'all' ? 'selected' : ''}>Tất cả</option>
-                                <option value="business" ${data?.applies_to === 'business' ? 'selected' : ''}>Doanh nghiệp</option>
-                                <option value="individual" ${data?.applies_to === 'individual' ? 'selected' : ''}>Cá nhân</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Mức độ ưu tiên</label>
-                            <select name="priority" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="low" ${data?.priority === 'low' ? 'selected' : ''}>Thấp</option>
-                                <option value="medium" ${data?.priority === 'medium' || !data?.priority ? 'selected' : ''}>Trung bình</option>
-                                <option value="high" ${data?.priority === 'high' ? 'selected' : ''}>Cao</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nhắc trước (ngày)</label>
-                            <input type="number" name="reminder_days" value="${data?.reminder_days || 7}" min="1" max="30" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Tỉnh/TP áp dụng</label>
-                            <select name="province_id" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">-- Toàn quốc --</option>
-                                ${state.provinces.map(p => `<option value="${p.id}" ${data?.province_id === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="flex items-center pt-6">
-                            <label class="flex items-center cursor-pointer">
-                                <input type="checkbox" name="is_active" ${data?.is_active !== false ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-                                <span class="ml-2 text-sm text-gray-700">Đang hoạt động</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-end gap-3 pt-4 border-t">
-                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
-                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">💾 Lưu</button>
-                    </div>
-                </form>
-            `;
-        }
+    async function editNews(id) {
+      const data = await api('/api/admin/news');
+      const news = data.data.find(n => n.id === id);
+      if (news) {
+        document.getElementById('newsId').value = news.id;
+        document.getElementById('newsTitle').value = news.title || '';
+        document.getElementById('newsCategory').value = news.category || 'general';
+        document.getElementById('newsSummary').value = news.summary || '';
+        document.getElementById('newsContent').innerHTML = news.content || '';
+        document.getElementById('newsImageUrl').value = news.image_url || '';
+        document.getElementById('newsSource').value = news.source || '';
+        document.getElementById('newsPublishedAt').value = news.published_at?.slice(0, 16) || '';
+        document.getElementById('newsFeatured').checked = news.is_featured;
+        document.getElementById('newsActive').checked = news.is_active;
+        document.getElementById('newsModalTitle').textContent = 'Sửa tin tức';
+        new bootstrap.Modal(document.getElementById('newsModal')).show();
+      }
+    }
 
-        function renderNewsForm(data) {
-            const isEdit = !!data;
-            return `
-                <div class="p-6 border-b bg-gradient-to-r from-purple-50 to-white">
-                    <h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Tin tức</h3>
-                </div>
-                <form id="newsForm" class="p-6 space-y-4">
-                    <input type="hidden" name="originalId" value="${data?.id || ''}">
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tiêu đề <span class="text-red-500">*</span></label>
-                        <input type="text" name="title" value="${data?.title || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tóm tắt</label>
-                        <textarea name="summary" rows="2" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.summary || ''}</textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung chi tiết</label>
-                        <textarea name="content" rows="4" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">${data?.content || ''}</textarea>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Danh mục</label>
-                            <select name="category" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">-- Chọn danh mục --</option>
-                                ${state.categories.map(c => `<option value="${c.id}" ${data?.category === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Ngày đăng</label>
-                            <input type="datetime-local" name="date" value="${formatDateTimeLocal(data?.date) || formatDateTimeLocal(new Date().toISOString())}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Nguồn tin</label>
-                            <input type="text" name="source" value="${data?.source || ''}" placeholder="VD: Bộ Tài chính, Tổng cục Thuế" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Link nguồn</label>
-                            <input type="url" name="source_url" value="${data?.source_url || ''}" placeholder="https://..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Link hình ảnh</label>
-                        <input type="url" name="image_url" value="${data?.image_url || ''}" placeholder="https://..." class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    
-                    <div class="flex items-center gap-6">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" name="is_featured" ${data?.is_featured ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-                            <span class="ml-2 text-sm text-gray-700">⭐ Tin nổi bật</span>
-                        </label>
-                        <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" name="is_active" ${data?.is_active !== false ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
-                            <span class="ml-2 text-sm text-gray-700">Đang hiển thị</span>
-                        </label>
-                    </div>
-                    
-                    <div class="flex justify-end gap-3 pt-4 border-t">
-                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
-                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">💾 Lưu</button>
-                    </div>
-                </form>
-            `;
-        }
+    async function saveNews() {
+      const id = document.getElementById('newsId').value;
+      const data = {
+        title: document.getElementById('newsTitle').value,
+        category: document.getElementById('newsCategory').value,
+        summary: document.getElementById('newsSummary').value,
+        content: document.getElementById('newsContent').innerHTML,
+        image_url: document.getElementById('newsImageUrl').value,
+        source: document.getElementById('newsSource').value,
+        published_at: document.getElementById('newsPublishedAt').value,
+        is_featured: document.getElementById('newsFeatured').checked,
+        is_active: document.getElementById('newsActive').checked
+      };
+      
+      const url = id ? `/api/admin/news/${id}` : '/api/admin/news';
+      const method = id ? 'PUT' : 'POST';
+      await api(url, { method, body: JSON.stringify(data) });
+      bootstrap.Modal.getInstance(document.getElementById('newsModal')).hide();
+      loadNews();
+    }
 
-        function renderCategoryForm(data) {
-            const isEdit = !!data;
-            return `
-                <div class="p-6 border-b"><h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Danh mục</h3></div>
-                <form id="categoryForm" class="p-6 space-y-4">
-                    <input type="hidden" name="id" value="${data?.id || ''}">
-                    <input type="hidden" name="isEdit" value="${isEdit}">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên danh mục <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" value="${data?.name || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Icon</label>
-                            <input type="text" name="icon" value="${data?.icon || ''}" placeholder="VD: receipt_long" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Màu sắc</label>
-                            <input type="color" name="color" value="${data?.color || '#3b82f6'}" class="w-full h-10 border rounded-lg cursor-pointer">
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-3 pt-4 border-t">
-                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
-                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">💾 Lưu</button>
-                    </div>
-                </form>
-            `;
-        }
+    async function deleteNews(id) {
+      if (confirm('Bạn có chắc muốn xóa?')) {
+        await api(`/api/admin/news/${id}`, { method: 'DELETE' });
+        loadNews();
+      }
+    }
 
-        function renderAgencyForm(data) {
-            const isEdit = !!data;
-            return `
-                <div class="p-6 border-b"><h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Cơ quan ban hành</h3></div>
-                <form id="agencyForm" class="p-6 space-y-4">
-                    <input type="hidden" name="id" value="${data?.id || ''}">
-                    <input type="hidden" name="isEdit" value="${isEdit}">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên cơ quan <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" value="${data?.name || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên viết tắt</label>
-                        <input type="text" name="short_name" value="${data?.short_name || ''}" placeholder="VD: BTC, BHXH" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div class="flex justify-end gap-3 pt-4 border-t">
-                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
-                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">💾 Lưu</button>
-                    </div>
-                </form>
-            `;
-        }
+    function formatText(command) {
+      document.execCommand(command, false, null);
+      document.getElementById('newsContent').focus();
+    }
 
-        function renderProvinceForm(data) {
-            const isEdit = !!data;
-            return `
-                <div class="p-6 border-b"><h3 class="text-xl font-bold text-gray-800">${isEdit ? '✏️ Sửa' : '➕ Thêm'} Tỉnh/Thành phố</h3></div>
-                <form id="provinceForm" class="p-6 space-y-4">
-                    <input type="hidden" name="id" value="${data?.id || ''}">
-                    <input type="hidden" name="isEdit" value="${isEdit}">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên tỉnh/TP <span class="text-red-500">*</span></label>
-                        <input type="text" name="name" value="${data?.name || ''}" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Vùng miền</label>
-                        <select name="region" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">-- Chọn --</option>
-                            <option value="north" ${data?.region === 'north' ? 'selected' : ''}>Miền Bắc</option>
-                            <option value="central" ${data?.region === 'central' ? 'selected' : ''}>Miền Trung</option>
-                            <option value="south" ${data?.region === 'south' ? 'selected' : ''}>Miền Nam</option>
-                            <option value="all" ${data?.region === 'all' ? 'selected' : ''}>Toàn quốc</option>
-                        </select>
-                    </div>
-                    <div class="flex justify-end gap-3 pt-4 border-t">
-                        <button type="button" id="cancelModalBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Hủy</button>
-                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">💾 Lưu</button>
-                    </div>
-                </form>
-            `;
-        }
+    // ═══════════════════════════════════════════════════════════════════════
+    // ORGANIZATIONS
+    // ═══════════════════════════════════════════════════════════════════════
+    async function loadOrganizations() {
+      const data = await api('/api/admin/organizations');
+      const tbody = document.getElementById('orgsTable');
+      if (data.success) {
+        tbody.innerHTML = data.data.map(o => `
+          <tr>
+            <td><strong>${o.name}</strong></td>
+            <td><span class="badge bg-info">${o.type_name || getOrgCategoryName(o.category)}</span></td>
+            <td>${o.address || '-'}</td>
+            <td>${o.phone || '-'}</td>
+            <td>${o.is_active ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-secondary">Tắt</span>'}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary btn-action" onclick="editOrg(${o.id})"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteOrg(${o.id})"><i class="bi bi-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // EVENT LISTENERS
-        // ═══════════════════════════════════════════════════════════════
-        function attachEventListeners() {
-            document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const result = await login(document.getElementById('username').value, document.getElementById('password').value);
-                if (!result.success) showToast(result.message || 'Đăng nhập thất bại', 'error');
-            });
+    function openOrgModal() {
+      document.getElementById('orgId').value = '';
+      document.getElementById('orgName').value = '';
+      document.getElementById('orgCategory').value = 'government';
+      document.getElementById('orgTypeId').value = '';
+      document.getElementById('orgProvinceId').value = '';
+      document.getElementById('orgAddress').value = '';
+      document.getElementById('orgPhone').value = '';
+      document.getElementById('orgEmail').value = '';
+      document.getElementById('orgWebsite').value = '';
+      document.getElementById('orgWorkingHours').value = '';
+      document.getElementById('orgDescription').value = '';
+      document.getElementById('orgActive').checked = true;
+      document.getElementById('orgModalTitle').textContent = 'Thêm cơ quan';
+      new bootstrap.Modal(document.getElementById('orgModal')).show();
+    }
 
-            document.getElementById('logoutBtn')?.addEventListener('click', logout);
-            document.querySelectorAll('.sidebar-link').forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); navigate(e.currentTarget.dataset.page); }));
+    async function editOrg(id) {
+      const data = await api('/api/admin/organizations');
+      const org = data.data.find(o => o.id === id);
+      if (org) {
+        document.getElementById('orgId').value = org.id;
+        document.getElementById('orgName').value = org.name || '';
+        document.getElementById('orgCategory').value = org.category || 'government';
+        document.getElementById('orgTypeId').value = org.type_id || '';
+        document.getElementById('orgProvinceId').value = org.province_id || '';
+        document.getElementById('orgAddress').value = org.address || '';
+        document.getElementById('orgPhone').value = org.phone || '';
+        document.getElementById('orgEmail').value = org.email || '';
+        document.getElementById('orgWebsite').value = org.website || '';
+        document.getElementById('orgWorkingHours').value = org.working_hours || '';
+        document.getElementById('orgDescription').value = org.description || '';
+        document.getElementById('orgActive').checked = org.is_active;
+        document.getElementById('orgModalTitle').textContent = 'Sửa cơ quan';
+        new bootstrap.Modal(document.getElementById('orgModal')).show();
+      }
+    }
 
-            // Add buttons
-            document.getElementById('addEventBtn')?.addEventListener('click', () => showModal('event'));
-            document.getElementById('addNewsBtn')?.addEventListener('click', () => showModal('news'));
-            document.getElementById('addCategoryBtn')?.addEventListener('click', () => showModal('category'));
-            document.getElementById('addAgencyBtn')?.addEventListener('click', () => showModal('agency'));
-            document.getElementById('addProvinceBtn')?.addEventListener('click', () => showModal('province'));
+    async function saveOrg() {
+      const id = document.getElementById('orgId').value;
+      const data = {
+        name: document.getElementById('orgName').value,
+        category: document.getElementById('orgCategory').value,
+        type_id: document.getElementById('orgTypeId').value || null,
+        province_id: document.getElementById('orgProvinceId').value || null,
+        address: document.getElementById('orgAddress').value,
+        phone: document.getElementById('orgPhone').value,
+        email: document.getElementById('orgEmail').value,
+        website: document.getElementById('orgWebsite').value,
+        working_hours: document.getElementById('orgWorkingHours').value,
+        description: document.getElementById('orgDescription').value,
+        is_active: document.getElementById('orgActive').checked
+      };
+      
+      const url = id ? `/api/admin/organizations/${id}` : '/api/admin/organizations';
+      const method = id ? 'PUT' : 'POST';
+      await api(url, { method, body: JSON.stringify(data) });
+      bootstrap.Modal.getInstance(document.getElementById('orgModal')).hide();
+      loadOrganizations();
+    }
 
-            // Edit/Delete Events
-            document.querySelectorAll('.edit-event-btn').forEach(btn => btn.addEventListener('click', () => showModal('event', state.events.find(e => e.id === btn.dataset.id))));
-            document.querySelectorAll('.delete-event-btn').forEach(btn => btn.addEventListener('click', () => deleteEvent(btn.dataset.id)));
+    async function deleteOrg(id) {
+      if (confirm('Bạn có chắc muốn xóa?')) {
+        await api(`/api/admin/organizations/${id}`, { method: 'DELETE' });
+        loadOrganizations();
+      }
+    }
 
-            // Edit/Delete News
-            document.querySelectorAll('.edit-news-btn').forEach(btn => btn.addEventListener('click', () => showModal('news', state.news.find(n => n.id === btn.dataset.id))));
-            document.querySelectorAll('.delete-news-btn').forEach(btn => btn.addEventListener('click', () => deleteNews(btn.dataset.id)));
+    // ═══════════════════════════════════════════════════════════════════════
+    // LAWYERS
+    // ═══════════════════════════════════════════════════════════════════════
+    async function loadLawyers() {
+      const data = await api('/api/admin/lawyers');
+      const tbody = document.getElementById('lawyersTable');
+      if (data.success) {
+        tbody.innerHTML = data.data.map(l => `
+          <tr>
+            <td><strong>${l.name}</strong>${l.is_primary ? ' <span class="badge bg-warning">Chính</span>' : ''}</td>
+            <td>${l.title || '-'}</td>
+            <td>${l.company || '-'}</td>
+            <td>${l.phone || '-'}</td>
+            <td>${l.is_online ? '<span class="badge bg-success">Online</span>' : '<span class="badge bg-secondary">Offline</span>'}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary btn-action" onclick="editLawyer(${l.id})"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteLawyer(${l.id})"><i class="bi bi-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
 
-            // Edit/Delete Categories
-            document.querySelectorAll('.edit-category-btn').forEach(btn => btn.addEventListener('click', () => showModal('category', { id: btn.dataset.id, name: btn.dataset.name, icon: btn.dataset.icon, color: btn.dataset.color })));
-            document.querySelectorAll('.delete-category-btn').forEach(btn => btn.addEventListener('click', () => deleteCategory(btn.dataset.id)));
+    function openLawyerModal() {
+      document.getElementById('lawyerId').value = '';
+      document.getElementById('lawyerName').value = '';
+      document.getElementById('lawyerTitle').value = '';
+      document.getElementById('lawyerCompany').value = '';
+      document.getElementById('lawyerPhone').value = '';
+      document.getElementById('lawyerZalo').value = '';
+      document.getElementById('lawyerEmail').value = '';
+      document.getElementById('lawyerWorkingHours').value = '';
+      document.getElementById('lawyerWorkingDays').value = '';
+      document.getElementById('lawyerSpecialization').value = '';
+      document.getElementById('lawyerBio').value = '';
+      document.getElementById('lawyerOnline').checked = true;
+      document.getElementById('lawyerPrimary').checked = false;
+      document.getElementById('lawyerActive').checked = true;
+      document.getElementById('lawyerModalTitle').textContent = 'Thêm luật sư';
+      new bootstrap.Modal(document.getElementById('lawyerModal')).show();
+    }
 
-            // Edit/Delete Agencies
-            document.querySelectorAll('.edit-agency-btn').forEach(btn => btn.addEventListener('click', () => showModal('agency', { id: btn.dataset.id, name: btn.dataset.name, short_name: btn.dataset.short })));
-            document.querySelectorAll('.delete-agency-btn').forEach(btn => btn.addEventListener('click', () => deleteAgency(btn.dataset.id)));
+    async function editLawyer(id) {
+      const data = await api('/api/admin/lawyers');
+      const lawyer = data.data.find(l => l.id === id);
+      if (lawyer) {
+        document.getElementById('lawyerId').value = lawyer.id;
+        document.getElementById('lawyerName').value = lawyer.name || '';
+        document.getElementById('lawyerTitle').value = lawyer.title || '';
+        document.getElementById('lawyerCompany').value = lawyer.company || '';
+        document.getElementById('lawyerPhone').value = lawyer.phone || '';
+        document.getElementById('lawyerZalo').value = lawyer.zalo || '';
+        document.getElementById('lawyerEmail').value = lawyer.email || '';
+        document.getElementById('lawyerWorkingHours').value = lawyer.working_hours || '';
+        document.getElementById('lawyerWorkingDays').value = lawyer.working_days || '';
+        document.getElementById('lawyerSpecialization').value = lawyer.specialization || '';
+        document.getElementById('lawyerBio').value = lawyer.bio || '';
+        document.getElementById('lawyerOnline').checked = lawyer.is_online;
+        document.getElementById('lawyerPrimary').checked = lawyer.is_primary;
+        document.getElementById('lawyerActive').checked = lawyer.is_active;
+        document.getElementById('lawyerModalTitle').textContent = 'Sửa luật sư';
+        new bootstrap.Modal(document.getElementById('lawyerModal')).show();
+      }
+    }
 
-            // Edit/Delete Provinces
-            document.querySelectorAll('.edit-province-btn').forEach(btn => btn.addEventListener('click', () => showModal('province', { id: btn.dataset.id, name: btn.dataset.name, region: btn.dataset.region })));
-            document.querySelectorAll('.delete-province-btn').forEach(btn => btn.addEventListener('click', () => deleteProvince(btn.dataset.id)));
+    async function saveLawyer() {
+      const id = document.getElementById('lawyerId').value;
+      const data = {
+        name: document.getElementById('lawyerName').value,
+        title: document.getElementById('lawyerTitle').value,
+        company: document.getElementById('lawyerCompany').value,
+        phone: document.getElementById('lawyerPhone').value,
+        zalo: document.getElementById('lawyerZalo').value,
+        email: document.getElementById('lawyerEmail').value,
+        working_hours: document.getElementById('lawyerWorkingHours').value,
+        working_days: document.getElementById('lawyerWorkingDays').value,
+        specialization: document.getElementById('lawyerSpecialization').value,
+        bio: document.getElementById('lawyerBio').value,
+        is_online: document.getElementById('lawyerOnline').checked,
+        is_primary: document.getElementById('lawyerPrimary').checked,
+        is_active: document.getElementById('lawyerActive').checked
+      };
+      
+      const url = id ? `/api/admin/lawyers/${id}` : '/api/admin/lawyers';
+      const method = id ? 'PUT' : 'POST';
+      await api(url, { method, body: JSON.stringify(data) });
+      bootstrap.Modal.getInstance(document.getElementById('lawyerModal')).hide();
+      loadLawyers();
+    }
 
-            // Modal cancel
-            document.getElementById('cancelModalBtn')?.addEventListener('click', closeModal);
+    async function deleteLawyer(id) {
+      if (confirm('Bạn có chắc muốn xóa?')) {
+        await api(`/api/admin/lawyers/${id}`, { method: 'DELETE' });
+        loadLawyers();
+      }
+    }
 
-            // Forms
-            document.getElementById('eventForm')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                const data = Object.fromEntries(fd);
-                data.is_active = fd.get('is_active') === 'on';
-                saveEvent(data);
-            });
+    // ═══════════════════════════════════════════════════════════════════════
+    // SUPPORT REQUESTS
+    // ═══════════════════════════════════════════════════════════════════════
+    async function loadRequests() {
+      const data = await api('/api/admin/support-requests');
+      const tbody = document.getElementById('requestsTable');
+      if (data.success) {
+        tbody.innerHTML = data.data.map(r => `
+          <tr>
+            <td><strong>${r.name}</strong></td>
+            <td>${r.phone || '-'}<br><small class="text-muted">${r.email || ''}</small></td>
+            <td><small>${(r.message || '').substring(0, 60)}...</small></td>
+            <td>${formatDateTime(r.created_at)}</td>
+            <td><span class="status-badge status-${r.status}">${getStatusName(r.status)}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary btn-action" onclick="viewRequest(${r.id})"><i class="bi bi-eye"></i></button>
+              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteRequest(${r.id})"><i class="bi bi-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
 
-            document.getElementById('newsForm')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                const data = Object.fromEntries(fd);
-                data.is_featured = fd.get('is_featured') === 'on';
-                data.is_active = fd.get('is_active') === 'on';
-                saveNews(data);
-            });
+    async function viewRequest(id) {
+      const data = await api('/api/admin/support-requests');
+      const req = data.data.find(r => r.id === id);
+      if (req) {
+        document.getElementById('requestId').value = req.id;
+        document.getElementById('requestName').textContent = req.name || '-';
+        document.getElementById('requestCompany').textContent = req.company || '-';
+        document.getElementById('requestPhone').textContent = req.phone || '-';
+        document.getElementById('requestEmail').textContent = req.email || '-';
+        document.getElementById('requestMessage').textContent = req.message || '-';
+        document.getElementById('requestStatus').value = req.status || 'pending';
+        document.getElementById('requestAssignedTo').value = req.assigned_to || '';
+        document.getElementById('requestNotes').value = req.notes || '';
+        new bootstrap.Modal(document.getElementById('requestModal')).show();
+      }
+    }
 
-            document.getElementById('categoryForm')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                const data = Object.fromEntries(fd);
-                data.isEdit = data.isEdit === 'true';
-                saveCategory(data);
-            });
+    async function saveRequest() {
+      const id = document.getElementById('requestId').value;
+      const data = {
+        status: document.getElementById('requestStatus').value,
+        assigned_to: document.getElementById('requestAssignedTo').value,
+        notes: document.getElementById('requestNotes').value
+      };
+      
+      await api(`/api/admin/support-requests/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+      bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
+      loadRequests();
+      loadDashboard();
+    }
 
-            document.getElementById('agencyForm')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                const data = Object.fromEntries(fd);
-                data.isEdit = data.isEdit === 'true';
-                saveAgency(data);
-            });
+    async function deleteRequest(id) {
+      if (confirm('Bạn có chắc muốn xóa?')) {
+        await api(`/api/admin/support-requests/${id}`, { method: 'DELETE' });
+        loadRequests();
+        loadDashboard();
+      }
+    }
 
-            document.getElementById('provinceForm')?.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                const data = Object.fromEntries(fd);
-                data.isEdit = data.isEdit === 'true';
-                saveProvince(data);
-            });
-        }
+    // ═══════════════════════════════════════════════════════════════════════
+    // SETTINGS
+    // ═══════════════════════════════════════════════════════════════════════
+    async function loadSettings() {
+      const data = await api('/api/admin/settings');
+      if (data.success) {
+        data.data.forEach(s => {
+          const el = document.getElementById('setting_' + s.key);
+          if (el) el.value = s.value || '';
+        });
+      }
+    }
 
-        // ═══════════════════════════════════════════════════════════════
-        // INITIALIZE
-        // ═══════════════════════════════════════════════════════════════
-        async function init() {
-            const saved = localStorage.getItem('htic_admin');
-            if (saved) {
-                state.isLoggedIn = true;
-                state.user = JSON.parse(saved);
-                await loadAllData();
-            }
-            render();
-        }
+    async function saveSettings() {
+      const settings = {};
+      const keys = ['app_name', 'app_version', 'app_logo', 'company_name', 'company_slogan', 'address', 'hotline', 'zalo_link', 'contact_email', 'website', 'facebook', 'working_hours', 'working_days', 'about_content'];
+      keys.forEach(key => {
+        const el = document.getElementById('setting_' + key);
+        if (el) settings[key] = el.value;
+      });
+      
+      await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify(settings) });
+      alert('Đã lưu cài đặt!');
+    }
 
-        init();
-    </script>
+    // ═══════════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('vi-VN');
+    }
+
+    function formatDateTime(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function getCategoryColor(cat) {
+      const colors = { tax: '#F97316', labor: '#06B6D4', insurance: '#10B981', finance: '#8B5CF6', investment: '#6366F1', general: '#3B82F6', other: '#64748B' };
+      return colors[cat] || '#3B82F6';
+    }
+
+    function getCategoryName(cat) {
+      const names = { tax: 'Thuế', labor: 'Lao động', insurance: 'Bảo hiểm', finance: 'Tài chính', investment: 'Đầu tư', general: 'Tin chung', other: 'Khác' };
+      return names[cat] || cat;
+    }
+
+    function getPriorityName(p) {
+      const names = { high: '🔴 Cao', medium: '🟠 TB', low: '🟢 Thấp' };
+      return names[p] || p;
+    }
+
+    function getStatusName(s) {
+      const names = { pending: 'Chờ xử lý', processing: 'Đang xử lý', completed: 'Hoàn thành', cancelled: 'Đã hủy' };
+      return names[s] || s;
+    }
+
+    function getOrgCategoryName(cat) {
+      const names = { government: 'Cơ quan nhà nước', lawfirm: 'Công ty luật', notary: 'Công chứng', bailiff: 'Thừa phát lại' };
+      return names[cat] || cat;
+    }
+  </script>
 </body>
 </html>
