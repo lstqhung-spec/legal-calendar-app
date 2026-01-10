@@ -1,9 +1,0 @@
-[
-  { "id": "hcm", "name": "TP. Hồ Chí Minh" },
-  { "id": "hanoi", "name": "Hà Nội" },
-  { "id": "danang", "name": "Đà Nẵng" },
-  { "id": "haiphong", "name": "Hải Phòng" },
-  { "id": "cantho", "name": "Cần Thơ" },
-  { "id": "binhduong", "name": "Bình Dương" },
-  { "id": "dongnai", "name": "Đồng Nai" }
-]
