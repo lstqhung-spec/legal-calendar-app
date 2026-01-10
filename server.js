@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HTIC LEGAL CALENDAR - BACKEND v14.0 (COMPLETE ADMIN FEATURES)
+// HTIC LEGAL CALENDAR - BACKEND v14.1 (FIX MIGRATION)
 // Railway PostgreSQL + Express.js
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -23,11 +23,67 @@ const pool = new Pool({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// DATABASE MIGRATION - CHECK AND FIX SCHEMA CONFLICTS
+// ═══════════════════════════════════════════════════════════════════════════
+async function migrateDatabase() {
+  const client = await pool.connect();
+  try {
+    console.log('🔍 Checking database schema...');
+    
+    // Check if provinces table exists and has VARCHAR id (old schema)
+    const checkProvinces = await client.query(`
+      SELECT data_type FROM information_schema.columns 
+      WHERE table_name = 'provinces' AND column_name = 'id'
+    `);
+    
+    if (checkProvinces.rows.length > 0 && checkProvinces.rows[0].data_type === 'character varying') {
+      console.log('⚠️ Detected old schema with VARCHAR IDs. Starting migration...');
+      
+      // Drop tables in correct order (reverse dependency order)
+      const tablesToDrop = [
+        'organizations', 'events', 'news', 'lawyers', 'support_requests', 
+        'settings', 'org_types', 'agencies', 'provinces', 'categories', 'admin_users'
+      ];
+      
+      for (const table of tablesToDrop) {
+        try {
+          await client.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
+          console.log(`  ✓ Dropped table: ${table}`);
+        } catch (e) {
+          console.log(`  - Table ${table} not found or already dropped`);
+        }
+      }
+      
+      console.log('✅ Old tables dropped. Will recreate with new schema.');
+    } else {
+      console.log('✅ Schema is compatible or database is empty.');
+    }
+  } catch (err) {
+    console.log('⚠️ Migration check error (non-fatal):', err.message);
+  } finally {
+    client.release();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // DATABASE INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════
 async function initDatabase() {
+  // Run migration check first
+  await migrateDatabase();
+  
   const client = await pool.connect();
   try {
+    // Admin users table (create first, no dependencies)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS admin_users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Categories table
     await client.query(`
       CREATE TABLE IF NOT EXISTS categories (
@@ -77,8 +133,8 @@ async function initDatabase() {
         frequency VARCHAR(50),
         legal_basis TEXT,
         penalty TEXT,
-        agency_id INT REFERENCES agencies(id),
-        province_id INT REFERENCES provinces(id),
+        agency_id INT REFERENCES agencies(id) ON DELETE SET NULL,
+        province_id INT REFERENCES provinces(id) ON DELETE SET NULL,
         applies_to VARCHAR(50) DEFAULT 'business',
         priority VARCHAR(20) DEFAULT 'medium',
         reminder_days INT DEFAULT 7,
@@ -130,11 +186,11 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS organizations (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        type_id INT REFERENCES org_types(id),
+        type_id INT REFERENCES org_types(id) ON DELETE SET NULL,
         category VARCHAR(50) DEFAULT 'government',
         address TEXT,
         district VARCHAR(100),
-        province_id INT REFERENCES provinces(id),
+        province_id INT REFERENCES provinces(id) ON DELETE SET NULL,
         phone VARCHAR(50),
         email VARCHAR(100),
         website TEXT,
@@ -203,6 +259,18 @@ async function initDatabase() {
     `);
 
     // SEED DEFAULT DATA
+    // Default admin user
+    const bcrypt = require('bcryptjs');
+    const adminExists = await client.query("SELECT * FROM admin_users WHERE username = 'admin'");
+    if (adminExists.rows.length === 0) {
+      const hashedPassword = await bcrypt.hash('htic2025', 10);
+      await client.query(
+        "INSERT INTO admin_users (username, password) VALUES ('admin', $1)",
+        [hashedPassword]
+      );
+      console.log('✅ Default admin user created');
+    }
+
     const defaultCategories = [
       { name: 'Thuế', key: 'tax', icon: 'receipt_long', color: '#F97316' },
       { name: 'Lao động', key: 'labor', icon: 'people', color: '#06B6D4' },
@@ -292,18 +360,44 @@ async function initDatabase() {
       );
     }
 
-    console.log('✅ Database initialized with v14 schema');
+    console.log('✅ Database initialized with v14.1 schema');
   } finally {
     client.release();
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// ADMIN AUTHENTICATION
+// ═══════════════════════════════════════════════════════════════════════════
+const bcrypt = require('bcryptjs');
+
+const adminAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ success: false, message: 'No authorization header' });
+  }
+  const [username, password] = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+  try {
+    const result = await pool.query('SELECT * FROM admin_users WHERE username = $1', [username]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    const valid = await bcrypt.compare(password, result.rows[0].password);
+    if (!valid) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    next();
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
 // API ROUTES - PUBLIC (FOR FLUTTER APP)
 // ═══════════════════════════════════════════════════════════════════════════
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '14.0.0', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: '14.1.0', timestamp: new Date().toISOString() });
 });
 
 app.get('/api/events', async (req, res) => {
@@ -368,35 +462,10 @@ app.get('/api/organizations', async (req, res) => {
     }
     if (search) {
       params.push(`%${search}%`);
-      query += ` AND (o.name ILIKE $${params.length} OR o.address ILIKE $${params.length})`;
+      query += ` AND (o.name ILIKE $${params.length} OR o.address ILIKE $${params.length} OR o.services ILIKE $${params.length})`;
     }
     query += ` ORDER BY o.name ASC`;
     const result = await pool.query(query, params);
-    res.json({ success: true, data: result.rows });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.get('/api/agencies', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT o.id, o.name, o.category, o.address, o.phone, o.email, o.website, o.working_hours as "workingHours", o.description, o.services,
-             t.key as type, t.name as type_name, p.code as "provinceId", p.name as province_name
-      FROM organizations o
-      LEFT JOIN org_types t ON o.type_id = t.id
-      LEFT JOIN provinces p ON o.province_id = p.id
-      WHERE o.is_active = true ORDER BY o.name ASC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.get('/api/org-types', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM org_types WHERE is_active = true ORDER BY sort_order ASC');
     res.json({ success: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -407,42 +476,6 @@ app.get('/api/lawyers', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM lawyers WHERE is_active = true ORDER BY is_primary DESC, sort_order ASC');
     res.json({ success: true, data: result.rows });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.get('/api/lawyers/primary', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM lawyers WHERE is_primary = true AND is_active = true LIMIT 1');
-    res.json({ success: true, data: result.rows[0] || null });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.post('/api/support-requests', async (req, res) => {
-  try {
-    const { name, phone, email, company, category, subject, message } = req.body;
-    if (!name || !message) {
-      return res.status(400).json({ success: false, message: 'Vui lòng điền họ tên và nội dung' });
-    }
-    const result = await pool.query(
-      `INSERT INTO support_requests (name, phone, email, company, category, subject, message) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [name, phone, email, company, category || 'legal', subject || 'Yêu cầu tư vấn pháp lý', message]
-    );
-    res.json({ success: true, message: 'Gửi yêu cầu thành công!', id: result.rows[0].id });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.get('/api/settings', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT key, value FROM settings');
-    const settings = {};
-    result.rows.forEach(row => { settings[row.key] = row.value; });
-    res.json({ success: true, data: settings });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -466,36 +499,74 @@ app.get('/api/provinces', async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ADMIN API ROUTES
-// ═══════════════════════════════════════════════════════════════════════════
-
-const adminAuth = (req, res, next) => {
-  const auth = req.headers.authorization;
-  if (auth === 'Basic ' + Buffer.from('admin:htic2025').toString('base64')) {
-    next();
-  } else {
-    res.status(401).json({ success: false, message: 'Unauthorized' });
+app.get('/api/org-types', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM org_types WHERE is_active = true ORDER BY sort_order ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
-};
+});
 
+app.get('/api/settings', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT key, value FROM settings');
+    const settings = {};
+    result.rows.forEach(row => { settings[row.key] = row.value; });
+    res.json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/support-request', async (req, res) => {
+  try {
+    const { name, phone, email, company, category, subject, message } = req.body;
+    const result = await pool.query(
+      `INSERT INTO support_requests (name, phone, email, company, category, subject, message) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [name, phone, email, company, category || 'legal', subject, message]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API ROUTES - ADMIN (PROTECTED)
+// ═══════════════════════════════════════════════════════════════════════════
+
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const result = await pool.query('SELECT * FROM admin_users WHERE username = $1', [username]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    const valid = await bcrypt.compare(password, result.rows[0].password);
+    if (!valid) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    res.json({ success: true, user: { id: result.rows[0].id, username: result.rows[0].username } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Dashboard stats
 app.get('/api/admin/stats', adminAuth, async (req, res) => {
   try {
-    const [events, news, orgs, lawyers, pending] = await Promise.all([
-      pool.query('SELECT COUNT(*) as count FROM events WHERE is_active = true'),
-      pool.query('SELECT COUNT(*) as count FROM news WHERE is_active = true'),
-      pool.query('SELECT COUNT(*) as count FROM organizations WHERE is_active = true'),
-      pool.query('SELECT COUNT(*) as count FROM lawyers WHERE is_active = true'),
-      pool.query("SELECT COUNT(*) as count FROM support_requests WHERE status = 'pending'")
-    ]);
+    const events = await pool.query('SELECT COUNT(*) FROM events WHERE is_active = true');
+    const news = await pool.query('SELECT COUNT(*) FROM news WHERE is_active = true');
+    const orgs = await pool.query('SELECT COUNT(*) FROM organizations WHERE is_active = true');
+    const requests = await pool.query("SELECT COUNT(*) FROM support_requests WHERE status = 'pending'");
     res.json({
       success: true,
       data: {
         events: parseInt(events.rows[0].count),
         news: parseInt(news.rows[0].count),
         organizations: parseInt(orgs.rows[0].count),
-        lawyers: parseInt(lawyers.rows[0].count),
-        pendingRequests: parseInt(pending.rows[0].count)
+        pendingRequests: parseInt(requests.rows[0].count)
       }
     });
   } catch (err) {
@@ -508,8 +579,10 @@ app.get('/api/admin/events', adminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT e.*, a.name as agency_name, p.name as province_name
-      FROM events e LEFT JOIN agencies a ON e.agency_id = a.id LEFT JOIN provinces p ON e.province_id = p.id
-      ORDER BY e.deadline DESC, e.created_at DESC
+      FROM events e
+      LEFT JOIN agencies a ON e.agency_id = a.id
+      LEFT JOIN provinces p ON e.province_id = p.id
+      ORDER BY e.created_at DESC
     `);
     res.json({ success: true, data: result.rows });
   } catch (err) {
@@ -521,9 +594,9 @@ app.post('/api/admin/events', adminAuth, async (req, res) => {
   try {
     const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = req.body;
     const result = await pool.query(
-      `INSERT INTO events (title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active)
+      `INSERT INTO events (title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
-      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days || 7, notes, source, source_url, is_active !== false]
+      [title, description, category, deadline || null, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days || 7, notes, source, source_url, is_active !== false]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -537,7 +610,7 @@ app.put('/api/admin/events/:id', adminAuth, async (req, res) => {
     const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = req.body;
     const result = await pool.query(
       `UPDATE events SET title=$1, description=$2, category=$3, deadline=$4, frequency=$5, legal_basis=$6, penalty=$7, agency_id=$8, province_id=$9, applies_to=$10, priority=$11, reminder_days=$12, notes=$13, source=$14, source_url=$15, is_active=$16, updated_at=CURRENT_TIMESTAMP WHERE id=$17 RETURNING *`,
-      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days, notes, source, source_url, is_active, id]
+      [title, description, category, deadline || null, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days, notes, source, source_url, is_active, id]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -557,7 +630,7 @@ app.delete('/api/admin/events/:id', adminAuth, async (req, res) => {
 // NEWS CRUD
 app.get('/api/admin/news', adminAuth, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM news ORDER BY published_at DESC, created_at DESC');
+    const result = await pool.query('SELECT * FROM news ORDER BY created_at DESC');
     res.json({ success: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -566,10 +639,10 @@ app.get('/api/admin/news', adminAuth, async (req, res) => {
 
 app.post('/api/admin/news', adminAuth, async (req, res) => {
   try {
-    const { title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, published_at } = req.body;
+    const { title, summary, content, category, image_url, source, source_url, author, is_featured, is_active } = req.body;
     const result = await pool.query(
-      `INSERT INTO news (title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, published_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-      [title, summary, content, category, image_url, source, source_url, author, is_featured || false, is_active !== false, published_at || new Date()]
+      `INSERT INTO news (title, summary, content, category, image_url, source, source_url, author, is_featured, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [title, summary, content, category, image_url, source, source_url, author, is_featured || false, is_active !== false]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -580,10 +653,10 @@ app.post('/api/admin/news', adminAuth, async (req, res) => {
 app.put('/api/admin/news/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, published_at } = req.body;
+    const { title, summary, content, category, image_url, source, source_url, author, is_featured, is_active } = req.body;
     const result = await pool.query(
-      `UPDATE news SET title=$1, summary=$2, content=$3, category=$4, image_url=$5, source=$6, source_url=$7, author=$8, is_featured=$9, is_active=$10, published_at=$11, updated_at=CURRENT_TIMESTAMP WHERE id=$12 RETURNING *`,
-      [title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, published_at, id]
+      `UPDATE news SET title=$1, summary=$2, content=$3, category=$4, image_url=$5, source=$6, source_url=$7, author=$8, is_featured=$9, is_active=$10, updated_at=CURRENT_TIMESTAMP WHERE id=$11 RETURNING *`,
+      [title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, id]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -799,7 +872,7 @@ app.get('/', (req, res) => {
 
 initDatabase().then(() => {
   app.listen(PORT, () => {
-    console.log(`🚀 HTIC Legal Calendar API v14.0 running on port ${PORT}`);
+    console.log(`🚀 HTIC Legal Calendar API v14.1 running on port ${PORT}`);
   });
 }).catch(err => {
   console.error('Failed to initialize database:', err);
