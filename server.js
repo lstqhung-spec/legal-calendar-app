@@ -23,43 +23,62 @@ const pool = new Pool({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DATABASE MIGRATION - CHECK AND FIX SCHEMA CONFLICTS
+// DATABASE MIGRATION - FORCE RESET TO FIX SCHEMA CONFLICTS
 // ═══════════════════════════════════════════════════════════════════════════
 async function migrateDatabase() {
   const client = await pool.connect();
   try {
     console.log('🔍 Checking database schema...');
     
-    // Check if provinces table exists and has VARCHAR id (old schema)
+    // Check if provinces table exists with wrong schema (VARCHAR id instead of SERIAL/INTEGER)
     const checkProvinces = await client.query(`
       SELECT data_type FROM information_schema.columns 
       WHERE table_name = 'provinces' AND column_name = 'id'
     `);
     
-    if (checkProvinces.rows.length > 0 && checkProvinces.rows[0].data_type === 'character varying') {
-      console.log('⚠️ Detected old schema with VARCHAR IDs. Starting migration...');
+    // If provinces exists but id is NOT integer, we need to reset
+    const needsReset = checkProvinces.rows.length > 0 && 
+                       checkProvinces.rows[0].data_type !== 'integer';
+    
+    if (needsReset) {
+      console.log('⚠️ Detected incompatible schema. Force resetting database...');
       
-      // Drop tables in correct order (reverse dependency order)
-      const tablesToDrop = [
-        'organizations', 'events', 'news', 'lawyers', 'support_requests', 
-        'settings', 'org_types', 'agencies', 'provinces', 'categories', 'admin_users'
-      ];
+      // Drop ALL tables using CASCADE to handle dependencies
+      await client.query(`
+        DO $$ DECLARE
+          r RECORD;
+        BEGIN
+          FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+            EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+            RAISE NOTICE 'Dropped table: %', r.tablename;
+          END LOOP;
+        END $$;
+      `);
       
-      for (const table of tablesToDrop) {
-        try {
-          await client.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
-          console.log(`  ✓ Dropped table: ${table}`);
-        } catch (e) {
-          console.log(`  - Table ${table} not found or already dropped`);
-        }
-      }
-      
-      console.log('✅ Old tables dropped. Will recreate with new schema.');
+      console.log('✅ All tables dropped. Will recreate with correct schema.');
+    } else if (checkProvinces.rows.length === 0) {
+      console.log('✅ Database is empty. Will create fresh schema.');
     } else {
-      console.log('✅ Schema is compatible or database is empty.');
+      console.log('✅ Schema is compatible (provinces.id is integer).');
     }
   } catch (err) {
-    console.log('⚠️ Migration check error (non-fatal):', err.message);
+    console.log('⚠️ Migration check error:', err.message);
+    // If any error, try to force drop all tables
+    try {
+      console.log('🔄 Attempting force reset...');
+      await client.query(`
+        DO $$ DECLARE
+          r RECORD;
+        BEGIN
+          FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+            EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+          END LOOP;
+        END $$;
+      `);
+      console.log('✅ Force reset completed.');
+    } catch (e2) {
+      console.log('❌ Force reset failed:', e2.message);
+    }
   } finally {
     client.release();
   }
