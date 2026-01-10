@@ -373,10 +373,13 @@ async function initDatabase() {
       { name: 'Bộ Lao động - Thương binh và Xã hội', short_name: 'BLĐTBXH' }
     ];
     for (const agency of defaultAgencies) {
-      await client.query(
-        `INSERT INTO agencies (name, short_name) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM agencies WHERE name = $1)`,
-        [agency.name, agency.short_name]
-      );
+      const exists = await client.query('SELECT 1 FROM agencies WHERE name = $1', [agency.name]);
+      if (exists.rows.length === 0) {
+        await client.query(
+          'INSERT INTO agencies (name, short_name) VALUES ($1, $2)',
+          [agency.name, agency.short_name]
+        );
+      }
     }
 
     console.log('✅ Database initialized with v14.1 schema');
