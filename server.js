@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HTIC LEGAL CALENDAR - BACKEND v14.1 (FIX MIGRATION)
+// HTIC LEGAL CALENDAR - BACKEND v15.0 (WITH HTML CLEANER)
 // Railway PostgreSQL + Express.js
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -21,6 +21,67 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HTML STRIPPER - Loại bỏ HTML tags và trả về plain text
+// ═══════════════════════════════════════════════════════════════════════════
+function stripHtml(html) {
+  if (!html || typeof html !== 'string') return html || '';
+  
+  let text = html;
+  
+  // Thay thế các thẻ block bằng newline
+  text = text.replace(/<\/p>/gi, '\n\n');
+  text = text.replace(/<\/div>/gi, '\n');
+  text = text.replace(/<\/li>/gi, '\n');
+  text = text.replace(/<\/h[1-6]>/gi, '\n\n');
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/tr>/gi, '\n');
+  
+  // Thêm bullet cho list items
+  text = text.replace(/<li[^>]*>/gi, '• ');
+  
+  // LOẠI BỎ TẤT CẢ HTML TAGS
+  text = text.replace(/<[^>]*>/g, '');
+  
+  // Decode HTML entities
+  const entities = {
+    '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>',
+    '&quot;': '"', '&#39;': "'", '&apos;': "'", '&#x27;': "'",
+    '&rdquo;': '"', '&ldquo;': '"', '&rsquo;': "'", '&lsquo;': "'",
+    '&ndash;': '–', '&mdash;': '—', '&hellip;': '...',
+    '&copy;': '©', '&reg;': '®', '&trade;': '™'
+  };
+  for (const [entity, char] of Object.entries(entities)) {
+    text = text.split(entity).join(char);
+  }
+  
+  // Decode numeric entities
+  text = text.replace(/&#(\d+);/g, (m, d) => {
+    try { return String.fromCharCode(parseInt(d)); } catch(e) { return ''; }
+  });
+  text = text.replace(/&#x([0-9a-f]+);/gi, (m, h) => {
+    try { return String.fromCharCode(parseInt(h, 16)); } catch(e) { return ''; }
+  });
+  
+  // Clean whitespace
+  text = text.replace(/[ \t]+/g, ' ');
+  text = text.replace(/\n[ \t]+/g, '\n');
+  text = text.replace(/[ \t]+\n/g, '\n');
+  text = text.replace(/\n{3,}/g, '\n\n');
+  
+  return text.trim();
+}
+
+// Hàm clean news object
+function cleanNewsHtml(news) {
+  return {
+    ...news,
+    title: stripHtml(news.title),
+    summary: stripHtml(news.summary),
+    content: stripHtml(news.content)
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DATABASE MIGRATION - FORCE RESET TO FIX SCHEMA CONFLICTS
@@ -382,7 +443,7 @@ async function initDatabase() {
       }
     }
 
-    console.log('✅ Database initialized with v14.1 schema');
+    console.log('✅ Database initialized with v15.0 schema (with HTML Cleaner)');
   } finally {
     client.release();
   }
@@ -419,7 +480,7 @@ const adminAuth = async (req, res, next) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '14.1.0', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: '15.0.0', timestamp: new Date().toISOString() });
 });
 
 app.get('/api/events', async (req, res) => {
@@ -438,6 +499,9 @@ app.get('/api/events', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// API NEWS - TỰ ĐỘNG CLEAN HTML KHI TRẢ VỀ CHO APP
+// ═══════════════════════════════════════════════════════════════════════════
 app.get('/api/news', async (req, res) => {
   try {
     const { category, limit } = req.query;
@@ -453,7 +517,11 @@ app.get('/api/news', async (req, res) => {
       query += ` LIMIT $${params.length}`;
     }
     const result = await pool.query(query, params);
-    res.json({ success: true, data: result.rows });
+    
+    // ✅ TỰ ĐỘNG CLEAN HTML TRƯỚC KHI TRẢ VỀ CHO APP
+    const cleanedData = result.rows.map(cleanNewsHtml);
+    
+    res.json({ success: true, data: cleanedData });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -695,6 +763,59 @@ app.delete('/api/admin/news/:id', adminAuth, async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// API CLEAN HTML - CLEAN TOÀN BỘ TIN TỨC TRONG DATABASE
+// ═══════════════════════════════════════════════════════════════════════════
+app.post('/api/admin/clean-news-html', adminAuth, async (req, res) => {
+  try {
+    // Lấy tất cả news
+    const result = await pool.query('SELECT id, title, summary, content FROM news');
+    let cleanedCount = 0;
+    
+    // Clean từng news
+    for (const news of result.rows) {
+      const cleanTitle = stripHtml(news.title);
+      const cleanSummary = stripHtml(news.summary);
+      const cleanContent = stripHtml(news.content);
+      
+      // Chỉ update nếu có thay đổi
+      if (cleanTitle !== news.title || cleanSummary !== news.summary || cleanContent !== news.content) {
+        await pool.query(
+          `UPDATE news SET title = $1, summary = $2, content = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4`,
+          [cleanTitle, cleanSummary, cleanContent, news.id]
+        );
+        cleanedCount++;
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      message: `Đã clean HTML cho ${cleanedCount}/${result.rows.length} tin tức`,
+      total: result.rows.length,
+      cleaned: cleanedCount
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// API xem trước news sau khi clean (không lưu)
+app.get('/api/admin/preview-clean-news', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM news ORDER BY created_at DESC LIMIT 5');
+    const preview = result.rows.map(news => ({
+      id: news.id,
+      original_title: news.title,
+      cleaned_title: stripHtml(news.title),
+      original_summary: (news.summary || '').substring(0, 200),
+      cleaned_summary: stripHtml(news.summary).substring(0, 200),
+    }));
+    res.json({ success: true, data: preview });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ORGANIZATIONS CRUD
 app.get('/api/admin/organizations', adminAuth, async (req, res) => {
   try {
@@ -894,7 +1015,7 @@ app.get('/', (req, res) => {
 
 initDatabase().then(() => {
   app.listen(PORT, () => {
-    console.log(`🚀 HTIC Legal Calendar API v14.1 running on port ${PORT}`);
+    console.log(`🚀 HTIC Legal Calendar API v15.0 (with HTML Cleaner) running on port ${PORT}`);
   });
 }).catch(err => {
   console.error('Failed to initialize database:', err);
