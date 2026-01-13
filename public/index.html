@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTIC Legal Calendar - Admin v14</title>
+  <title>HTIC Legal Calendar - Admin v15</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
@@ -100,7 +100,7 @@
           <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
         </button>
       </form>
-      <p class="text-muted mt-3 mb-0" style="font-size: 12px;">Admin Dashboard v14.0</p>
+      <p class="text-muted mt-3 mb-0" style="font-size: 12px;">Admin Dashboard v15.0</p>
     </div>
   </div>
 
@@ -110,7 +110,7 @@
     <div class="sidebar">
       <div class="sidebar-brand">
         <h4>⚖️ HTIC Admin</h4>
-        <small>Legal Calendar v14.0</small>
+        <small>Legal Calendar v15.0</small>
       </div>
       <ul class="nav flex-column">
         <li class="nav-item"><a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2-fill"></i>Tổng quan</a></li>
@@ -211,7 +211,10 @@
       <div id="page-news" class="page-content hidden">
         <div class="page-header d-flex justify-content-between align-items-center">
           <h2>📰 Quản lý Tin tức</h2>
-          <button class="btn btn-primary" onclick="openNewsModal()"><i class="bi bi-plus-lg me-2"></i>Thêm tin mới</button>
+          <div>
+            <button class="btn btn-warning me-2" onclick="cleanNewsHtml()"><i class="bi bi-magic me-2"></i>Clean HTML</button>
+            <button class="btn btn-primary" onclick="openNewsModal()"><i class="bi bi-plus-lg me-2"></i>Thêm tin mới</button>
+          </div>
         </div>
         <div class="card">
           <div class="card-body p-0">
@@ -1092,6 +1095,25 @@
       if (confirm('Bạn có chắc muốn xóa?')) {
         await api(`/api/admin/news/${id}`, { method: 'DELETE' });
         loadNews();
+      }
+    }
+
+    // Clean HTML từ tất cả tin tức trong database
+    async function cleanNewsHtml() {
+      if (!confirm('Bạn có chắc muốn clean HTML từ tất cả tin tức?\n\nThao tác này sẽ loại bỏ tất cả HTML tags và chỉ giữ lại nội dung văn bản thuần.')) {
+        return;
+      }
+      
+      try {
+        const result = await api('/api/admin/clean-news-html', { method: 'POST' });
+        if (result.success) {
+          alert(`✅ ${result.message}`);
+          loadNews();
+        } else {
+          alert('❌ Lỗi: ' + result.message);
+        }
+      } catch (err) {
+        alert('❌ Lỗi kết nối: ' + err.message);
       }
     }
 
