@@ -485,7 +485,10 @@
                     content.innerHTML = `
                         <div class="flex justify-between items-center mb-6">
                             <h1 class="text-2xl font-bold">Tin tức</h1>
-                            <button onclick="showNewsModal()" class="btn-primary flex items-center gap-2"><span class="material-icons text-sm">add</span> Thêm mới</button>
+                            <div class="flex gap-2">
+                                <button onclick="cleanAllNews()" class="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center gap-2" title="Xóa CSS Tailwind khỏi tất cả tin tức"><span class="material-icons text-sm">cleaning_services</span> Clean CSS</button>
+                                <button onclick="showNewsModal()" class="btn-primary flex items-center gap-2"><span class="material-icons text-sm">add</span> Thêm mới</button>
+                            </div>
                         </div>
                         <div class="card overflow-hidden">
                             <table class="w-full">
@@ -620,6 +623,27 @@
                 const res = await fetch(API + '/admin/news/' + id, { method: 'DELETE', headers: getHeaders() });
                 if ((await res.json()).success) loadNewsContent();
             } catch (e) { alert('Lỗi'); }
+        }
+
+        async function cleanAllNews() {
+            if (!confirm('Clean CSS Tailwind khỏi tất cả tin tức?\n\nThao tác này sẽ loại bỏ các style CSS không cần thiết từ nội dung tin tức.')) return;
+            try {
+                const btn = event.target.closest('button');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-icons text-sm animate-spin">sync</span> Đang xử lý...';
+                
+                const res = await fetch(API + '/admin/clean-news', { headers: getHeaders() });
+                const result = await res.json();
+                
+                if (result.success) {
+                    alert(`✅ Hoàn tất!\n\n${result.message}`);
+                    loadNewsContent();
+                } else {
+                    alert('❌ Lỗi: ' + (result.message || 'Không thể clean'));
+                }
+            } catch (e) {
+                alert('❌ Lỗi kết nối: ' + e.message);
+            }
         }
 
         // ========== ORGANIZATIONS ==========
