@@ -1,628 +1,870 @@
-const http = require('http');
-const fs = require('fs');
+// ═══════════════════════════════════════════════════════════════════════════
+// HTIC LEGAL CALENDAR - BACKEND v15.0 (FIXED DATABASE CONNECTION)
+// Railway PostgreSQL + Express.js
+// ═══════════════════════════════════════════════════════════════════════════
+
+const express = require('express');
+const { Pool } = require('pg');
+const cors = require('cors');
 const path = require('path');
 
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Data file paths
-const DATA_DIR = path.join(__dirname, 'data');
-const EVENTS_FILE = path.join(DATA_DIR, 'events.json');
-const NEWS_FILE = path.join(DATA_DIR, 'news.json');
-const PROVINCES_FILE = path.join(DATA_DIR, 'provinces.json');
-const AGENCIES_FILE = path.join(DATA_DIR, 'agencies.json');
-const LAWYERS_FILE = path.join(DATA_DIR, 'lawyers.json');
-const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+// ═══════════════════════════════════════════════════════════════════════════
+// DATABASE CONNECTION - Railway PostgreSQL
+// ═══════════════════════════════════════════════════════════════════════════
+console.log('🔧 Environment check:');
+console.log('   PORT:', PORT);
+console.log('   NODE_ENV:', process.env.NODE_ENV || 'development');
+console.log('   DATABASE_URL:', process.env.DATABASE_URL ? '✅ SET (hidden)' : '❌ NOT SET');
+
+// Kiểm tra DATABASE_URL
+if (!process.env.DATABASE_URL) {
+  console.error('❌ CRITICAL: DATABASE_URL is not set!');
+  console.error('   Please configure DATABASE_URL in Railway Variables');
+  console.error('   Format: postgresql://user:pass@host:port/database');
 }
 
-// Helper functions
-function readJSON(file) {
-    try {
-        if (fs.existsSync(file)) {
-            return JSON.parse(fs.readFileSync(file, 'utf8'));
-        }
-    } catch (e) {
-        console.error('Error reading', file, e);
-    }
-    return [];
-}
-
-function writeJSON(file, data) {
-    try {
-        fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
-        return true;
-    } catch (e) {
-        console.error('Error writing', file, e);
-        return false;
-    }
-}
-
-function getNextId(items) {
-    if (!items || items.length === 0) return 1;
-    return Math.max(...items.map(i => i.id || 0)) + 1;
-}
-
-function sendJSON(res, data, status = 200) {
-    res.writeHead(status, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-    });
-    res.end(JSON.stringify(data));
-}
-
-function parseBody(req) {
-    return new Promise((resolve, reject) => {
-        let body = '';
-        req.on('data', chunk => body += chunk);
-        req.on('end', () => {
-            try {
-                resolve(body ? JSON.parse(body) : {});
-            } catch (e) {
-                resolve({});
-            }
-        });
-        req.on('error', reject);
-    });
-}
-
-// MIME types
-const MIME_TYPES = {
-    '.html': 'text/html',
-    '.css': 'text/css',
-    '.js': 'application/javascript',
-    '.json': 'application/json',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.gif': 'image/gif',
-    '.svg': 'image/svg+xml',
-    '.ico': 'image/x-icon'
-};
-
-function serveStatic(res, filePath) {
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-    
-    fs.readFile(filePath, (err, data) => {
-        if (err) {
-            res.writeHead(404);
-            res.end('File not found');
-        } else {
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(data);
-        }
-    });
-}
-
-// Initialize default data if not exists
-function initializeData() {
-    // Default events
-    if (!fs.existsSync(EVENTS_FILE)) {
-        const defaultEvents = [
-            { id: 1, title: 'Nop to khai thue GTGT thang', category: 'tax', frequency: 'monthly', dayOfMonth: 20, description: 'Nop to khai thue GTGT thang truoc', legalReference: 'Theo Dieu 44 Luat Quan ly thue 2019', penalty: 'Phat 2-5 trieu dong neu nop cham', isActive: true },
-            { id: 2, title: 'Dong BHXH, BHYT, BHTN', category: 'insurance', frequency: 'monthly', dayOfMonth: 25, description: 'Dong bao hiem xa hoi, y te, that nghiep hang thang', legalReference: 'Luat Bao hiem xa hoi 2014', penalty: 'Phat 12-15% so tien cham dong', isActive: true },
-            { id: 3, title: 'Nop to khai thue TNCN', category: 'tax', frequency: 'monthly', dayOfMonth: 20, description: 'Nop to khai thue thu nhap ca nhan', legalReference: 'Thong tu 111/2013/TT-BTC', penalty: 'Phat 2-5 trieu dong', isActive: true },
-            { id: 4, title: 'Bao cao tinh hinh su dung hoa don', category: 'report', frequency: 'quarterly', dayOfMonth: 30, description: 'Bao cao tinh hinh su dung hoa don hang quy', legalReference: 'Nghi dinh 123/2020/ND-CP', penalty: 'Phat 4-8 trieu dong', isActive: true },
-            { id: 5, title: 'Nop to khai thue GTGT quy', category: 'tax', frequency: 'quarterly', dayOfMonth: 30, description: 'Nop to khai thue GTGT theo quy', legalReference: 'Luat Thue GTGT', penalty: 'Phat 2-5 trieu dong', isActive: true },
-            { id: 6, title: 'Bao cao nam ve Lao dong', category: 'report', frequency: 'yearly', dayOfMonth: 5, month: 1, description: 'Bao cao tinh hinh su dung lao dong nam', legalReference: 'Bo luat Lao dong 2019', penalty: 'Phat 5-10 trieu dong', isActive: true },
-            { id: 7, title: 'Nop bao cao tai chinh nam', category: 'report', frequency: 'yearly', dayOfMonth: 30, month: 3, description: 'Nop bao cao tai chinh nam truoc', legalReference: 'Luat Ke toan 2015', penalty: 'Phat 5-10 trieu dong', isActive: true },
-            { id: 8, title: 'Quyet toan thue TNDN nam', category: 'tax', frequency: 'yearly', dayOfMonth: 30, month: 3, description: 'Quyet toan thue thu nhap doanh nghiep nam truoc', legalReference: 'Luat Thue TNDN', penalty: 'Phat 2-5 trieu dong', isActive: true },
-            { id: 9, title: 'Quyet toan thue TNCN nam', category: 'tax', frequency: 'yearly', dayOfMonth: 30, month: 3, description: 'Quyet toan thue thu nhap ca nhan nam truoc', legalReference: 'Luat Thue TNCN', penalty: 'Phat 2-5 trieu dong', isActive: true },
-            { id: 10, title: 'Hop Dai hoi dong co dong thuong nien', category: 'license', frequency: 'yearly', dayOfMonth: 30, month: 4, description: 'To chuc Dai hoi dong co dong thuong nien', legalReference: 'Luat Doanh nghiep 2020', penalty: 'Phat 20-30 trieu dong', isActive: true }
-        ];
-        writeJSON(EVENTS_FILE, defaultEvents);
-    }
-
-    // Default news
-    if (!fs.existsSync(NEWS_FILE)) {
-        const defaultNews = [
-            { id: 1, title: 'Nghi dinh moi ve quan ly thue 2024', category: 'Thue', date: '25/12/2024', summary: 'Chinh phu ban hanh Nghi dinh moi ve quan ly thue, co hieu luc tu 01/01/2025...', content: 'Noi dung chi tiet nghi dinh...', image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400', isHot: true },
-            { id: 2, title: 'Huong dan moi ve BHXH tu 2025', category: 'BHXH', date: '24/12/2024', summary: 'Bo Lao dong ban hanh thong tu huong dan thuc hien Luat Bao hiem xa hoi sua doi...', content: 'Noi dung chi tiet...', image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=400', isHot: true },
-            { id: 3, title: 'Tang muc luong co so tu 01/7/2024', category: 'Lao dong', date: '23/12/2024', summary: 'Muc luong co so moi ap dung tu ngay 01/7/2024 la 2.340.000 dong/thang...', content: 'Chi tiet ve tang luong...', image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400', isHot: false },
-            { id: 4, title: 'Sua doi Luat Doanh nghiep 2024', category: 'Doanh nghiep', date: '22/12/2024', summary: 'Quoc hoi thong qua Luat sua doi bo sung mot so dieu cua Luat Doanh nghiep...', content: 'Chi tiet luat moi...', image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400', isHot: false },
-            { id: 5, title: 'Quy dinh moi ve hoa don dien tu', category: 'Thue', date: '21/12/2024', summary: 'Tong cuc Thue ban hanh van ban huong dan ve ap dung hoa don dien tu theo quy dinh moi...', content: 'Huong dan chi tiet...', image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400', isHot: false }
-        ];
-        writeJSON(NEWS_FILE, defaultNews);
-    }
-
-    // Default provinces
-    if (!fs.existsSync(PROVINCES_FILE)) {
-        const defaultProvinces = [
-            { id: 'hanoi', name: 'Ha Noi' },
-            { id: 'hcm', name: 'TP. Ho Chi Minh' },
-            { id: 'danang', name: 'Da Nang' },
-            { id: 'haiphong', name: 'Hai Phong' },
-            { id: 'cantho', name: 'Can Tho' },
-            { id: 'binhduong', name: 'Binh Duong' },
-            { id: 'dongnai', name: 'Dong Nai' },
-            { id: 'nghean', name: 'Nghe An' },
-            { id: 'thanhhoa', name: 'Thanh Hoa' },
-            { id: 'haiduong', name: 'Hai Duong' }
-        ];
-        writeJSON(PROVINCES_FILE, defaultProvinces);
-    }
-
-    // Default agencies - 4 categories: government, lawfirm, notary, bailiff
-    if (!fs.existsSync(AGENCIES_FILE)) {
-        const defaultAgencies = [
-            // ===== CO QUAN NHA NUOC (government) =====
-            { id: 1, name: 'Cuc Thue TP. Ha Noi', category: 'government', provinceId: 'hanoi', address: '20 Le Dai Hanh, Hai Ba Trung, Ha Noi', phone: '024 3974 2020' },
-            { id: 2, name: 'BHXH TP. Ha Noi', category: 'government', provinceId: 'hanoi', address: '86 Tran Hung Dao, Hoan Kiem, Ha Noi', phone: '024 3943 6789' },
-            { id: 3, name: 'So Ke hoach va Dau tu Ha Noi', category: 'government', provinceId: 'hanoi', address: '16 Cat Linh, Dong Da, Ha Noi', phone: '024 3822 4543' },
-            { id: 4, name: 'Cuc Thue TP. HCM', category: 'government', provinceId: 'hcm', address: '140 Nguyen Thi Minh Khai, Quan 3, TP.HCM', phone: '028 3930 1999' },
-            { id: 5, name: 'BHXH TP. HCM', category: 'government', provinceId: 'hcm', address: '1 Nguyen Thi Minh Khai, Quan 1, TP.HCM', phone: '028 3829 7959' },
-            { id: 6, name: 'So Ke hoach va Dau tu TP.HCM', category: 'government', provinceId: 'hcm', address: '32 Le Thanh Ton, Quan 1, TP.HCM', phone: '028 3829 5012' },
-            
-            // ===== VAN PHONG LUAT SU / CONG TY LUAT (lawfirm) =====
-            { id: 7, name: 'Cong ty Luat HTIC', category: 'lawfirm', provinceId: 'hanoi', address: 'So 15 Pham Hung, Nam Tu Liem, Ha Noi', phone: '0379 044 299', website: 'www.htic.com.vn' },
-            { id: 8, name: 'VP Luat su Pham va Lien danh', category: 'lawfirm', provinceId: 'hanoi', address: '28 Lieu Giai, Ba Dinh, Ha Noi', phone: '024 3762 8888' },
-            { id: 9, name: 'Cong ty Luat Baker McKenzie', category: 'lawfirm', provinceId: 'hcm', address: 'Tang 12, Saigon Tower, 29 Le Duan, Quan 1', phone: '028 3829 5585', website: 'www.bakermckenzie.com' },
-            { id: 10, name: 'VP Luat su Vilaf', category: 'lawfirm', provinceId: 'hcm', address: '6B Ton Duc Thang, Quan 1, TP.HCM', phone: '028 3827 7300', website: 'www.vilaf.com.vn' },
-            { id: 11, name: 'Cong ty Luat LNT & Partners', category: 'lawfirm', provinceId: 'hcm', address: 'Tang 16, Vincom Center, 72 Le Thanh Ton, Q1', phone: '028 3821 2357', website: 'www.lntpartners.com' },
-            
-            // ===== VAN PHONG CONG CHUNG (notary) =====
-            { id: 12, name: 'VP Cong chung Nguyen Hue', category: 'notary', provinceId: 'hanoi', address: '65 Nguyen Hue, Hoan Kiem, Ha Noi', phone: '024 3825 1234' },
-            { id: 13, name: 'VP Cong chung so 1 Ha Noi', category: 'notary', provinceId: 'hanoi', address: '18 Trang Thi, Hoan Kiem, Ha Noi', phone: '024 3826 5678' },
-            { id: 14, name: 'VP Cong chung Tran Van Sy', category: 'notary', provinceId: 'hcm', address: '324 Tran Van Sy, Phu Nhuan, TP.HCM', phone: '028 3847 1111' },
-            { id: 15, name: 'VP Cong chung Quan 1', category: 'notary', provinceId: 'hcm', address: '135 Nam Ky Khoi Nghia, Quan 1, TP.HCM', phone: '028 3822 9999' },
-            { id: 16, name: 'VP Cong chung Hai Chau', category: 'notary', provinceId: 'danang', address: '56 Bach Dang, Hai Chau, Da Nang', phone: '0236 3888 999' },
-            
-            // ===== VAN PHONG THUA PHAT LAI (bailiff) =====
-            { id: 17, name: 'VP Thua phat lai Quan Cau Giay', category: 'bailiff', provinceId: 'hanoi', address: '125 Xuan Thuy, Cau Giay, Ha Noi', phone: '024 3793 5555' },
-            { id: 18, name: 'VP Thua phat lai Ba Dinh', category: 'bailiff', provinceId: 'hanoi', address: '45 Kim Ma, Ba Dinh, Ha Noi', phone: '024 3726 8888' },
-            { id: 19, name: 'VP Thua phat lai Quan 1 TP.HCM', category: 'bailiff', provinceId: 'hcm', address: '88 Nguyen Du, Quan 1, TP.HCM', phone: '028 3823 7777' },
-            { id: 20, name: 'VP Thua phat lai Binh Thanh', category: 'bailiff', provinceId: 'hcm', address: '200 Xo Viet Nghe Tinh, Binh Thanh, TP.HCM', phone: '028 3512 6666' }
-        ];
-        writeJSON(AGENCIES_FILE, defaultAgencies);
-    }
-
-    // Default settings
-    if (!fs.existsSync(SETTINGS_FILE)) {
-        const defaultSettings = {
-            logo: null,
-            companyName: 'HTIC LAW FIRM',
-            website: 'www.htic.com.vn',
-            phone: '0379 044 299',
-            email: 'contact@htic.com.vn',
-            address: 'Ha Noi, Viet Nam'
-        };
-        writeJSON(SETTINGS_FILE, defaultSettings);
-    }
-
-    // Default lawyers
-    if (!fs.existsSync(LAWYERS_FILE)) {
-        const defaultLawyers = [
-            { id: 1, name: 'Luat su Nguyen Van An', title: 'Luat su dieu hanh', company: 'Cong ty Luat HTIC', phone: '0901234567', zalo: '0901234567', email: 'nguyenvanan@hticlaw.vn', working_hours: '8:00 - 18:00', working_days: 'Thu 2 - Thu 6', specialization: 'Thue & Ke toan', bio: '15 nam kinh nghiem trong linh vuc thue va ke toan doanh nghiep', avatar_url: '', is_online: true, is_primary: true, is_active: true, sort_order: 1 },
-            { id: 2, name: 'Luat su Tran Thi Binh', title: 'Luat su', company: 'Cong ty Luat HTIC', phone: '0907654321', zalo: '0907654321', email: 'tranthibinh@hticlaw.vn', working_hours: '8:00 - 17:30', working_days: 'Thu 2 - Thu 6', specialization: 'Lao dong & Bao hiem', bio: '12 nam kinh nghiem ve luat lao dong va bao hiem xa hoi', avatar_url: '', is_online: true, is_primary: false, is_active: true, sort_order: 2 },
-            { id: 3, name: 'Luat su Le Hoang Cuong', title: 'Luat su cao cap', company: 'Cong ty Luat HTIC', phone: '0912345678', zalo: '0912345678', email: 'lehoangcuong@hticlaw.vn', working_hours: '8:30 - 18:00', working_days: 'Thu 2 - Thu 7', specialization: 'Dau tu & Doanh nghiep', bio: '18 nam kinh nghiem tu van dau tu va M&A', avatar_url: '', is_online: true, is_primary: false, is_active: true, sort_order: 3 },
-            { id: 4, name: 'Luat su Hoang Van Long', title: 'Luat su', company: 'Cong ty Luat HTIC', phone: '0945678901', zalo: '0945678901', email: 'hoangvanlong@hticlaw.vn', working_hours: '8:00 - 17:00', working_days: 'Thu 2 - Thu 6', specialization: 'Thuong mai quoc te', bio: '16 nam kinh nghiem trong linh vuc xuat nhap khau va thuong mai quoc te', avatar_url: '', is_online: false, is_primary: false, is_active: true, sort_order: 4 },
-            { id: 5, name: 'Luat su Bui Van Phuc', title: 'Luat su', company: 'Cong ty Luat HTIC', phone: '0978901234', zalo: '0978901234', email: 'buivanphuc@hticlaw.vn', working_hours: '8:00 - 17:30', working_days: 'Thu 2 - Thu 6', specialization: 'Hanh chinh cong', bio: '9 nam kinh nghiem ve thu tuc hanh chinh va giay phep kinh doanh', avatar_url: '', is_online: true, is_primary: false, is_active: true, sort_order: 5 }
-        ];
-        writeJSON(LAWYERS_FILE, defaultLawyers);
-    }
-}
-
-// Initialize data
-initializeData();
-
-// Request handler
-const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url, `http://localhost:${PORT}`);
-    const pathname = url.pathname;
-    const method = req.method;
-
-    // CORS preflight
-    if (method === 'OPTIONS') {
-        res.writeHead(200, {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type'
-        });
-        res.end();
-        return;
-    }
-
-    console.log(`${method} ${pathname}`);
-
-    // =============== API ROUTES ===============
-
-    // --- EVENTS ---
-    if (pathname === '/api/events' && method === 'GET') {
-        const events = readJSON(EVENTS_FILE);
-        return sendJSON(res, { success: true, data: events });
-    }
-
-    if (pathname === '/api/admin/events' && method === 'GET') {
-        const events = readJSON(EVENTS_FILE);
-        return sendJSON(res, { success: true, data: events });
-    }
-
-    if (pathname === '/api/admin/events' && method === 'POST') {
-        const body = await parseBody(req);
-        const events = readJSON(EVENTS_FILE);
-        const newEvent = {
-            id: getNextId(events),
-            ...body,
-            isActive: true
-        };
-        events.push(newEvent);
-        if (writeJSON(EVENTS_FILE, events)) {
-            return sendJSON(res, { success: true, data: newEvent, message: 'Event created' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-    }
-
-    const eventMatch = pathname.match(/^\/api\/admin\/events\/(\d+)$/);
-    if (eventMatch) {
-        const eventId = parseInt(eventMatch[1]);
-        const events = readJSON(EVENTS_FILE);
-        const eventIndex = events.findIndex(e => e.id === eventId);
-
-        if (method === 'GET') {
-            const event = events.find(e => e.id === eventId);
-            if (event) return sendJSON(res, { success: true, data: event });
-            return sendJSON(res, { success: false, message: 'Event not found' }, 404);
-        }
-
-        if (method === 'PUT') {
-            if (eventIndex === -1) return sendJSON(res, { success: false, message: 'Event not found' }, 404);
-            const body = await parseBody(req);
-            events[eventIndex] = { ...events[eventIndex], ...body, id: eventId };
-            if (writeJSON(EVENTS_FILE, events)) {
-                return sendJSON(res, { success: true, data: events[eventIndex], message: 'Event updated' });
-            }
-            return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-        }
-
-        if (method === 'DELETE') {
-            if (eventIndex === -1) return sendJSON(res, { success: false, message: 'Event not found' }, 404);
-            events.splice(eventIndex, 1);
-            if (writeJSON(EVENTS_FILE, events)) {
-                return sendJSON(res, { success: true, message: 'Event deleted' });
-            }
-            return sendJSON(res, { success: false, message: 'Failed to delete' }, 500);
-        }
-    }
-
-    // --- NEWS ---
-    if (pathname === '/api/news' && method === 'GET') {
-        const news = readJSON(NEWS_FILE);
-        return sendJSON(res, { success: true, data: news });
-    }
-
-    if (pathname === '/api/admin/news' && method === 'GET') {
-        const news = readJSON(NEWS_FILE);
-        return sendJSON(res, { success: true, data: news });
-    }
-
-    if (pathname === '/api/admin/news' && method === 'POST') {
-        const body = await parseBody(req);
-        const news = readJSON(NEWS_FILE);
-        const newNews = {
-            id: getNextId(news),
-            ...body
-        };
-        news.push(newNews);
-        if (writeJSON(NEWS_FILE, news)) {
-            return sendJSON(res, { success: true, data: newNews, message: 'News created' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-    }
-
-    const newsMatch = pathname.match(/^\/api\/admin\/news\/(\d+)$/);
-    if (newsMatch) {
-        const newsId = parseInt(newsMatch[1]);
-        const news = readJSON(NEWS_FILE);
-        const newsIndex = news.findIndex(n => n.id === newsId);
-
-        if (method === 'GET') {
-            const item = news.find(n => n.id === newsId);
-            if (item) return sendJSON(res, { success: true, data: item });
-            return sendJSON(res, { success: false, message: 'News not found' }, 404);
-        }
-
-        if (method === 'PUT') {
-            if (newsIndex === -1) return sendJSON(res, { success: false, message: 'News not found' }, 404);
-            const body = await parseBody(req);
-            news[newsIndex] = { ...news[newsIndex], ...body, id: newsId };
-            if (writeJSON(NEWS_FILE, news)) {
-                return sendJSON(res, { success: true, data: news[newsIndex], message: 'News updated' });
-            }
-            return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-        }
-
-        if (method === 'DELETE') {
-            if (newsIndex === -1) return sendJSON(res, { success: false, message: 'News not found' }, 404);
-            news.splice(newsIndex, 1);
-            if (writeJSON(NEWS_FILE, news)) {
-                return sendJSON(res, { success: true, message: 'News deleted' });
-            }
-            return sendJSON(res, { success: false, message: 'Failed to delete' }, 500);
-        }
-    }
-
-    // --- PROVINCES ---
-    if (pathname === '/api/provinces' && method === 'GET') {
-        const provinces = readJSON(PROVINCES_FILE);
-        return sendJSON(res, { success: true, data: provinces });
-    }
-
-    if (pathname === '/api/admin/provinces' && method === 'GET') {
-        const provinces = readJSON(PROVINCES_FILE);
-        return sendJSON(res, { success: true, data: provinces });
-    }
-
-    if (pathname === '/api/admin/provinces' && method === 'POST') {
-        const body = await parseBody(req);
-        const provinces = readJSON(PROVINCES_FILE);
-        // Check if id already exists
-        if (provinces.find(p => p.id === body.id)) {
-            return sendJSON(res, { success: false, message: 'Province ID already exists' }, 400);
-        }
-        provinces.push(body);
-        if (writeJSON(PROVINCES_FILE, provinces)) {
-            return sendJSON(res, { success: true, data: body, message: 'Province created' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-    }
-
-    const provinceMatch = pathname.match(/^\/api\/admin\/provinces\/(.+)$/);
-    if (provinceMatch) {
-        const provinceId = provinceMatch[1];
-        const provinces = readJSON(PROVINCES_FILE);
-        const provinceIndex = provinces.findIndex(p => p.id === provinceId);
-        
-        if (method === 'GET') {
-            if (provinceIndex === -1) return sendJSON(res, { success: false, message: 'Province not found' }, 404);
-            return sendJSON(res, { success: true, data: provinces[provinceIndex] });
-        }
-        
-        if (method === 'PUT') {
-            const body = await parseBody(req);
-            if (provinceIndex === -1) return sendJSON(res, { success: false, message: 'Province not found' }, 404);
-            provinces[provinceIndex] = { ...provinces[provinceIndex], ...body };
-            if (writeJSON(PROVINCES_FILE, provinces)) {
-                return sendJSON(res, { success: true, data: provinces[provinceIndex], message: 'Province updated' });
-            }
-            return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-        }
-        
-        if (method === 'DELETE') {
-            if (provinceIndex === -1) return sendJSON(res, { success: false, message: 'Province not found' }, 404);
-            provinces.splice(provinceIndex, 1);
-            if (writeJSON(PROVINCES_FILE, provinces)) {
-                return sendJSON(res, { success: true, message: 'Province deleted' });
-            }
-            return sendJSON(res, { success: false, message: 'Failed to delete' }, 500);
-        }
-    }
-
-    // --- AGENCIES ---
-    if (pathname === '/api/agencies' && method === 'GET') {
-        const agencies = readJSON(AGENCIES_FILE);
-        return sendJSON(res, { success: true, data: agencies });
-    }
-
-    if (pathname === '/api/admin/agencies' && method === 'GET') {
-        const agencies = readJSON(AGENCIES_FILE);
-        return sendJSON(res, { success: true, data: agencies });
-    }
-
-    if (pathname === '/api/admin/agencies' && method === 'POST') {
-        const body = await parseBody(req);
-        const agencies = readJSON(AGENCIES_FILE);
-        const newAgency = {
-            id: getNextId(agencies),
-            ...body
-        };
-        agencies.push(newAgency);
-        if (writeJSON(AGENCIES_FILE, agencies)) {
-            return sendJSON(res, { success: true, data: newAgency, message: 'Agency created' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-    }
-
-    const agencyMatch = pathname.match(/^\/api\/admin\/agencies\/(\d+)$/);
-    if (agencyMatch && method === 'DELETE') {
-        const agencyId = parseInt(agencyMatch[1]);
-        const agencies = readJSON(AGENCIES_FILE);
-        const agencyIndex = agencies.findIndex(a => a.id === agencyId);
-        if (agencyIndex === -1) return sendJSON(res, { success: false, message: 'Agency not found' }, 404);
-        agencies.splice(agencyIndex, 1);
-        if (writeJSON(AGENCIES_FILE, agencies)) {
-            return sendJSON(res, { success: true, message: 'Agency deleted' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to delete' }, 500);
-    }
-
-    // --- LAWYERS ---
-    if (pathname === '/api/lawyers' && method === 'GET') {
-        const lawyers = readJSON(LAWYERS_FILE);
-        const activeLawyers = lawyers.filter(l => l.is_active !== false);
-        return sendJSON(res, { success: true, data: activeLawyers });
-    }
-
-    if (pathname === '/api/admin/lawyers' && method === 'GET') {
-        const lawyers = readJSON(LAWYERS_FILE);
-        return sendJSON(res, { success: true, data: lawyers });
-    }
-
-    if (pathname === '/api/admin/lawyers' && method === 'POST') {
-        const body = await parseBody(req);
-        const lawyers = readJSON(LAWYERS_FILE);
-        const newLawyer = {
-            id: getNextId(lawyers),
-            name: body.name || '',
-            title: body.title || '',
-            company: body.company || '',
-            phone: body.phone || '',
-            zalo: body.zalo || '',
-            email: body.email || '',
-            working_hours: body.working_hours || '',
-            working_days: body.working_days || '',
-            specialization: body.specialization || '',
-            bio: body.bio || '',
-            avatar_url: body.avatar_url || '',
-            is_online: body.is_online !== false,
-            is_primary: body.is_primary || false,
-            is_active: body.is_active !== false,
-            sort_order: body.sort_order || lawyers.length + 1
-        };
-        lawyers.push(newLawyer);
-        if (writeJSON(LAWYERS_FILE, lawyers)) {
-            return sendJSON(res, { success: true, data: newLawyer, message: 'Lawyer created' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-    }
-
-    const lawyerMatch = pathname.match(/^\/api\/admin\/lawyers\/(\d+)$/);
-    if (lawyerMatch) {
-        const lawyerId = parseInt(lawyerMatch[1]);
-        const lawyers = readJSON(LAWYERS_FILE);
-        const lawyerIndex = lawyers.findIndex(l => l.id === lawyerId);
-
-        if (method === 'GET') {
-            const lawyer = lawyers.find(l => l.id === lawyerId);
-            if (lawyer) return sendJSON(res, { success: true, data: lawyer });
-            return sendJSON(res, { success: false, message: 'Lawyer not found' }, 404);
-        }
-
-        if (method === 'PUT') {
-            if (lawyerIndex === -1) return sendJSON(res, { success: false, message: 'Lawyer not found' }, 404);
-            const body = await parseBody(req);
-            lawyers[lawyerIndex] = { 
-                ...lawyers[lawyerIndex], 
-                ...body, 
-                id: lawyerId,
-                avatar_url: body.avatar_url || lawyers[lawyerIndex].avatar_url || ''
-            };
-            if (writeJSON(LAWYERS_FILE, lawyers)) {
-                return sendJSON(res, { success: true, data: lawyers[lawyerIndex], message: 'Lawyer updated' });
-            }
-            return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-        }
-
-        if (method === 'DELETE') {
-            if (lawyerIndex === -1) return sendJSON(res, { success: false, message: 'Lawyer not found' }, 404);
-            lawyers.splice(lawyerIndex, 1);
-            if (writeJSON(LAWYERS_FILE, lawyers)) {
-                return sendJSON(res, { success: true, message: 'Lawyer deleted' });
-            }
-            return sendJSON(res, { success: false, message: 'Failed to delete' }, 500);
-        }
-    }
-
-    // --- SETTINGS ---
-    if (pathname === '/api/settings/logo' && method === 'GET') {
-        const settings = readJSON(SETTINGS_FILE) || {};
-        return sendJSON(res, { success: true, data: { logo: settings.logo } });
-    }
-
-    if (pathname === '/api/admin/settings/logo' && method === 'POST') {
-        const body = await parseBody(req);
-        const settings = readJSON(SETTINGS_FILE) || {};
-        settings.logo = body.logo;
-        if (writeJSON(SETTINGS_FILE, settings)) {
-            return sendJSON(res, { success: true, message: 'Logo saved' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-    }
-
-    if (pathname === '/api/admin/settings/logo' && method === 'DELETE') {
-        const settings = readJSON(SETTINGS_FILE) || {};
-        settings.logo = null;
-        if (writeJSON(SETTINGS_FILE, settings)) {
-            return sendJSON(res, { success: true, message: 'Logo deleted' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to delete' }, 500);
-    }
-
-    if (pathname === '/api/settings' && method === 'GET') {
-        const settings = readJSON(SETTINGS_FILE) || {};
-        return sendJSON(res, { success: true, data: settings });
-    }
-
-    if (pathname === '/api/admin/settings' && method === 'POST') {
-        const body = await parseBody(req);
-        const settings = readJSON(SETTINGS_FILE) || {};
-        Object.assign(settings, body);
-        if (writeJSON(SETTINGS_FILE, settings)) {
-            return sendJSON(res, { success: true, message: 'Settings saved' });
-        }
-        return sendJSON(res, { success: false, message: 'Failed to save' }, 500);
-    }
-
-    // --- STATS ---
-    if (pathname === '/api/admin/stats' && method === 'GET') {
-        const events = readJSON(EVENTS_FILE);
-        const news = readJSON(NEWS_FILE);
-        const agencies = readJSON(AGENCIES_FILE);
-        const lawyers = readJSON(LAWYERS_FILE);
-        return sendJSON(res, {
-            success: true,
-            data: {
-                events: { total: events.length, active: events.filter(e => e.isActive).length },
-                news: { total: news.length },
-                agencies: { total: agencies.length },
-                lawyers: { total: lawyers.length, active: lawyers.filter(l => l.is_active !== false).length, online: lawyers.filter(l => l.is_online).length }
-            }
-        });
-    }
-
-    // --- ADMIN LOGIN ---
-    if (pathname === '/api/admin/login' && method === 'POST') {
-        const body = await parseBody(req);
-        if (body.username === 'admin' && body.password === 'htic2025') {
-            return sendJSON(res, { success: true, token: 'admin-token-' + Date.now() });
-        }
-        return sendJSON(res, { success: false, message: 'Invalid credentials' }, 401);
-    }
-
-    // =============== STATIC FILES ===============
-    
-    // Serve frontend files
-    const frontendDir = path.join(__dirname, '..', 'frontend');
-    
-    if (pathname === '/' || pathname === '/index.html') {
-        return serveStatic(res, path.join(frontendDir, 'index.html'));
-    }
-    
-    if (pathname === '/admin' || pathname === '/admin.html') {
-        return serveStatic(res, path.join(frontendDir, 'admin.html'));
-    }
-
-    // Serve images folder
-    if (pathname.startsWith('/images/')) {
-        const imagePath = path.join(frontendDir, pathname);
-        if (fs.existsSync(imagePath)) {
-            return serveStatic(res, imagePath);
-        }
-    }
-
-    // Serve other static files
-    const staticPath = path.join(frontendDir, pathname);
-    if (fs.existsSync(staticPath) && fs.statSync(staticPath).isFile()) {
-        return serveStatic(res, staticPath);
-    }
-
-    // 404
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: false, message: 'Not found' }));
+// PostgreSQL Connection với cấu hình Railway
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false  // Required for Railway PostgreSQL
+  },
+  // Connection pool settings
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
-server.listen(PORT, () => {
-    console.log(`
-â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
-â•‘         HTIC Legal App Server v8.6                     â•‘
-â• â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•£
-â•‘  Server running at: http://localhost:${PORT}             â•‘
-â•‘  Admin panel: http://localhost:${PORT}/admin             â•‘
-â•‘  Login: admin / htic2025                               â•‘
-â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// Test connection on startup
+pool.on('connect', () => {
+  console.log('✅ PostgreSQL client connected');
+});
+
+pool.on('error', (err) => {
+  console.error('❌ PostgreSQL pool error:', err.message);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DATABASE INITIALIZATION
+// ═══════════════════════════════════════════════════════════════════════════
+async function initDatabase() {
+  console.log('📦 Initializing database...');
+  
+  // Test connection first
+  try {
+    const testResult = await pool.query('SELECT NOW() as now, current_database() as db');
+    console.log('✅ Database connected:', testResult.rows[0].db, 'at', testResult.rows[0].now);
+  } catch (testErr) {
+    console.error('❌ Database connection test failed:', testErr.message);
+    throw testErr;
+  }
+
+  const client = await pool.connect();
+  try {
+    console.log('📝 Creating tables...');
+    
+    // Categories table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        key VARCHAR(50) UNIQUE NOT NULL,
+        icon VARCHAR(50) DEFAULT 'event',
+        color VARCHAR(20) DEFAULT '#3B82F6',
+        sort_order INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
     `);
+
+    // Provinces table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS provinces (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        code VARCHAR(20) UNIQUE,
+        region VARCHAR(50),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Agencies table (cơ quan ban hành)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS agencies (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        short_name VARCHAR(100),
+        description TEXT,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Events table (Nghĩa vụ pháp lý / Lịch pháp lý)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS events (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(500) NOT NULL,
+        description TEXT,
+        category VARCHAR(50) DEFAULT 'other',
+        deadline DATE,
+        frequency VARCHAR(50),
+        legal_basis TEXT,
+        penalty TEXT,
+        agency_id INT REFERENCES agencies(id),
+        province_id INT REFERENCES provinces(id),
+        applies_to VARCHAR(50) DEFAULT 'business',
+        priority VARCHAR(20) DEFAULT 'medium',
+        reminder_days INT DEFAULT 7,
+        notes TEXT,
+        source VARCHAR(255),
+        source_url TEXT,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // News table (Tin tức pháp lý)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS news (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(500) NOT NULL,
+        summary TEXT,
+        content TEXT,
+        category VARCHAR(50) DEFAULT 'general',
+        image_url TEXT,
+        source VARCHAR(255),
+        source_url TEXT,
+        author VARCHAR(100),
+        views INT DEFAULT 0,
+        is_featured BOOLEAN DEFAULT false,
+        is_active BOOLEAN DEFAULT true,
+        published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Organization types (Loại cơ quan tra cứu)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS org_types (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        key VARCHAR(50) UNIQUE NOT NULL,
+        icon VARCHAR(50) DEFAULT 'business',
+        color VARCHAR(20) DEFAULT '#3B82F6',
+        sort_order INT DEFAULT 0,
+        is_active BOOLEAN DEFAULT true
+      )
+    `);
+
+    // Organizations table (Cơ quan tra cứu)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS organizations (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        type_id INT REFERENCES org_types(id),
+        category VARCHAR(50) DEFAULT 'government',
+        address TEXT,
+        district VARCHAR(100),
+        province_id INT REFERENCES provinces(id),
+        phone VARCHAR(50),
+        email VARCHAR(100),
+        website TEXT,
+        working_hours VARCHAR(255),
+        description TEXT,
+        services TEXT,
+        lat DECIMAL(10, 8),
+        lng DECIMAL(11, 8),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Lawyers table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS lawyers (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        title VARCHAR(100),
+        company VARCHAR(255),
+        phone VARCHAR(50),
+        zalo VARCHAR(50),
+        email VARCHAR(100),
+        avatar_url TEXT,
+        working_hours VARCHAR(100),
+        working_days VARCHAR(100),
+        bio TEXT,
+        specialization TEXT,
+        is_online BOOLEAN DEFAULT true,
+        is_primary BOOLEAN DEFAULT false,
+        is_active BOOLEAN DEFAULT true,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Support requests table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS support_requests (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        phone VARCHAR(50),
+        email VARCHAR(100),
+        company VARCHAR(255),
+        category VARCHAR(50) DEFAULT 'legal',
+        subject VARCHAR(255),
+        message TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        notes TEXT,
+        assigned_to VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Settings table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        id SERIAL PRIMARY KEY,
+        key VARCHAR(100) UNIQUE NOT NULL,
+        value TEXT,
+        description VARCHAR(255),
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // SEED DEFAULT DATA
+    const defaultCategories = [
+      { name: 'Thuế', key: 'tax', icon: 'receipt_long', color: '#F97316' },
+      { name: 'Lao động', key: 'labor', icon: 'people', color: '#06B6D4' },
+      { name: 'Bảo hiểm', key: 'insurance', icon: 'health_and_safety', color: '#10B981' },
+      { name: 'Tài chính', key: 'finance', icon: 'account_balance', color: '#8B5CF6' },
+      { name: 'Đầu tư', key: 'investment', icon: 'trending_up', color: '#6366F1' },
+      { name: 'Khác', key: 'other', icon: 'event', color: '#3B82F6' }
+    ];
+    for (const cat of defaultCategories) {
+      await client.query(
+        `INSERT INTO categories (name, key, icon, color, sort_order) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (key) DO NOTHING`,
+        [cat.name, cat.key, cat.icon, cat.color, defaultCategories.indexOf(cat)]
+      );
+    }
+
+    const defaultProvinces = [
+      { name: 'TP. Hồ Chí Minh', code: 'hcm', region: 'south' },
+      { name: 'Hà Nội', code: 'hanoi', region: 'north' },
+      { name: 'Đà Nẵng', code: 'danang', region: 'central' },
+      { name: 'Bình Dương', code: 'binhduong', region: 'south' },
+      { name: 'Đồng Nai', code: 'dongnai', region: 'south' }
+    ];
+    for (const prov of defaultProvinces) {
+      await client.query(
+        `INSERT INTO provinces (name, code, region) VALUES ($1, $2, $3) ON CONFLICT (code) DO NOTHING`,
+        [prov.name, prov.code, prov.region]
+      );
+    }
+
+    const defaultOrgTypes = [
+      { name: 'Cơ quan nhà nước', key: 'government', icon: 'account_balance', color: '#3B82F6' },
+      { name: 'Công ty luật', key: 'lawfirm', icon: 'gavel', color: '#8B5CF6' },
+      { name: 'Văn phòng công chứng', key: 'notary', icon: 'verified', color: '#F97316' },
+      { name: 'Thừa phát lại', key: 'bailiff', icon: 'assignment', color: '#10B981' },
+      { name: 'Cơ quan thuế', key: 'tax', icon: 'receipt_long', color: '#EF4444' },
+      { name: 'Bảo hiểm xã hội', key: 'insurance', icon: 'shield', color: '#06B6D4' },
+      { name: 'Sở LĐTBXH', key: 'labor', icon: 'people', color: '#EC4899' },
+      { name: 'Khác', key: 'other', icon: 'business', color: '#64748B' }
+    ];
+    for (const type of defaultOrgTypes) {
+      await client.query(
+        `INSERT INTO org_types (name, key, icon, color, sort_order) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (key) DO NOTHING`,
+        [type.name, type.key, type.icon, type.color, defaultOrgTypes.indexOf(type)]
+      );
+    }
+
+    const defaultSettings = [
+      { key: 'app_name', value: 'HTIC Legal Calendar', description: 'Tên ứng dụng' },
+      { key: 'app_version', value: '1.0.0', description: 'Phiên bản ứng dụng' },
+      { key: 'app_logo', value: '', description: 'URL logo ứng dụng' },
+      { key: 'company_name', value: 'Công ty Luật TNHH HTIC', description: 'Tên công ty' },
+      { key: 'company_slogan', value: 'Đồng hành pháp lý doanh nghiệp', description: 'Slogan công ty' },
+      { key: 'address', value: '79/6 Hoàng Văn Thái, P.Tân Phú, Quận 7, TP.HCM', description: 'Địa chỉ' },
+      { key: 'hotline', value: '0918 682 879', description: 'Số hotline' },
+      { key: 'zalo_link', value: 'https://zalo.me/0918682879', description: 'Link Zalo' },
+      { key: 'contact_email', value: 'contact@htic.com.vn', description: 'Email liên hệ' },
+      { key: 'support_email', value: 'support@htic.com.vn', description: 'Email hỗ trợ' },
+      { key: 'website', value: 'https://htic.com.vn', description: 'Website' },
+      { key: 'facebook', value: 'https://facebook.com/hticlaw', description: 'Facebook' },
+      { key: 'working_hours', value: '8:00 - 18:00', description: 'Giờ làm việc' },
+      { key: 'working_days', value: 'Thứ 2 - Thứ 6', description: 'Ngày làm việc' },
+      { key: 'about_content', value: 'HTIC Law Firm là công ty luật hàng đầu tại Việt Nam với hơn 15 năm kinh nghiệm trong lĩnh vực tư vấn pháp luật doanh nghiệp.', description: 'Nội dung giới thiệu' }
+    ];
+    for (const setting of defaultSettings) {
+      await client.query(
+        `INSERT INTO settings (key, value, description) VALUES ($1, $2, $3) ON CONFLICT (key) DO NOTHING`,
+        [setting.key, setting.value, setting.description]
+      );
+    }
+
+    await client.query(`
+      INSERT INTO lawyers (name, title, company, phone, zalo, email, working_hours, working_days, bio, specialization, is_online, is_primary, sort_order)
+      SELECT 'Luật sư HTIC', 'Luật sư điều hành', 'Công ty Luật TNHH HTIC', '0918 682 879', '0918682879', 'contact@htic.com.vn',
+             '8:00 - 18:00', 'Thứ 2 - Thứ 6', 'Hơn 15 năm kinh nghiệm tư vấn pháp luật doanh nghiệp.', 'Thuế, M&A, Đầu tư nước ngoài', true, true, 0
+      WHERE NOT EXISTS (SELECT 1 FROM lawyers WHERE is_primary = true)
+    `);
+
+    const defaultAgencies = [
+      { name: 'Tổng cục Thuế', short_name: 'TCT' },
+      { name: 'Bảo hiểm Xã hội Việt Nam', short_name: 'BHXHVN' },
+      { name: 'Bộ Lao động - Thương binh và Xã hội', short_name: 'BLĐTBXH' }
+    ];
+    for (const agency of defaultAgencies) {
+      await client.query(
+        `INSERT INTO agencies (name, short_name) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM agencies WHERE name = $1)`,
+        [agency.name, agency.short_name]
+      );
+    }
+
+    console.log('✅ Database initialized with v14 schema');
+  } finally {
+    client.release();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API ROUTES - PUBLIC (FOR FLUTTER APP)
+// ═══════════════════════════════════════════════════════════════════════════
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', version: '14.0.0', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/events', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT e.*, a.name as agency_name, p.name as province_name
+      FROM events e
+      LEFT JOIN agencies a ON e.agency_id = a.id
+      LEFT JOIN provinces p ON e.province_id = p.id
+      WHERE e.is_active = true
+      ORDER BY e.deadline DESC, e.created_at DESC
+    `);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/news', async (req, res) => {
+  try {
+    const { category, limit } = req.query;
+    let query = `SELECT * FROM news WHERE is_active = true`;
+    const params = [];
+    if (category && category !== 'all') {
+      params.push(category);
+      query += ` AND category = $${params.length}`;
+    }
+    query += ` ORDER BY published_at DESC, created_at DESC`;
+    if (limit) {
+      params.push(parseInt(limit));
+      query += ` LIMIT $${params.length}`;
+    }
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/organizations', async (req, res) => {
+  try {
+    const { category, type, province_id, search } = req.query;
+    let query = `
+      SELECT o.*, t.name as type_name, t.key as type_key, t.icon as type_icon, t.color as type_color, p.name as province_name
+      FROM organizations o
+      LEFT JOIN org_types t ON o.type_id = t.id
+      LEFT JOIN provinces p ON o.province_id = p.id
+      WHERE o.is_active = true
+    `;
+    const params = [];
+    if (category && category !== 'all') {
+      params.push(category);
+      query += ` AND o.category = $${params.length}`;
+    }
+    if (type) {
+      params.push(type);
+      query += ` AND t.key = $${params.length}`;
+    }
+    if (province_id) {
+      params.push(province_id);
+      query += ` AND o.province_id = $${params.length}`;
+    }
+    if (search) {
+      params.push(`%${search}%`);
+      query += ` AND (o.name ILIKE $${params.length} OR o.address ILIKE $${params.length})`;
+    }
+    query += ` ORDER BY o.name ASC`;
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/agencies', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT o.id, o.name, o.category, o.address, o.phone, o.email, o.website, o.working_hours as "workingHours", o.description, o.services,
+             t.key as type, t.name as type_name, p.code as "provinceId", p.name as province_name
+      FROM organizations o
+      LEFT JOIN org_types t ON o.type_id = t.id
+      LEFT JOIN provinces p ON o.province_id = p.id
+      WHERE o.is_active = true ORDER BY o.name ASC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/org-types', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM org_types WHERE is_active = true ORDER BY sort_order ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/lawyers', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM lawyers WHERE is_active = true ORDER BY is_primary DESC, sort_order ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/lawyers/primary', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM lawyers WHERE is_primary = true AND is_active = true LIMIT 1');
+    res.json({ success: true, data: result.rows[0] || null });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/support-requests', async (req, res) => {
+  try {
+    const { name, phone, email, company, category, subject, message } = req.body;
+    if (!name || !message) {
+      return res.status(400).json({ success: false, message: 'Vui lòng điền họ tên và nội dung' });
+    }
+    const result = await pool.query(
+      `INSERT INTO support_requests (name, phone, email, company, category, subject, message) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [name, phone, email, company, category || 'legal', subject || 'Yêu cầu tư vấn pháp lý', message]
+    );
+    res.json({ success: true, message: 'Gửi yêu cầu thành công!', id: result.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/settings', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT key, value FROM settings');
+    const settings = {};
+    result.rows.forEach(row => { settings[row.key] = row.value; });
+    res.json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/categories', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM categories WHERE is_active = true ORDER BY sort_order ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/provinces', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM provinces WHERE is_active = true ORDER BY name ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN API ROUTES
+// ═══════════════════════════════════════════════════════════════════════════
+
+const adminAuth = (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (auth === 'Basic ' + Buffer.from('admin:htic2025').toString('base64')) {
+    next();
+  } else {
+    res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+};
+
+app.get('/api/admin/stats', adminAuth, async (req, res) => {
+  try {
+    const [events, news, orgs, lawyers, pending] = await Promise.all([
+      pool.query('SELECT COUNT(*) as count FROM events WHERE is_active = true'),
+      pool.query('SELECT COUNT(*) as count FROM news WHERE is_active = true'),
+      pool.query('SELECT COUNT(*) as count FROM organizations WHERE is_active = true'),
+      pool.query('SELECT COUNT(*) as count FROM lawyers WHERE is_active = true'),
+      pool.query("SELECT COUNT(*) as count FROM support_requests WHERE status = 'pending'")
+    ]);
+    res.json({
+      success: true,
+      data: {
+        events: parseInt(events.rows[0].count),
+        news: parseInt(news.rows[0].count),
+        organizations: parseInt(orgs.rows[0].count),
+        lawyers: parseInt(lawyers.rows[0].count),
+        pendingRequests: parseInt(pending.rows[0].count)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// EVENTS CRUD
+app.get('/api/admin/events', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT e.*, a.name as agency_name, p.name as province_name
+      FROM events e LEFT JOIN agencies a ON e.agency_id = a.id LEFT JOIN provinces p ON e.province_id = p.id
+      ORDER BY e.deadline DESC, e.created_at DESC
+    `);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/events', adminAuth, async (req, res) => {
+  try {
+    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = req.body;
+    const result = await pool.query(
+      `INSERT INTO events (title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
+      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days || 7, notes, source, source_url, is_active !== false]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/events/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = req.body;
+    const result = await pool.query(
+      `UPDATE events SET title=$1, description=$2, category=$3, deadline=$4, frequency=$5, legal_basis=$6, penalty=$7, agency_id=$8, province_id=$9, applies_to=$10, priority=$11, reminder_days=$12, notes=$13, source=$14, source_url=$15, is_active=$16, updated_at=CURRENT_TIMESTAMP WHERE id=$17 RETURNING *`,
+      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days, notes, source, source_url, is_active, id]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/admin/events/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM events WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// NEWS CRUD
+app.get('/api/admin/news', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM news ORDER BY published_at DESC, created_at DESC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/news', adminAuth, async (req, res) => {
+  try {
+    const { title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, published_at } = req.body;
+    const result = await pool.query(
+      `INSERT INTO news (title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, published_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      [title, summary, content, category, image_url, source, source_url, author, is_featured || false, is_active !== false, published_at || new Date()]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/news/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, published_at } = req.body;
+    const result = await pool.query(
+      `UPDATE news SET title=$1, summary=$2, content=$3, category=$4, image_url=$5, source=$6, source_url=$7, author=$8, is_featured=$9, is_active=$10, published_at=$11, updated_at=CURRENT_TIMESTAMP WHERE id=$12 RETURNING *`,
+      [title, summary, content, category, image_url, source, source_url, author, is_featured, is_active, published_at, id]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/admin/news/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM news WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ORGANIZATIONS CRUD
+app.get('/api/admin/organizations', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT o.*, t.name as type_name, t.key as type_key, p.name as province_name
+      FROM organizations o LEFT JOIN org_types t ON o.type_id = t.id LEFT JOIN provinces p ON o.province_id = p.id ORDER BY o.name ASC
+    `);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/organizations', adminAuth, async (req, res) => {
+  try {
+    const { name, type_id, category, address, district, province_id, phone, email, website, working_hours, description, services, lat, lng, is_active } = req.body;
+    const result = await pool.query(
+      `INSERT INTO organizations (name, type_id, category, address, district, province_id, phone, email, website, working_hours, description, services, lat, lng, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+      [name, type_id, category, address, district, province_id || null, phone, email, website, working_hours, description, services, lat, lng, is_active !== false]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/organizations/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, type_id, category, address, district, province_id, phone, email, website, working_hours, description, services, lat, lng, is_active } = req.body;
+    const result = await pool.query(
+      `UPDATE organizations SET name=$1, type_id=$2, category=$3, address=$4, district=$5, province_id=$6, phone=$7, email=$8, website=$9, working_hours=$10, description=$11, services=$12, lat=$13, lng=$14, is_active=$15, updated_at=CURRENT_TIMESTAMP WHERE id=$16 RETURNING *`,
+      [name, type_id, category, address, district, province_id || null, phone, email, website, working_hours, description, services, lat, lng, is_active, id]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/admin/organizations/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM organizations WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// LAWYERS CRUD
+app.get('/api/admin/lawyers', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM lawyers ORDER BY is_primary DESC, sort_order ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/lawyers', adminAuth, async (req, res) => {
+  try {
+    const { name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order } = req.body;
+    const result = await pool.query(
+      `INSERT INTO lawyers (name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+      [name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online !== false, is_primary || false, is_active !== false, sort_order || 0]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/lawyers/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order } = req.body;
+    const result = await pool.query(
+      `UPDATE lawyers SET name=$1, title=$2, company=$3, phone=$4, zalo=$5, email=$6, avatar_url=$7, working_hours=$8, working_days=$9, bio=$10, specialization=$11, is_online=$12, is_primary=$13, is_active=$14, sort_order=$15 WHERE id=$16 RETURNING *`,
+      [name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order, id]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/admin/lawyers/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM lawyers WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// SUPPORT REQUESTS CRUD
+app.get('/api/admin/support-requests', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM support_requests ORDER BY created_at DESC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/support-requests/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, notes, assigned_to } = req.body;
+    const result = await pool.query(
+      `UPDATE support_requests SET status=$1, notes=$2, assigned_to=$3, updated_at=CURRENT_TIMESTAMP WHERE id=$4 RETURNING *`,
+      [status, notes, assigned_to, id]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/admin/support-requests/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM support_requests WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// SETTINGS CRUD
+app.get('/api/admin/settings', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM settings ORDER BY key ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/settings', adminAuth, async (req, res) => {
+  try {
+    const settings = req.body;
+    for (const [key, value] of Object.entries(settings)) {
+      await pool.query(
+        `INSERT INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+        [key, value]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/admin/agencies-list', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM agencies ORDER BY name ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/admin/categories', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM categories ORDER BY sort_order ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/admin/provinces', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM provinces ORDER BY name ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/admin/org-types', adminAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM org_types ORDER BY sort_order ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/', (req, res) => {
+  res.redirect('/admin');
+});
+
+initDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log('');
+    console.log('╔═══════════════════════════════════════════════════════════╗');
+    console.log('║     HTIC Legal Calendar API v15.0                         ║');
+    console.log('╠═══════════════════════════════════════════════════════════╣');
+    console.log(`║  🚀 Server running on port ${PORT}                           ║`);
+    console.log('║  ✅ Database connected successfully                        ║');
+    console.log('║  📱 API ready for Flutter app                              ║');
+    console.log('╚═══════════════════════════════════════════════════════════╝');
+    console.log('');
+  });
+}).catch(err => {
+  console.error('');
+  console.error('╔═══════════════════════════════════════════════════════════╗');
+  console.error('║  ❌ STARTUP FAILED                                         ║');
+  console.error('╠═══════════════════════════════════════════════════════════╣');
+  console.error('║  Error:', err.message.substring(0, 45).padEnd(45), '║');
+  console.error('╠═══════════════════════════════════════════════════════════╣');
+  console.error('║  Please check:                                            ║');
+  console.error('║  1. DATABASE_URL is set in Railway Variables              ║');
+  console.error('║  2. PostgreSQL service is running                         ║');
+  console.error('║  3. Network connection to database                        ║');
+  console.error('╚═══════════════════════════════════════════════════════════╝');
+  console.error('');
+  // Don't exit - let Railway handle restart
+  // process.exit(1);
 });
