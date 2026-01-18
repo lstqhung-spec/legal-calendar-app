@@ -565,13 +565,57 @@ app.get('/api/provinces', async (req, res) => {
 // ADMIN API ROUTES
 // ═══════════════════════════════════════════════════════════════════════════
 
+const ADMIN_USER = 'admin';
+const ADMIN_PASS = 'admin123';
+const JWT_SECRET = 'htic-legal-2025-secret-key';
+
+// Simple token generation
+function generateToken(username) {
+  const payload = { username, exp: Date.now() + 24 * 60 * 60 * 1000 }; // 24h
+  return Buffer.from(JSON.stringify(payload)).toString('base64');
+}
+
+function verifyToken(token) {
+  try {
+    const payload = JSON.parse(Buffer.from(token, 'base64').toString());
+    if (payload.exp > Date.now()) return payload;
+  } catch (e) {}
+  return null;
+}
+
+// Admin login endpoint
+app.post('/api/admin/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    const token = generateToken(username);
+    res.json({ success: true, token, message: 'Đăng nhập thành công' });
+  } else {
+    res.status(401).json({ success: false, message: 'Sai tên đăng nhập hoặc mật khẩu' });
+  }
+});
+
 const adminAuth = (req, res, next) => {
   const auth = req.headers.authorization;
-  if (auth === 'Basic ' + Buffer.from('admin:htic2025').toString('base64')) {
-    next();
-  } else {
-    res.status(401).json({ success: false, message: 'Unauthorized' });
+  if (!auth) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
+  
+  // Support Bearer token
+  if (auth.startsWith('Bearer ')) {
+    const token = auth.slice(7);
+    const payload = verifyToken(token);
+    if (payload) {
+      req.admin = payload;
+      return next();
+    }
+  }
+  
+  // Support Basic Auth (legacy)
+  if (auth === 'Basic ' + Buffer.from('admin:htic2025').toString('base64')) {
+    return next();
+  }
+  
+  res.status(401).json({ success: false, message: 'Unauthorized' });
 };
 
 app.get('/api/admin/stats', adminAuth, async (req, res) => {
