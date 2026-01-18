@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTIC Legal Calendar - Admin v17.1</title>
+    <title>HTIC Legal Calendar - Admin v17.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -60,6 +60,25 @@
 
         const app = document.getElementById('app');
         const modalRoot = document.getElementById('modal-root');
+
+        // ========== CLEAN HTML - Loại bỏ CSS Tailwind ==========
+        function cleanHTML(html) {
+            if (!html) return '';
+            let text = html;
+            // Loại bỏ style attributes
+            text = text.replace(/style\s*=\s*"[^"]*"/gi, '');
+            text = text.replace(/style\s*=\s*'[^']*'/gi, '');
+            // Loại bỏ class attributes
+            text = text.replace(/class\s*=\s*"[^"]*"/gi, '');
+            text = text.replace(/class\s*=\s*'[^']*'/gi, '');
+            // Loại bỏ data-* attributes
+            text = text.replace(/data-[\w-]+\s*=\s*"[^"]*"/gi, '');
+            // Loại bỏ CSS variables
+            text = text.replace(/--[\w-]+\s*:[^;]*;?\s*/g, '');
+            // Clean up whitespace
+            text = text.replace(/[ \t]+/g, ' ');
+            return text.trim();
+        }
 
         // ========== CONSTANTS ==========
         const CATEGORIES = [
@@ -126,7 +145,7 @@
                             <div class="w-20 h-20 bg-gradient-to-br from-navy-600 to-navy-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <span class="text-white text-3xl font-bold">H</span>
                             </div>
-                            <h1 class="text-2xl font-bold text-gray-900">HTIC Admin v17.1</h1>
+                            <h1 class="text-2xl font-bold text-gray-900">HTIC Admin v17.2</h1>
                             <p class="text-gray-500 mt-2">Đăng nhập để quản lý</p>
                         </div>
                         <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm"></div>
@@ -574,8 +593,9 @@
                 title: document.getElementById('news-title').value,
                 category: document.getElementById('news-category').value,
                 source: document.getElementById('news-source').value,
-                summary: document.getElementById('news-summary').value,
-                content: window.newsEditor ? window.newsEditor.root.innerHTML : '',
+                // Clean HTML trước khi gửi (loại bỏ CSS Tailwind)
+                summary: cleanHTML(document.getElementById('news-summary').value),
+                content: cleanHTML(window.newsEditor ? window.newsEditor.root.innerHTML : ''),
                 image_url: document.getElementById('news-image').value,
                 source_url: document.getElementById('news-source-url')?.value || '',
                 is_featured: document.getElementById('news-featured').checked,
