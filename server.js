@@ -25,7 +25,7 @@ let pool = null;
 
 console.log('');
 console.log('╔═══════════════════════════════════════════════════════════╗');
-console.log('║     HTIC Legal Calendar API v15.1 - Starting...           ║');
+console.log('║     HTIC Legal Calendar API v17.0 - Starting...           ║');
 console.log('╚═══════════════════════════════════════════════════════════╝');
 console.log('');
 console.log('🔧 Environment check:');
@@ -381,7 +381,7 @@ async function initDatabase() {
       console.log('   ✓ Agencies seeded');
     } catch (e) { console.log('   ⚠ Agencies already exist or error:', e.message); }
 
-    console.log('✅ Database initialized with v15.1 schema');
+    console.log('✅ Database initialized with v17.0 schema');
   } finally {
     client.release();
   }
@@ -394,7 +394,7 @@ async function initDatabase() {
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    version: '15.1.0', 
+    version: '17.0.0', 
     timestamp: new Date().toISOString(),
     database: dbConnected ? 'connected' : 'disconnected',
     message: dbConnected ? 'All systems operational' : 'Database not connected - please configure DATABASE_URL'
@@ -1087,7 +1087,7 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════╗');
-    console.log('║     HTIC Legal Calendar API v15.1                         ║');
+    console.log('║     HTIC Legal Calendar API v17.0                         ║');
     console.log('╠═══════════════════════════════════════════════════════════╣');
     console.log(`║  🚀 Server running on port ${PORT}                           ║`);
     if (dbConnected) {
