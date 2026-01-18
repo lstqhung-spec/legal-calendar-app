@@ -1,1508 +1,855 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTIC Legal Calendar - Admin v15</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #3B82F6;
-      --primary-dark: #2563EB;
-      --success: #10B981;
-      --warning: #F97316;
-      --danger: #EF4444;
-      --sidebar-width: 260px;
-    }
-    body { background: #F1F5F9; font-family: 'Segoe UI', system-ui, sans-serif; }
-    .sidebar {
-      position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-width);
-      background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-      padding: 20px 0; z-index: 1000; overflow-y: auto;
-    }
-    .sidebar-brand {
-      padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1);
-      margin-bottom: 20px; text-align: center;
-    }
-    .sidebar-brand h4 { color: #fff; font-weight: 700; margin: 0; font-size: 18px; }
-    .sidebar-brand small { color: #94A3B8; font-size: 11px; }
-    .nav-item { padding: 3px 15px; }
-    .nav-link {
-      color: #CBD5E1; padding: 12px 15px; border-radius: 10px;
-      display: flex; align-items: center; gap: 12px; font-weight: 500;
-      transition: all 0.2s;
-    }
-    .nav-link:hover, .nav-link.active { background: var(--primary); color: #fff; }
-    .nav-link i { font-size: 18px; width: 24px; text-align: center; }
-    .nav-link .badge { margin-left: auto; }
-    .main-content { margin-left: var(--sidebar-width); padding: 30px; }
-    .page-header { margin-bottom: 25px; }
-    .page-header h2 { font-weight: 700; color: #1E293B; margin: 0; }
-    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-    .card-header { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 16px 20px; border-radius: 16px 16px 0 0 !important; }
-    .card-header h5 { margin: 0; font-weight: 600; color: #1E293B; }
-    .stat-card { border-radius: 16px; padding: 20px; color: #fff; }
-    .stat-card.events { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
-    .stat-card.news { background: linear-gradient(135deg, #10B981, #34D399); }
-    .stat-card.orgs { background: linear-gradient(135deg, #F97316, #FB923C); }
-    .stat-card.requests { background: linear-gradient(135deg, #EF4444, #F87171); }
-    .stat-card .stat-icon { font-size: 40px; opacity: 0.3; position: absolute; right: 20px; top: 20px; }
-    .stat-card .stat-value { font-size: 32px; font-weight: 700; }
-    .stat-card .stat-label { opacity: 0.9; font-size: 14px; }
-    .table th { font-weight: 600; color: #475569; font-size: 13px; text-transform: uppercase; }
-    .table td { vertical-align: middle; }
-    .btn-action { padding: 6px 10px; font-size: 14px; }
-    .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .status-pending { background: #FEF3C7; color: #D97706; }
-    .status-processing { background: #DBEAFE; color: #2563EB; }
-    .status-completed { background: #D1FAE5; color: #059669; }
-    .status-cancelled { background: #FEE2E2; color: #DC2626; }
-    .category-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; }
-    .form-label { font-weight: 600; color: #475569; font-size: 13px; }
-    .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-    .modal-header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
-    .modal-header .btn-close { filter: brightness(0) invert(1); }
-    .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #3B82F6, #1E40AF); }
-    .login-card { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-    .login-card h3 { font-weight: 700; color: #1E293B; }
-    /* Rich Text Editor */
-    .editor-toolbar { background: #F8FAFC; border: 1px solid #E2E8F0; border-bottom: none; border-radius: 8px 8px 0 0; padding: 8px; display: flex; gap: 5px; flex-wrap: wrap; }
-    .editor-toolbar button { background: #fff; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; }
-    .editor-toolbar button:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .editor-toolbar button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .editor-content { border: 1px solid #E2E8F0; border-radius: 0 0 8px 8px; min-height: 200px; padding: 15px; background: #fff; }
-    .editor-content:focus { outline: none; border-color: var(--primary); }
-    .priority-high { color: #DC2626; }
-    .priority-medium { color: #F97316; }
-    .priority-low { color: #10B981; }
-    .hidden { display: none !important; }
-    @media (max-width: 768px) {
-      .sidebar { width: 100%; position: relative; }
-      .main-content { margin-left: 0; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTIC Legal Calendar - Admin v17</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script>tailwind.config={theme:{extend:{colors:{navy:{50:'#e8eef5',100:'#c5d4e8',500:'#3d6d9e',600:'#1e3a5f',700:'#162d4a'}}}}}</script>
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .sidebar-item:hover { background: rgba(255,255,255,0.1); }
+        .sidebar-item.active { background: rgba(255,255,255,0.2); border-left: 4px solid #f5c842; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .modal-content { background: white; border-radius: 16px; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; }
+        .btn-primary { background: #1e3a5f; color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-primary:hover { background: #162d4a; }
+        .btn-danger { background: #dc2626; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-danger:hover { background: #b91c1c; }
+        .input-field { width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 8px; }
+        .input-field:focus { outline: none; border-color: #1e3a5f; }
+        select.input-field { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px; }
+        .avatar-preview { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #1e3a5f, #3d6d9e); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px; overflow: hidden; }
+        .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-green { background: #d1fae5; color: #059669; }
+        .badge-red { background: #fee2e2; color: #dc2626; }
+        .badge-blue { background: #dbeafe; color: #2563eb; }
+        .table-row:hover { background: #f8fafc; }
+        .tab-btn { padding: 10px 20px; border-radius: 8px 8px 0 0; cursor: pointer; }
+        .tab-btn.active { background: white; border-bottom: 2px solid #1e3a5f; font-weight: 600; }
+    </style>
 </head>
-<body>
-  <!-- Login Screen -->
-  <div id="loginScreen" class="login-container">
-    <div class="login-card text-center">
-      <i class="bi bi-shield-lock-fill text-primary" style="font-size: 50px;"></i>
-      <h3 class="mt-3 mb-4">HTIC Admin</h3>
-      <form id="loginForm">
-        <div class="mb-3">
-          <input type="text" class="form-control form-control-lg" id="username" placeholder="Tên đăng nhập" required>
-        </div>
-        <div class="mb-4">
-          <input type="password" class="form-control form-control-lg" id="password" placeholder="Mật khẩu" required>
-        </div>
-        <button type="submit" class="btn btn-primary btn-lg w-100">
-          <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
-        </button>
-      </form>
-      <p class="text-muted mt-3 mb-0" style="font-size: 12px;">Admin Dashboard v14.0</p>
-    </div>
-  </div>
+<body class="bg-gray-100">
+    <div id="app"></div>
+    <div id="modal-root"></div>
 
-  <!-- Main Admin -->
-  <div id="adminPanel" class="hidden">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="sidebar-brand">
-        <h4>⚖️ HTIC Admin</h4>
-        <small>Legal Calendar v14.0</small>
-      </div>
-      <ul class="nav flex-column">
-        <li class="nav-item"><a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2-fill"></i>Tổng quan</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-page="events"><i class="bi bi-calendar-event-fill"></i>Lịch pháp lý</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-page="news"><i class="bi bi-newspaper"></i>Tin tức</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-page="organizations"><i class="bi bi-building"></i>Cơ quan tra cứu</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-page="lawyers"><i class="bi bi-person-badge-fill"></i>Luật sư hỗ trợ</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-page="requests"><i class="bi bi-chat-left-text-fill"></i>Yêu cầu tư vấn<span id="pendingBadge" class="badge bg-danger rounded-pill ms-2">0</span></a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-page="settings"><i class="bi bi-gear-fill"></i>Cài đặt App</a></li>
-        <li class="nav-item mt-4"><a class="nav-link text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-left"></i>Đăng xuất</a></li>
-      </ul>
-    </div>
+    <script>
+        const API = '/api';
+        let token = localStorage.getItem('adminToken');
+        let currentSection = 'dashboard';
+        let provinces = [];
+        let wards = [];
+        let orgTypes = [];
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Dashboard Page -->
-      <div id="page-dashboard" class="page-content">
-        <div class="page-header"><h2>📊 Tổng quan</h2></div>
-        <div class="row g-4 mb-4">
-          <div class="col-md-3">
-            <div class="stat-card events position-relative">
-              <i class="bi bi-calendar-event stat-icon"></i>
-              <div class="stat-value" id="statEvents">0</div>
-              <div class="stat-label">Lịch pháp lý</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card news position-relative">
-              <i class="bi bi-newspaper stat-icon"></i>
-              <div class="stat-value" id="statNews">0</div>
-              <div class="stat-label">Tin tức</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card orgs position-relative">
-              <i class="bi bi-building stat-icon"></i>
-              <div class="stat-value" id="statOrgs">0</div>
-              <div class="stat-label">Cơ quan</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="stat-card requests position-relative">
-              <i class="bi bi-chat-left-text stat-icon"></i>
-              <div class="stat-value" id="statRequests">0</div>
-              <div class="stat-label">Yêu cầu chờ xử lý</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h5>📌 Hướng dẫn sử dụng</h5></div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <h6 class="text-primary"><i class="bi bi-calendar-event me-2"></i>Lịch pháp lý</h6>
-                <p class="text-muted">Quản lý các nghĩa vụ pháp lý, deadline với đầy đủ thông tin: căn cứ pháp lý, mức phạt...</p>
-                <h6 class="text-success"><i class="bi bi-newspaper me-2"></i>Tin tức</h6>
-                <p class="text-muted">Đăng tin tức pháp luật với trình soạn thảo hỗ trợ định dạng văn bản.</p>
-              </div>
-              <div class="col-md-6">
-                <h6 class="text-warning"><i class="bi bi-building me-2"></i>Cơ quan tra cứu</h6>
-                <p class="text-muted">Danh sách cơ quan nhà nước, công ty luật, văn phòng công chứng...</p>
-                <h6 class="text-danger"><i class="bi bi-chat-left-text me-2"></i>Yêu cầu tư vấn</h6>
-                <p class="text-muted">Xử lý các yêu cầu tư vấn từ người dùng app.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        const app = document.getElementById('app');
+        const modalRoot = document.getElementById('modal-root');
 
-      <!-- Events Page -->
-      <div id="page-events" class="page-content hidden">
-        <div class="page-header d-flex justify-content-between align-items-center">
-          <h2>📅 Quản lý Lịch pháp lý</h2>
-          <button class="btn btn-primary" onclick="openEventModal()"><i class="bi bi-plus-lg me-2"></i>Thêm mới</button>
-        </div>
-        <div class="card">
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Tiêu đề</th>
-                    <th>Danh mục</th>
-                    <th>Hạn nộp</th>
-                    <th>Ưu tiên</th>
-                    <th>Trạng thái</th>
-                    <th width="120">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="eventsTable"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- News Page -->
-      <div id="page-news" class="page-content hidden">
-        <div class="page-header d-flex justify-content-between align-items-center">
-          <h2>📰 Quản lý Tin tức</h2>
-          <button class="btn btn-primary" onclick="openNewsModal()"><i class="bi bi-plus-lg me-2"></i>Thêm tin mới</button>
-        </div>
-        <div class="card">
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Tiêu đề</th>
-                    <th>Danh mục</th>
-                    <th>Ngày đăng</th>
-                    <th>Nổi bật</th>
-                    <th>Trạng thái</th>
-                    <th width="120">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="newsTable"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Organizations Page -->
-      <div id="page-organizations" class="page-content hidden">
-        <div class="page-header d-flex justify-content-between align-items-center">
-          <h2>🏢 Quản lý Cơ quan tra cứu</h2>
-          <button class="btn btn-primary" onclick="openOrgModal()"><i class="bi bi-plus-lg me-2"></i>Thêm mới</button>
-        </div>
-        <div class="card">
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Tên cơ quan</th>
-                    <th>Loại</th>
-                    <th>Địa chỉ</th>
-                    <th>Điện thoại</th>
-                    <th>Trạng thái</th>
-                    <th width="120">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="orgsTable"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lawyers Page -->
-      <div id="page-lawyers" class="page-content hidden">
-        <div class="page-header d-flex justify-content-between align-items-center">
-          <h2>👨‍⚖️ Quản lý Luật sư hỗ trợ</h2>
-          <button class="btn btn-primary" onclick="openLawyerModal()"><i class="bi bi-plus-lg me-2"></i>Thêm mới</button>
-        </div>
-        <div class="card">
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Họ tên</th>
-                    <th>Chức danh</th>
-                    <th>Công ty</th>
-                    <th>Điện thoại</th>
-                    <th>Online</th>
-                    <th width="120">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="lawyersTable"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Support Requests Page -->
-      <div id="page-requests" class="page-content hidden">
-        <div class="page-header"><h2>💬 Yêu cầu tư vấn từ người dùng</h2></div>
-        <div class="card">
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Họ tên</th>
-                    <th>Liên hệ</th>
-                    <th>Nội dung</th>
-                    <th>Ngày gửi</th>
-                    <th>Trạng thái</th>
-                    <th width="140">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody id="requestsTable"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings Page -->
-      <div id="page-settings" class="page-content hidden">
-        <div class="page-header"><h2>⚙️ Cài đặt ứng dụng</h2></div>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="card mb-4">
-              <div class="card-header"><h5><i class="bi bi-app me-2"></i>Thông tin ứng dụng</h5></div>
-              <div class="card-body">
-                <div class="mb-3">
-                  <label class="form-label">Tên ứng dụng</label>
-                  <input type="text" class="form-control" id="setting_app_name">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Phiên bản</label>
-                  <input type="text" class="form-control" id="setting_app_version">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">URL Logo (để trống nếu dùng mặc định)</label>
-                  <input type="text" class="form-control" id="setting_app_logo" placeholder="https://example.com/logo.png">
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-header"><h5><i class="bi bi-clock me-2"></i>Giờ làm việc</h5></div>
-              <div class="card-body">
-                <div class="mb-3">
-                  <label class="form-label">Ngày làm việc</label>
-                  <input type="text" class="form-control" id="setting_working_days">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Giờ làm việc</label>
-                  <input type="text" class="form-control" id="setting_working_hours">
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card mb-4">
-              <div class="card-header"><h5><i class="bi bi-building me-2"></i>Thông tin công ty</h5></div>
-              <div class="card-body">
-                <div class="mb-3">
-                  <label class="form-label">Tên công ty</label>
-                  <input type="text" class="form-control" id="setting_company_name">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Slogan</label>
-                  <input type="text" class="form-control" id="setting_company_slogan">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Địa chỉ</label>
-                  <input type="text" class="form-control" id="setting_address">
-                </div>
-              </div>
-            </div>
-            <div class="card mb-4">
-              <div class="card-header"><h5><i class="bi bi-telephone me-2"></i>Thông tin liên hệ</h5></div>
-              <div class="card-body">
-                <div class="mb-3">
-                  <label class="form-label">Hotline</label>
-                  <input type="text" class="form-control" id="setting_hotline">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Email liên hệ</label>
-                  <input type="email" class="form-control" id="setting_contact_email">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Link Zalo</label>
-                  <input type="text" class="form-control" id="setting_zalo_link">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Website</label>
-                  <input type="text" class="form-control" id="setting_website">
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Facebook</label>
-                  <input type="text" class="form-control" id="setting_facebook">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card mb-4">
-          <div class="card-header"><h5><i class="bi bi-info-circle me-2"></i>Giới thiệu công ty</h5></div>
-          <div class="card-body">
-            <textarea class="form-control" id="setting_about_content" rows="4"></textarea>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-lg" onclick="saveSettings()"><i class="bi bi-save me-2"></i>Lưu cài đặt</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Event Modal -->
-  <div class="modal fade" id="eventModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="eventModalTitle">Thêm lịch pháp lý</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="eventId">
-          <div class="row">
-            <div class="col-md-8 mb-3">
-              <label class="form-label">Tiêu đề *</label>
-              <input type="text" class="form-control" id="eventTitle" required>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Danh mục</label>
-              <select class="form-select" id="eventCategory">
-                <option value="tax">Thuế</option>
-                <option value="labor">Lao động</option>
-                <option value="insurance">Bảo hiểm</option>
-                <option value="finance">Tài chính</option>
-                <option value="investment">Đầu tư</option>
-                <option value="other">Khác</option>
-              </select>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Hạn nộp *</label>
-              <input type="date" class="form-control" id="eventDeadline" required>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Mức ưu tiên</label>
-              <select class="form-select" id="eventPriority">
-                <option value="high">Cao</option>
-                <option value="medium" selected>Trung bình</option>
-                <option value="low">Thấp</option>
-              </select>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Tần suất</label>
-              <select class="form-select" id="eventFrequency">
-                <option value="">Một lần</option>
-                <option value="monthly">Hàng tháng</option>
-                <option value="quarterly">Hàng quý</option>
-                <option value="yearly">Hàng năm</option>
-              </select>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Mô tả chi tiết</label>
-            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Căn cứ pháp lý</label>
-            <input type="text" class="form-control" id="eventLegalBasis" placeholder="VD: Thông tư 80/2021/TT-BTC">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Mức phạt vi phạm</label>
-            <textarea class="form-control" id="eventPenalty" rows="2" placeholder="VD: Phạt chậm nộp 0.03%/ngày"></textarea>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Áp dụng cho</label>
-              <select class="form-select" id="eventAppliesTo">
-                <option value="business">Doanh nghiệp</option>
-                <option value="individual">Cá nhân</option>
-                <option value="both">Cả hai</option>
-              </select>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Nhắc trước (ngày)</label>
-              <input type="number" class="form-control" id="eventReminderDays" value="7">
-            </div>
-          </div>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="eventActive" checked>
-            <label class="form-check-label" for="eventActive">Kích hoạt</label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-          <button type="button" class="btn btn-primary" onclick="saveEvent()"><i class="bi bi-save me-2"></i>Lưu</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- News Modal -->
-  <div class="modal fade" id="newsModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="newsModalTitle">Thêm tin tức</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="newsId">
-          <div class="row">
-            <div class="col-md-8 mb-3">
-              <label class="form-label">Tiêu đề *</label>
-              <input type="text" class="form-control" id="newsTitle" required>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Danh mục</label>
-              <select class="form-select" id="newsCategory">
-                <option value="tax">Thuế</option>
-                <option value="labor">Lao động</option>
-                <option value="insurance">Bảo hiểm</option>
-                <option value="investment">Đầu tư</option>
-                <option value="general">Tin chung</option>
-              </select>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Tóm tắt</label>
-            <textarea class="form-control" id="newsSummary" rows="2"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Nội dung chi tiết</label>
-            <div class="editor-toolbar">
-              <button type="button" onclick="formatText('bold')" title="In đậm"><i class="bi bi-type-bold"></i></button>
-              <button type="button" onclick="formatText('italic')" title="In nghiêng"><i class="bi bi-type-italic"></i></button>
-              <button type="button" onclick="formatText('underline')" title="Gạch dưới"><i class="bi bi-type-underline"></i></button>
-              <button type="button" onclick="formatText('strikeThrough')" title="Gạch ngang"><i class="bi bi-type-strikethrough"></i></button>
-              <span class="mx-2 border-start"></span>
-              <button type="button" onclick="formatText('insertUnorderedList')" title="Danh sách"><i class="bi bi-list-ul"></i></button>
-              <button type="button" onclick="formatText('insertOrderedList')" title="Danh sách số"><i class="bi bi-list-ol"></i></button>
-              <span class="mx-2 border-start"></span>
-              <button type="button" onclick="formatText('justifyLeft')" title="Căn trái"><i class="bi bi-text-left"></i></button>
-              <button type="button" onclick="formatText('justifyCenter')" title="Căn giữa"><i class="bi bi-text-center"></i></button>
-              <button type="button" onclick="formatText('justifyRight')" title="Căn phải"><i class="bi bi-text-right"></i></button>
-            </div>
-            <div class="editor-content" id="newsContent" contenteditable="true"></div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">URL Hình ảnh</label>
-              <input type="text" class="form-control" id="newsImageUrl" placeholder="https://example.com/image.jpg">
-            </div>
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Nguồn</label>
-              <input type="text" class="form-control" id="newsSource">
-            </div>
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Ngày đăng</label>
-              <input type="datetime-local" class="form-control" id="newsPublishedAt">
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="newsFeatured">
-                <label class="form-check-label" for="newsFeatured">Tin nổi bật</label>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="newsActive" checked>
-                <label class="form-check-label" for="newsActive">Kích hoạt</label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-          <button type="button" class="btn btn-primary" onclick="saveNews()"><i class="bi bi-save me-2"></i>Lưu</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Organization Modal -->
-  <div class="modal fade" id="orgModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="orgModalTitle">Thêm cơ quan</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="orgId">
-          <div class="row">
-            <div class="col-md-8 mb-3">
-              <label class="form-label">Tên cơ quan *</label>
-              <input type="text" class="form-control" id="orgName" required>
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Loại cơ quan</label>
-              <select class="form-select" id="orgCategory">
-                <option value="government">Cơ quan nhà nước</option>
-                <option value="lawfirm">Công ty luật</option>
-                <option value="notary">Văn phòng công chứng</option>
-                <option value="bailiff">Thừa phát lại</option>
-              </select>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Loại chi tiết</label>
-              <select class="form-select" id="orgTypeId"></select>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Tỉnh/Thành phố</label>
-              <select class="form-select" id="orgProvinceId"></select>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Địa chỉ</label>
-            <input type="text" class="form-control" id="orgAddress">
-          </div>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Điện thoại</label>
-              <input type="text" class="form-control" id="orgPhone">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-control" id="orgEmail">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Website</label>
-              <input type="text" class="form-control" id="orgWebsite">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Giờ làm việc</label>
-            <input type="text" class="form-control" id="orgWorkingHours" placeholder="VD: 7:30 - 16:30">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Mô tả / Dịch vụ</label>
-            <textarea class="form-control" id="orgDescription" rows="2"></textarea>
-          </div>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="orgActive" checked>
-            <label class="form-check-label" for="orgActive">Kích hoạt</label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-          <button type="button" class="btn btn-primary" onclick="saveOrg()"><i class="bi bi-save me-2"></i>Lưu</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Lawyer Modal -->
-  <div class="modal fade" id="lawyerModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="lawyerModalTitle">Thêm luật sư</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="lawyerId">
-          
-          <!-- Avatar Section -->
-          <div class="row mb-4">
-            <div class="col-md-3 text-center">
-              <div id="lawyerAvatarPreview" style="width: 100px; height: 100px; border-radius: 16px; background: linear-gradient(135deg, #3B82F6, #60A5FA); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(59,130,246,0.3);">
-                <span id="lawyerAvatarInitials" style="color: white; font-size: 32px; font-weight: bold;">LS</span>
-              </div>
-              <small class="text-muted">Xem trước Avatar</small>
-            </div>
-            <div class="col-md-9">
-              <label class="form-label"><i class="bi bi-image me-1"></i>URL Ảnh đại diện</label>
-              <input type="url" class="form-control" id="lawyerAvatarUrl" placeholder="https://example.com/avatar.jpg" oninput="previewLawyerAvatar()">
-              <small class="text-muted">Nhập URL hình ảnh (khuyến nghị: 200x200px, định dạng JPG/PNG). Để trống sẽ hiển thị chữ viết tắt.</small>
-            </div>
-          </div>
-          
-          <hr class="my-3">
-          
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Họ tên *</label>
-              <input type="text" class="form-control" id="lawyerName" required oninput="updateLawyerInitials()">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Chức danh</label>
-              <input type="text" class="form-control" id="lawyerTitle" placeholder="VD: Luật sư điều hành">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Công ty</label>
-            <input type="text" class="form-control" id="lawyerCompany">
-          </div>
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Điện thoại</label>
-              <input type="text" class="form-control" id="lawyerPhone">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Zalo</label>
-              <input type="text" class="form-control" id="lawyerZalo">
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-control" id="lawyerEmail">
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Giờ làm việc</label>
-              <input type="text" class="form-control" id="lawyerWorkingHours" placeholder="VD: 8:00 - 18:00">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Ngày làm việc</label>
-              <input type="text" class="form-control" id="lawyerWorkingDays" placeholder="VD: Thứ 2 - Thứ 6">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Chuyên môn</label>
-            <input type="text" class="form-control" id="lawyerSpecialization" placeholder="VD: Thuế, M&A, Lao động">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Giới thiệu</label>
-            <textarea class="form-control" id="lawyerBio" rows="2"></textarea>
-          </div>
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="lawyerOnline" checked>
-                <label class="form-check-label" for="lawyerOnline">Đang online</label>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="lawyerPrimary">
-                <label class="form-check-label" for="lawyerPrimary">Luật sư chính</label>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="lawyerActive" checked>
-                <label class="form-check-label" for="lawyerActive">Kích hoạt</label>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-          <button type="button" class="btn btn-primary" onclick="saveLawyer()"><i class="bi bi-save me-2"></i>Lưu</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Request Detail Modal -->
-  <div class="modal fade" id="requestModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Chi tiết yêu cầu tư vấn</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" id="requestId">
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label text-muted">Họ tên</label>
-              <p class="fw-bold" id="requestName"></p>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label text-muted">Công ty</label>
-              <p class="fw-bold" id="requestCompany"></p>
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <label class="form-label text-muted">Điện thoại</label>
-              <p class="fw-bold" id="requestPhone"></p>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label text-muted">Email</label>
-              <p class="fw-bold" id="requestEmail"></p>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label text-muted">Nội dung yêu cầu</label>
-            <div class="p-3 bg-light rounded" id="requestMessage"></div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Trạng thái</label>
-              <select class="form-select" id="requestStatus">
-                <option value="pending">Chờ xử lý</option>
-                <option value="processing">Đang xử lý</option>
-                <option value="completed">Đã hoàn thành</option>
-                <option value="cancelled">Đã hủy</option>
-              </select>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Người xử lý</label>
-              <input type="text" class="form-control" id="requestAssignedTo">
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Ghi chú nội bộ</label>
-            <textarea class="form-control" id="requestNotes" rows="3"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-          <button type="button" class="btn btn-primary" onclick="saveRequest()"><i class="bi bi-save me-2"></i>Cập nhật</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // ═══════════════════════════════════════════════════════════════════════
-    // GLOBAL VARIABLES
-    // ═══════════════════════════════════════════════════════════════════════
-    let authHeader = '';
-    let orgTypes = [];
-    let provinces = [];
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // AUTHENTICATION
-    // ═══════════════════════════════════════════════════════════════════════
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      authHeader = 'Basic ' + btoa(username + ':' + password);
-      
-      try {
-        const res = await fetch('/api/admin/stats', { headers: { 'Authorization': authHeader } });
-        if (res.ok) {
-          document.getElementById('loginScreen').classList.add('hidden');
-          document.getElementById('adminPanel').classList.remove('hidden');
-          loadDashboard();
-          loadOrgTypes();
-          loadProvinces();
-        } else {
-          alert('Sai tên đăng nhập hoặc mật khẩu!');
+        // ========== AUTH ==========
+        function checkAuth() {
+            if (!token) showLogin();
+            else { loadMasterData(); showDashboard(); }
         }
-      } catch (err) {
-        alert('Lỗi kết nối server!');
-      }
-    });
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      authHeader = '';
-      document.getElementById('adminPanel').classList.add('hidden');
-      document.getElementById('loginScreen').classList.remove('hidden');
-      document.getElementById('username').value = '';
-      document.getElementById('password').value = '';
-    });
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // NAVIGATION
-    // ═══════════════════════════════════════════════════════════════════════
-    document.querySelectorAll('.nav-link[data-page]').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const page = link.dataset.page;
-        
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-        
-        document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
-        document.getElementById('page-' + page).classList.remove('hidden');
-        
-        switch(page) {
-          case 'dashboard': loadDashboard(); break;
-          case 'events': loadEvents(); break;
-          case 'news': loadNews(); break;
-          case 'organizations': loadOrganizations(); break;
-          case 'lawyers': loadLawyers(); break;
-          case 'requests': loadRequests(); break;
-          case 'settings': loadSettings(); break;
+        async function loadMasterData() {
+            try {
+                const [provRes, typesRes] = await Promise.all([
+                    fetch(API + '/admin/provinces', { headers: { 'Authorization': 'Bearer ' + token } }),
+                    fetch(API + '/admin/org-types', { headers: { 'Authorization': 'Bearer ' + token } })
+                ]);
+                const provData = await provRes.json();
+                const typesData = await typesRes.json();
+                if (provData.success) provinces = provData.data;
+                if (typesData.success) orgTypes = typesData.data;
+            } catch (e) { console.error('Load master data error:', e); }
         }
-      });
-    });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // API HELPERS
-    // ═══════════════════════════════════════════════════════════════════════
-    async function api(url, options = {}) {
-      const res = await fetch(url, {
-        ...options,
-        headers: { 'Authorization': authHeader, 'Content-Type': 'application/json', ...options.headers }
-      });
-      return res.json();
-    }
+        async function loadWards(provinceId) {
+            if (!provinceId) { wards = []; return []; }
+            try {
+                const res = await fetch(API + '/admin/wards?province_id=' + provinceId, { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                if (data.success) { wards = data.data; return data.data; }
+            } catch (e) { console.error('Load wards error:', e); }
+            return [];
+        }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // DASHBOARD
-    // ═══════════════════════════════════════════════════════════════════════
-    async function loadDashboard() {
-      const data = await api('/api/admin/stats');
-      if (data.success) {
-        document.getElementById('statEvents').textContent = data.data.events;
-        document.getElementById('statNews').textContent = data.data.news;
-        document.getElementById('statOrgs').textContent = data.data.organizations;
-        document.getElementById('statRequests').textContent = data.data.pendingRequests;
-        document.getElementById('pendingBadge').textContent = data.data.pendingRequests;
-      }
-    }
-
-    async function loadOrgTypes() {
-      const data = await api('/api/admin/org-types');
-      if (data.success) {
-        orgTypes = data.data;
-        updateOrgTypeSelect();
-      }
-    }
-
-    async function loadProvinces() {
-      const data = await api('/api/admin/provinces');
-      if (data.success) {
-        provinces = data.data;
-        updateProvinceSelect();
-      }
-    }
-
-    function updateOrgTypeSelect() {
-      const sel = document.getElementById('orgTypeId');
-      sel.innerHTML = '<option value="">-- Chọn loại --</option>' + 
-        orgTypes.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-    }
-
-    function updateProvinceSelect() {
-      const sel = document.getElementById('orgProvinceId');
-      sel.innerHTML = '<option value="">-- Chọn tỉnh/TP --</option>' + 
-        provinces.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // EVENTS
-    // ═══════════════════════════════════════════════════════════════════════
-    async function loadEvents() {
-      const data = await api('/api/admin/events');
-      const tbody = document.getElementById('eventsTable');
-      if (data.success) {
-        tbody.innerHTML = data.data.map(e => `
-          <tr>
-            <td><strong>${e.title}</strong></td>
-            <td><span class="category-badge" style="background: ${getCategoryColor(e.category)}20; color: ${getCategoryColor(e.category)}">${getCategoryName(e.category)}</span></td>
-            <td>${formatDate(e.deadline)}</td>
-            <td><span class="priority-${e.priority}">${getPriorityName(e.priority)}</span></td>
-            <td>${e.is_active ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-secondary">Tắt</span>'}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary btn-action" onclick="editEvent(${e.id})"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteEvent(${e.id})"><i class="bi bi-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
-      }
-    }
-
-    function openEventModal(id = null) {
-      document.getElementById('eventId').value = '';
-      document.getElementById('eventTitle').value = '';
-      document.getElementById('eventCategory').value = 'tax';
-      document.getElementById('eventDeadline').value = '';
-      document.getElementById('eventPriority').value = 'medium';
-      document.getElementById('eventFrequency').value = '';
-      document.getElementById('eventDescription').value = '';
-      document.getElementById('eventLegalBasis').value = '';
-      document.getElementById('eventPenalty').value = '';
-      document.getElementById('eventAppliesTo').value = 'business';
-      document.getElementById('eventReminderDays').value = '7';
-      document.getElementById('eventActive').checked = true;
-      document.getElementById('eventModalTitle').textContent = 'Thêm lịch pháp lý';
-      new bootstrap.Modal(document.getElementById('eventModal')).show();
-    }
-
-    async function editEvent(id) {
-      const data = await api('/api/admin/events');
-      const event = data.data.find(e => e.id === id);
-      if (event) {
-        document.getElementById('eventId').value = event.id;
-        document.getElementById('eventTitle').value = event.title || '';
-        document.getElementById('eventCategory').value = event.category || 'tax';
-        document.getElementById('eventDeadline').value = event.deadline?.split('T')[0] || '';
-        document.getElementById('eventPriority').value = event.priority || 'medium';
-        document.getElementById('eventFrequency').value = event.frequency || '';
-        document.getElementById('eventDescription').value = event.description || '';
-        document.getElementById('eventLegalBasis').value = event.legal_basis || '';
-        document.getElementById('eventPenalty').value = event.penalty || '';
-        document.getElementById('eventAppliesTo').value = event.applies_to || 'business';
-        document.getElementById('eventReminderDays').value = event.reminder_days || 7;
-        document.getElementById('eventActive').checked = event.is_active;
-        document.getElementById('eventModalTitle').textContent = 'Sửa lịch pháp lý';
-        new bootstrap.Modal(document.getElementById('eventModal')).show();
-      }
-    }
-
-    async function saveEvent() {
-      const id = document.getElementById('eventId').value;
-      const data = {
-        title: document.getElementById('eventTitle').value,
-        category: document.getElementById('eventCategory').value,
-        deadline: document.getElementById('eventDeadline').value,
-        priority: document.getElementById('eventPriority').value,
-        frequency: document.getElementById('eventFrequency').value,
-        description: document.getElementById('eventDescription').value,
-        legal_basis: document.getElementById('eventLegalBasis').value,
-        penalty: document.getElementById('eventPenalty').value,
-        applies_to: document.getElementById('eventAppliesTo').value,
-        reminder_days: parseInt(document.getElementById('eventReminderDays').value) || 7,
-        is_active: document.getElementById('eventActive').checked
-      };
-      
-      const url = id ? `/api/admin/events/${id}` : '/api/admin/events';
-      const method = id ? 'PUT' : 'POST';
-      await api(url, { method, body: JSON.stringify(data) });
-      bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
-      loadEvents();
-    }
-
-    async function deleteEvent(id) {
-      if (confirm('Bạn có chắc muốn xóa?')) {
-        await api(`/api/admin/events/${id}`, { method: 'DELETE' });
-        loadEvents();
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // NEWS
-    // ═══════════════════════════════════════════════════════════════════════
-    async function loadNews() {
-      const data = await api('/api/admin/news');
-      const tbody = document.getElementById('newsTable');
-      if (data.success) {
-        tbody.innerHTML = data.data.map(n => `
-          <tr>
-            <td><strong>${n.title}</strong></td>
-            <td><span class="category-badge" style="background: ${getCategoryColor(n.category)}20; color: ${getCategoryColor(n.category)}">${getCategoryName(n.category)}</span></td>
-            <td>${formatDateTime(n.published_at)}</td>
-            <td>${n.is_featured ? '<i class="bi bi-star-fill text-warning"></i>' : ''}</td>
-            <td>${n.is_active ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-secondary">Tắt</span>'}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary btn-action" onclick="editNews(${n.id})"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteNews(${n.id})"><i class="bi bi-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
-      }
-    }
-
-    function openNewsModal() {
-      document.getElementById('newsId').value = '';
-      document.getElementById('newsTitle').value = '';
-      document.getElementById('newsCategory').value = 'general';
-      document.getElementById('newsSummary').value = '';
-      document.getElementById('newsContent').innerHTML = '';
-      document.getElementById('newsImageUrl').value = '';
-      document.getElementById('newsSource').value = '';
-      document.getElementById('newsPublishedAt').value = new Date().toISOString().slice(0, 16);
-      document.getElementById('newsFeatured').checked = false;
-      document.getElementById('newsActive').checked = true;
-      document.getElementById('newsModalTitle').textContent = 'Thêm tin tức';
-      new bootstrap.Modal(document.getElementById('newsModal')).show();
-    }
-
-    async function editNews(id) {
-      const data = await api('/api/admin/news');
-      const news = data.data.find(n => n.id === id);
-      if (news) {
-        document.getElementById('newsId').value = news.id;
-        document.getElementById('newsTitle').value = news.title || '';
-        document.getElementById('newsCategory').value = news.category || 'general';
-        document.getElementById('newsSummary').value = news.summary || '';
-        document.getElementById('newsContent').innerHTML = news.content || '';
-        document.getElementById('newsImageUrl').value = news.image_url || '';
-        document.getElementById('newsSource').value = news.source || '';
-        document.getElementById('newsPublishedAt').value = news.published_at?.slice(0, 16) || '';
-        document.getElementById('newsFeatured').checked = news.is_featured;
-        document.getElementById('newsActive').checked = news.is_active;
-        document.getElementById('newsModalTitle').textContent = 'Sửa tin tức';
-        new bootstrap.Modal(document.getElementById('newsModal')).show();
-      }
-    }
-
-    async function saveNews() {
-      const id = document.getElementById('newsId').value;
-      const data = {
-        title: document.getElementById('newsTitle').value,
-        category: document.getElementById('newsCategory').value,
-        summary: document.getElementById('newsSummary').value,
-        content: document.getElementById('newsContent').innerHTML,
-        image_url: document.getElementById('newsImageUrl').value,
-        source: document.getElementById('newsSource').value,
-        published_at: document.getElementById('newsPublishedAt').value,
-        is_featured: document.getElementById('newsFeatured').checked,
-        is_active: document.getElementById('newsActive').checked
-      };
-      
-      const url = id ? `/api/admin/news/${id}` : '/api/admin/news';
-      const method = id ? 'PUT' : 'POST';
-      await api(url, { method, body: JSON.stringify(data) });
-      bootstrap.Modal.getInstance(document.getElementById('newsModal')).hide();
-      loadNews();
-    }
-
-    async function deleteNews(id) {
-      if (confirm('Bạn có chắc muốn xóa?')) {
-        await api(`/api/admin/news/${id}`, { method: 'DELETE' });
-        loadNews();
-      }
-    }
-
-    function formatText(command) {
-      document.execCommand(command, false, null);
-      document.getElementById('newsContent').focus();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // ORGANIZATIONS
-    // ═══════════════════════════════════════════════════════════════════════
-    async function loadOrganizations() {
-      const data = await api('/api/admin/organizations');
-      const tbody = document.getElementById('orgsTable');
-      if (data.success) {
-        tbody.innerHTML = data.data.map(o => `
-          <tr>
-            <td><strong>${o.name}</strong></td>
-            <td><span class="badge bg-info">${o.type_name || getOrgCategoryName(o.category)}</span></td>
-            <td>${o.address || '-'}</td>
-            <td>${o.phone || '-'}</td>
-            <td>${o.is_active ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-secondary">Tắt</span>'}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary btn-action" onclick="editOrg(${o.id})"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteOrg(${o.id})"><i class="bi bi-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
-      }
-    }
-
-    function openOrgModal() {
-      document.getElementById('orgId').value = '';
-      document.getElementById('orgName').value = '';
-      document.getElementById('orgCategory').value = 'government';
-      document.getElementById('orgTypeId').value = '';
-      document.getElementById('orgProvinceId').value = '';
-      document.getElementById('orgAddress').value = '';
-      document.getElementById('orgPhone').value = '';
-      document.getElementById('orgEmail').value = '';
-      document.getElementById('orgWebsite').value = '';
-      document.getElementById('orgWorkingHours').value = '';
-      document.getElementById('orgDescription').value = '';
-      document.getElementById('orgActive').checked = true;
-      document.getElementById('orgModalTitle').textContent = 'Thêm cơ quan';
-      new bootstrap.Modal(document.getElementById('orgModal')).show();
-    }
-
-    async function editOrg(id) {
-      const data = await api('/api/admin/organizations');
-      const org = data.data.find(o => o.id === id);
-      if (org) {
-        document.getElementById('orgId').value = org.id;
-        document.getElementById('orgName').value = org.name || '';
-        document.getElementById('orgCategory').value = org.category || 'government';
-        document.getElementById('orgTypeId').value = org.type_id || '';
-        document.getElementById('orgProvinceId').value = org.province_id || '';
-        document.getElementById('orgAddress').value = org.address || '';
-        document.getElementById('orgPhone').value = org.phone || '';
-        document.getElementById('orgEmail').value = org.email || '';
-        document.getElementById('orgWebsite').value = org.website || '';
-        document.getElementById('orgWorkingHours').value = org.working_hours || '';
-        document.getElementById('orgDescription').value = org.description || '';
-        document.getElementById('orgActive').checked = org.is_active;
-        document.getElementById('orgModalTitle').textContent = 'Sửa cơ quan';
-        new bootstrap.Modal(document.getElementById('orgModal')).show();
-      }
-    }
-
-    async function saveOrg() {
-      const id = document.getElementById('orgId').value;
-      const data = {
-        name: document.getElementById('orgName').value,
-        category: document.getElementById('orgCategory').value,
-        type_id: document.getElementById('orgTypeId').value || null,
-        province_id: document.getElementById('orgProvinceId').value || null,
-        address: document.getElementById('orgAddress').value,
-        phone: document.getElementById('orgPhone').value,
-        email: document.getElementById('orgEmail').value,
-        website: document.getElementById('orgWebsite').value,
-        working_hours: document.getElementById('orgWorkingHours').value,
-        description: document.getElementById('orgDescription').value,
-        is_active: document.getElementById('orgActive').checked
-      };
-      
-      const url = id ? `/api/admin/organizations/${id}` : '/api/admin/organizations';
-      const method = id ? 'PUT' : 'POST';
-      await api(url, { method, body: JSON.stringify(data) });
-      bootstrap.Modal.getInstance(document.getElementById('orgModal')).hide();
-      loadOrganizations();
-    }
-
-    async function deleteOrg(id) {
-      if (confirm('Bạn có chắc muốn xóa?')) {
-        await api(`/api/admin/organizations/${id}`, { method: 'DELETE' });
-        loadOrganizations();
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // LAWYERS
-    // ═══════════════════════════════════════════════════════════════════════
-    async function loadLawyers() {
-      const data = await api('/api/admin/lawyers');
-      const tbody = document.getElementById('lawyersTable');
-      if (data.success) {
-        tbody.innerHTML = data.data.map(l => {
-          const initials = getLawyerInitials(l.name);
-          const avatarHtml = l.avatar_url 
-            ? `<img src="${l.avatar_url}" style="width: 40px; height: 40px; border-radius: 10px; object-fit: cover;" onerror="this.outerHTML='<div style=\\'width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #3B82F6, #60A5FA); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;\\'>${initials}</div>'">`
-            : `<div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #3B82F6, #60A5FA); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">${initials}</div>`;
-          return `
-          <tr>
-            <td>
-              <div style="display: flex; align-items: center; gap: 12px;">
-                ${avatarHtml}
-                <div>
-                  <strong>${l.name}</strong>${l.is_primary ? ' <span class="badge bg-warning">Chính</span>' : ''}
+        function showLogin() {
+            app.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-navy-600 to-navy-700 p-4">
+                    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+                        <div class="text-center mb-8">
+                            <div class="w-20 h-20 bg-gradient-to-br from-navy-600 to-navy-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <span class="text-white text-3xl font-bold">H</span>
+                            </div>
+                            <h1 class="text-2xl font-bold text-gray-900">HTIC Admin v17</h1>
+                            <p class="text-gray-500 mt-2">Đăng nhập để quản lý</p>
+                        </div>
+                        <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm"></div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Tên đăng nhập</label>
+                                <input type="text" id="username" class="input-field" placeholder="admin" value="admin">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Mật khẩu</label>
+                                <input type="password" id="password" class="input-field" placeholder="********" onkeypress="if(event.key==='Enter')login()">
+                            </div>
+                            <button onclick="login()" class="w-full btn-primary py-3">Đăng nhập</button>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </td>
-            <td>${l.title || '-'}</td>
-            <td>${l.company || '-'}</td>
-            <td>${l.phone || '-'}</td>
-            <td>${l.is_online ? '<span class="badge bg-success">Online</span>' : '<span class="badge bg-secondary">Offline</span>'}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary btn-action" onclick="editLawyer(${l.id})"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteLawyer(${l.id})"><i class="bi bi-trash"></i></button>
-            </td>
-          </tr>
-        `}).join('');
-      }
-    }
+            `;
+        }
 
-    function openLawyerModal() {
-      document.getElementById('lawyerId').value = '';
-      document.getElementById('lawyerName').value = '';
-      document.getElementById('lawyerTitle').value = '';
-      document.getElementById('lawyerCompany').value = '';
-      document.getElementById('lawyerPhone').value = '';
-      document.getElementById('lawyerZalo').value = '';
-      document.getElementById('lawyerEmail').value = '';
-      document.getElementById('lawyerWorkingHours').value = '';
-      document.getElementById('lawyerWorkingDays').value = '';
-      document.getElementById('lawyerSpecialization').value = '';
-      document.getElementById('lawyerBio').value = '';
-      document.getElementById('lawyerOnline').checked = true;
-      document.getElementById('lawyerPrimary').checked = false;
-      document.getElementById('lawyerActive').checked = true;
-      document.getElementById('lawyerAvatarUrl').value = '';
-      document.getElementById('lawyerModalTitle').textContent = 'Thêm luật sư';
-      // Reset avatar preview
-      resetLawyerAvatarPreview();
-      new bootstrap.Modal(document.getElementById('lawyerModal')).show();
-    }
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            try {
+                const res = await fetch(API + '/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    token = data.token;
+                    localStorage.setItem('adminToken', token);
+                    loadMasterData();
+                    showDashboard();
+                } else {
+                    document.getElementById('loginError').textContent = data.message || 'Đăng nhập thất bại';
+                    document.getElementById('loginError').classList.remove('hidden');
+                }
+            } catch (e) {
+                document.getElementById('loginError').textContent = 'Lỗi kết nối server';
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
 
-    async function editLawyer(id) {
-      const data = await api('/api/admin/lawyers');
-      const lawyer = data.data.find(l => l.id === id);
-      if (lawyer) {
-        document.getElementById('lawyerId').value = lawyer.id;
-        document.getElementById('lawyerName').value = lawyer.name || '';
-        document.getElementById('lawyerTitle').value = lawyer.title || '';
-        document.getElementById('lawyerCompany').value = lawyer.company || '';
-        document.getElementById('lawyerPhone').value = lawyer.phone || '';
-        document.getElementById('lawyerZalo').value = lawyer.zalo || '';
-        document.getElementById('lawyerEmail').value = lawyer.email || '';
-        document.getElementById('lawyerWorkingHours').value = lawyer.working_hours || '';
-        document.getElementById('lawyerWorkingDays').value = lawyer.working_days || '';
-        document.getElementById('lawyerSpecialization').value = lawyer.specialization || '';
-        document.getElementById('lawyerBio').value = lawyer.bio || '';
-        document.getElementById('lawyerOnline').checked = lawyer.is_online;
-        document.getElementById('lawyerPrimary').checked = lawyer.is_primary;
-        document.getElementById('lawyerActive').checked = lawyer.is_active;
-        document.getElementById('lawyerAvatarUrl').value = lawyer.avatar_url || '';
-        document.getElementById('lawyerModalTitle').textContent = 'Sửa luật sư';
-        // Update avatar preview
-        updateLawyerInitials();
-        previewLawyerAvatar();
-        new bootstrap.Modal(document.getElementById('lawyerModal')).show();
-      }
-    }
+        function logout() {
+            token = null;
+            localStorage.removeItem('adminToken');
+            showLogin();
+        }
 
-    async function saveLawyer() {
-      const id = document.getElementById('lawyerId').value;
-      const data = {
-        name: document.getElementById('lawyerName').value,
-        title: document.getElementById('lawyerTitle').value,
-        company: document.getElementById('lawyerCompany').value,
-        phone: document.getElementById('lawyerPhone').value,
-        zalo: document.getElementById('lawyerZalo').value,
-        email: document.getElementById('lawyerEmail').value,
-        working_hours: document.getElementById('lawyerWorkingHours').value,
-        working_days: document.getElementById('lawyerWorkingDays').value,
-        specialization: document.getElementById('lawyerSpecialization').value,
-        bio: document.getElementById('lawyerBio').value,
-        is_online: document.getElementById('lawyerOnline').checked,
-        is_primary: document.getElementById('lawyerPrimary').checked,
-        is_active: document.getElementById('lawyerActive').checked,
-        avatar_url: document.getElementById('lawyerAvatarUrl').value
-      };
-      
-      const url = id ? `/api/admin/lawyers/${id}` : '/api/admin/lawyers';
-      const method = id ? 'PUT' : 'POST';
-      await api(url, { method, body: JSON.stringify(data) });
-      bootstrap.Modal.getInstance(document.getElementById('lawyerModal')).hide();
-      loadLawyers();
-    }
+        // ========== DASHBOARD ==========
+        function showDashboard() {
+            app.innerHTML = `
+                <div class="flex h-screen">
+                    <div class="w-64 bg-navy-600 text-white flex flex-col">
+                        <div class="p-6 border-b border-white/10">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center font-bold text-xl">H</div>
+                                <div>
+                                    <div class="font-bold">HTIC Admin</div>
+                                    <div class="text-xs text-white/60">Legal Calendar v17.0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <nav class="flex-1 py-4 overflow-y-auto">
+                            <div onclick="showSection('dashboard')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3"><span class="material-icons text-sm">dashboard</span> Tổng quan</div>
+                            <div onclick="showSection('events')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3"><span class="material-icons text-sm">event</span> Lịch pháp lý</div>
+                            <div onclick="showSection('news')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3"><span class="material-icons text-sm">article</span> Tin tức</div>
+                            <div onclick="showSection('organizations')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3"><span class="material-icons text-sm">business</span> Cơ quan tra cứu</div>
+                            <div onclick="showSection('lawyers')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3"><span class="material-icons text-sm">gavel</span> Luật sư hỗ trợ</div>
+                            <div onclick="showSection('support')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3"><span class="material-icons text-sm">support_agent</span> Yêu cầu tư vấn</div>
+                            <div class="border-t border-white/10 my-2"></div>
+                            <div onclick="showSection('locations')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3"><span class="material-icons text-sm">location_on</span> Quản lý địa điểm</div>
+                            <div onclick="showSection('settings')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3"><span class="material-icons text-sm">settings</span> Cài đặt App</div>
+                        </nav>
+                        <div class="p-4 border-t border-white/10">
+                            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 py-2 text-red-300 hover:text-red-200">
+                                <span class="material-icons text-sm">logout</span> Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-auto bg-gray-100">
+                        <div id="content" class="p-6"></div>
+                    </div>
+                </div>
+            `;
+            showSection(currentSection);
+        }
 
-    async function deleteLawyer(id) {
-      if (confirm('Bạn có chắc muốn xóa?')) {
-        await api(`/api/admin/lawyers/${id}`, { method: 'DELETE' });
-        loadLawyers();
-      }
-    }
+        function showSection(section) {
+            currentSection = section;
+            document.querySelectorAll('.sidebar-item').forEach((el, i) => {
+                el.classList.remove('active');
+                if ((section === 'dashboard' && i === 0) ||
+                    (section === 'events' && i === 1) ||
+                    (section === 'news' && i === 2) ||
+                    (section === 'organizations' && i === 3) ||
+                    (section === 'lawyers' && i === 4) ||
+                    (section === 'support' && i === 5) ||
+                    (section === 'locations' && i === 6) ||
+                    (section === 'settings' && i === 7)) {
+                    el.classList.add('active');
+                }
+            });
+            
+            switch(section) {
+                case 'dashboard': loadDashboardContent(); break;
+                case 'events': loadEvents(); break;
+                case 'news': loadNews(); break;
+                case 'organizations': loadOrganizations(); break;
+                case 'lawyers': loadLawyers(); break;
+                case 'support': loadSupport(); break;
+                case 'locations': loadLocations(); break;
+                case 'settings': loadSettings(); break;
+            }
+        }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SUPPORT REQUESTS
-    // ═══════════════════════════════════════════════════════════════════════
-    async function loadRequests() {
-      const data = await api('/api/admin/support-requests');
-      const tbody = document.getElementById('requestsTable');
-      if (data.success) {
-        tbody.innerHTML = data.data.map(r => `
-          <tr>
-            <td><strong>${r.name}</strong></td>
-            <td>${r.phone || '-'}<br><small class="text-muted">${r.email || ''}</small></td>
-            <td><small>${(r.message || '').substring(0, 60)}...</small></td>
-            <td>${formatDateTime(r.created_at)}</td>
-            <td><span class="status-badge status-${r.status}">${getStatusName(r.status)}</span></td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary btn-action" onclick="viewRequest(${r.id})"><i class="bi bi-eye"></i></button>
-              <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteRequest(${r.id})"><i class="bi bi-trash"></i></button>
-            </td>
-          </tr>
-        `).join('');
-      }
-    }
+        // ========== DASHBOARD CONTENT ==========
+        async function loadDashboardContent() {
+            document.getElementById('content').innerHTML = '<div class="text-center py-10">Đang tải...</div>';
+            try {
+                const res = await fetch(API + '/admin/stats', { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                if (data.success) {
+                    const s = data.data;
+                    document.getElementById('content').innerHTML = `
+                        <h1 class="text-2xl font-bold text-gray-900 mb-6">Tổng quan</h1>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="card p-6"><div class="flex items-center gap-4"><div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center"><span class="material-icons text-blue-600">event</span></div><div><div class="text-2xl font-bold">${s.events?.total || 0}</div><div class="text-sm text-gray-500">Sự kiện pháp lý</div></div></div></div>
+                            <div class="card p-6"><div class="flex items-center gap-4"><div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center"><span class="material-icons text-green-600">article</span></div><div><div class="text-2xl font-bold">${s.news?.total || 0}</div><div class="text-sm text-gray-500">Tin tức</div></div></div></div>
+                            <div class="card p-6"><div class="flex items-center gap-4"><div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center"><span class="material-icons text-purple-600">gavel</span></div><div><div class="text-2xl font-bold">${s.lawyers?.total || 0}</div><div class="text-sm text-gray-500">Luật sư</div></div></div></div>
+                            <div class="card p-6"><div class="flex items-center gap-4"><div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center"><span class="material-icons text-orange-600">support_agent</span></div><div><div class="text-2xl font-bold">${s.support_requests?.pending || 0}</div><div class="text-sm text-gray-500">Yêu cầu chờ</div></div></div></div>
+                        </div>
+                        <div class="card p-6">
+                            <h2 class="text-lg font-bold mb-4">Thông tin hệ thống</h2>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="text-center p-4 bg-gray-50 rounded-lg"><div class="text-xl font-bold text-navy-600">${provinces.length}</div><div class="text-sm text-gray-500">Tỉnh/Thành</div></div>
+                                <div class="text-center p-4 bg-gray-50 rounded-lg"><div class="text-xl font-bold text-navy-600">${s.organizations?.total || 0}</div><div class="text-sm text-gray-500">Cơ quan</div></div>
+                                <div class="text-center p-4 bg-gray-50 rounded-lg"><div class="text-xl font-bold text-navy-600">${orgTypes.length}</div><div class="text-sm text-gray-500">Loại cơ quan</div></div>
+                                <div class="text-center p-4 bg-gray-50 rounded-lg"><div class="text-xl font-bold text-navy-600">v17.0</div><div class="text-sm text-gray-500">Phiên bản</div></div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) { document.getElementById('content').innerHTML = '<div class="text-red-500">Lỗi tải dữ liệu</div>'; }
+        }
 
-    async function viewRequest(id) {
-      const data = await api('/api/admin/support-requests');
-      const req = data.data.find(r => r.id === id);
-      if (req) {
-        document.getElementById('requestId').value = req.id;
-        document.getElementById('requestName').textContent = req.name || '-';
-        document.getElementById('requestCompany').textContent = req.company || '-';
-        document.getElementById('requestPhone').textContent = req.phone || '-';
-        document.getElementById('requestEmail').textContent = req.email || '-';
-        document.getElementById('requestMessage').textContent = req.message || '-';
-        document.getElementById('requestStatus').value = req.status || 'pending';
-        document.getElementById('requestAssignedTo').value = req.assigned_to || '';
-        document.getElementById('requestNotes').value = req.notes || '';
-        new bootstrap.Modal(document.getElementById('requestModal')).show();
-      }
-    }
+        // ========== LOCATIONS (TỈNH/THÀNH & PHƯỜNG/XÃ) ==========
+        let locationTab = 'provinces';
 
-    async function saveRequest() {
-      const id = document.getElementById('requestId').value;
-      const data = {
-        status: document.getElementById('requestStatus').value,
-        assigned_to: document.getElementById('requestAssignedTo').value,
-        notes: document.getElementById('requestNotes').value
-      };
-      
-      await api(`/api/admin/support-requests/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-      bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
-      loadRequests();
-      loadDashboard();
-    }
+        async function loadLocations() {
+            await loadMasterData();
+            document.getElementById('content').innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900">Quản lý địa điểm</h1>
+                </div>
+                <div class="card">
+                    <div class="flex border-b">
+                        <div onclick="switchLocationTab('provinces')" class="tab-btn ${locationTab === 'provinces' ? 'active' : ''}" id="tab-provinces">Tỉnh/Thành phố (${provinces.length})</div>
+                        <div onclick="switchLocationTab('wards')" class="tab-btn ${locationTab === 'wards' ? 'active' : ''}" id="tab-wards">Phường/Xã</div>
+                    </div>
+                    <div id="location-content" class="p-6"></div>
+                </div>
+            `;
+            switchLocationTab(locationTab);
+        }
 
-    async function deleteRequest(id) {
-      if (confirm('Bạn có chắc muốn xóa?')) {
-        await api(`/api/admin/support-requests/${id}`, { method: 'DELETE' });
-        loadRequests();
-        loadDashboard();
-      }
-    }
+        async function switchLocationTab(tab) {
+            locationTab = tab;
+            document.getElementById('tab-provinces').className = 'tab-btn ' + (tab === 'provinces' ? 'active' : '');
+            document.getElementById('tab-wards').className = 'tab-btn ' + (tab === 'wards' ? 'active' : '');
+            
+            if (tab === 'provinces') {
+                renderProvincesTab();
+            } else {
+                renderWardsTab();
+            }
+        }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SETTINGS
-    // ═══════════════════════════════════════════════════════════════════════
-    async function loadSettings() {
-      const data = await api('/api/admin/settings');
-      if (data.success) {
-        data.data.forEach(s => {
-          const el = document.getElementById('setting_' + s.key);
-          if (el) el.value = s.value || '';
-        });
-      }
-    }
+        function renderProvincesTab() {
+            document.getElementById('location-content').innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <p class="text-gray-600">Danh sách tỉnh/thành phố do bạn tự nhập để sử dụng trong app</p>
+                    <button onclick="showProvinceModal()" class="btn-primary flex items-center gap-2"><span class="material-icons text-sm">add</span> Thêm mới</button>
+                </div>
+                <table class="w-full">
+                    <thead><tr class="text-left text-sm text-gray-500 border-b"><th class="pb-3">TÊN</th><th class="pb-3">MÃ</th><th class="pb-3">VÙNG</th><th class="pb-3">SỐ PHƯỜNG/XÃ</th><th class="pb-3">THAO TÁC</th></tr></thead>
+                    <tbody id="provinces-list"></tbody>
+                </table>
+            `;
+            loadProvincesData();
+        }
 
-    async function saveSettings() {
-      const settings = {};
-      const keys = ['app_name', 'app_version', 'app_logo', 'company_name', 'company_slogan', 'address', 'hotline', 'zalo_link', 'contact_email', 'website', 'facebook', 'working_hours', 'working_days', 'about_content'];
-      keys.forEach(key => {
-        const el = document.getElementById('setting_' + key);
-        if (el) settings[key] = el.value;
-      });
-      
-      await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify(settings) });
-      alert('Đã lưu cài đặt!');
-    }
+        async function loadProvincesData() {
+            try {
+                const res = await fetch(API + '/admin/provinces', { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                if (data.success) {
+                    provinces = data.data;
+                    // Load ward counts
+                    const wardsRes = await fetch(API + '/admin/wards', { headers: { 'Authorization': 'Bearer ' + token } });
+                    const wardsData = await wardsRes.json();
+                    const wardCounts = {};
+                    if (wardsData.success) {
+                        wardsData.data.forEach(w => {
+                            wardCounts[w.province_id] = (wardCounts[w.province_id] || 0) + 1;
+                        });
+                    }
+                    
+                    document.getElementById('provinces-list').innerHTML = provinces.length === 0 
+                        ? '<tr><td colspan="5" class="text-center py-8 text-gray-400">Chưa có dữ liệu. Nhấn "Thêm mới" để bắt đầu.</td></tr>'
+                        : provinces.map(p => `
+                        <tr class="table-row border-b">
+                            <td class="py-4 font-medium">${p.name}</td>
+                            <td class="py-4 text-gray-500">${p.code || '-'}</td>
+                            <td class="py-4"><span class="badge ${p.region === 'north' ? 'badge-blue' : p.region === 'central' ? 'badge-green' : 'bg-orange-100 text-orange-700'}">${p.region === 'north' ? 'Miền Bắc' : p.region === 'central' ? 'Miền Trung' : p.region === 'south' ? 'Miền Nam' : '-'}</span></td>
+                            <td class="py-4">${wardCounts[p.id] || 0} phường/xã</td>
+                            <td class="py-4">
+                                <button onclick="showProvinceModal(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="text-blue-600 hover:text-blue-800 mr-3"><span class="material-icons text-sm">edit</span></button>
+                                <button onclick="deleteProvince(${p.id})" class="text-red-600 hover:text-red-800"><span class="material-icons text-sm">delete</span></button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) { console.error(e); }
+        }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // HELPERS
-    // ═══════════════════════════════════════════════════════════════════════
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('vi-VN');
-    }
+        function showProvinceModal(province = null) {
+            modalRoot.innerHTML = `
+                <div class="modal" onclick="if(event.target===this)closeModal()">
+                    <div class="modal-content p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold">${province ? 'Sửa' : 'Thêm'} Tỉnh/Thành phố</h2>
+                            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><span class="material-icons">close</span></button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tên tỉnh/thành *</label>
+                                <input type="text" id="prov-name" class="input-field" value="${province?.name || ''}" placeholder="VD: TP. Hồ Chí Minh">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Mã (tùy chọn)</label>
+                                    <input type="text" id="prov-code" class="input-field" value="${province?.code || ''}" placeholder="VD: hcm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Vùng miền</label>
+                                    <select id="prov-region" class="input-field">
+                                        <option value="">-- Chọn --</option>
+                                        <option value="north" ${province?.region === 'north' ? 'selected' : ''}>Miền Bắc</option>
+                                        <option value="central" ${province?.region === 'central' ? 'selected' : ''}>Miền Trung</option>
+                                        <option value="south" ${province?.region === 'south' ? 'selected' : ''}>Miền Nam</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-3 mt-6">
+                            <button onclick="closeModal()" class="px-6 py-2 border rounded-lg">Hủy</button>
+                            <button onclick="saveProvince(${province?.id || 'null'})" class="btn-primary">Lưu</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-    function formatDateTime(dateStr) {
-      if (!dateStr) return '-';
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('vi-VN') + ' ' + d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-    }
+        async function saveProvince(id) {
+            const data = {
+                name: document.getElementById('prov-name').value,
+                code: document.getElementById('prov-code').value || null,
+                region: document.getElementById('prov-region').value || null
+            };
+            if (!data.name) { alert('Vui lòng nhập tên'); return; }
+            try {
+                const res = await fetch(API + '/admin/provinces' + (id ? '/' + id : ''), {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) { closeModal(); loadProvincesData(); loadMasterData(); }
+                else alert(result.message || 'Lỗi');
+            } catch (e) { alert('Lỗi kết nối'); }
+        }
 
-    function getCategoryColor(cat) {
-      const colors = { tax: '#F97316', labor: '#06B6D4', insurance: '#10B981', finance: '#8B5CF6', investment: '#6366F1', general: '#3B82F6', other: '#64748B' };
-      return colors[cat] || '#3B82F6';
-    }
+        async function deleteProvince(id) {
+            if (!confirm('Xóa tỉnh/thành này sẽ xóa luôn tất cả phường/xã thuộc nó. Tiếp tục?')) return;
+            try {
+                const res = await fetch(API + '/admin/provinces/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                const result = await res.json();
+                if (result.success) { loadProvincesData(); loadMasterData(); }
+            } catch (e) { alert('Lỗi'); }
+        }
 
-    function getCategoryName(cat) {
-      const names = { tax: 'Thuế', labor: 'Lao động', insurance: 'Bảo hiểm', finance: 'Tài chính', investment: 'Đầu tư', general: 'Tin chung', other: 'Khác' };
-      return names[cat] || cat;
-    }
+        // ========== WARDS TAB ==========
+        let selectedProvinceForWards = null;
 
-    function getPriorityName(p) {
-      const names = { high: '🔴 Cao', medium: '🟠 TB', low: '🟢 Thấp' };
-      return names[p] || p;
-    }
+        async function renderWardsTab() {
+            document.getElementById('location-content').innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-4">
+                        <label class="font-semibold">Chọn Tỉnh/Thành:</label>
+                        <select id="ward-province-filter" class="input-field w-64" onchange="filterWardsByProvince()">
+                            <option value="">-- Tất cả --</option>
+                            ${provinces.map(p => `<option value="${p.id}" ${selectedProvinceForWards == p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button onclick="showWardModal()" class="btn-primary flex items-center gap-2"><span class="material-icons text-sm">add</span> Thêm Phường/Xã</button>
+                </div>
+                <table class="w-full">
+                    <thead><tr class="text-left text-sm text-gray-500 border-b"><th class="pb-3">TÊN PHƯỜNG/XÃ</th><th class="pb-3">THUỘC TỈNH/THÀNH</th><th class="pb-3">MÃ</th><th class="pb-3">THAO TÁC</th></tr></thead>
+                    <tbody id="wards-list"><tr><td colspan="4" class="text-center py-8 text-gray-400">Chọn tỉnh/thành để xem danh sách phường/xã</td></tr></tbody>
+                </table>
+            `;
+            if (selectedProvinceForWards) filterWardsByProvince();
+        }
 
-    function getStatusName(s) {
-      const names = { pending: 'Chờ xử lý', processing: 'Đang xử lý', completed: 'Hoàn thành', cancelled: 'Đã hủy' };
-      return names[s] || s;
-    }
+        async function filterWardsByProvince() {
+            selectedProvinceForWards = document.getElementById('ward-province-filter').value;
+            if (!selectedProvinceForWards) {
+                document.getElementById('wards-list').innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-400">Chọn tỉnh/thành để xem danh sách phường/xã</td></tr>';
+                return;
+            }
+            try {
+                const res = await fetch(API + '/admin/wards?province_id=' + selectedProvinceForWards, { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                if (data.success) {
+                    const prov = provinces.find(p => p.id == selectedProvinceForWards);
+                    document.getElementById('wards-list').innerHTML = data.data.length === 0
+                        ? `<tr><td colspan="4" class="text-center py-8 text-gray-400">Chưa có phường/xã cho ${prov?.name}. Nhấn "Thêm Phường/Xã" để bắt đầu.</td></tr>`
+                        : data.data.map(w => `
+                        <tr class="table-row border-b">
+                            <td class="py-4 font-medium">${w.name}</td>
+                            <td class="py-4 text-gray-500">${w.province_name || prov?.name || '-'}</td>
+                            <td class="py-4 text-gray-500">${w.code || '-'}</td>
+                            <td class="py-4">
+                                <button onclick="showWardModal(${JSON.stringify(w).replace(/"/g, '&quot;')})" class="text-blue-600 hover:text-blue-800 mr-3"><span class="material-icons text-sm">edit</span></button>
+                                <button onclick="deleteWard(${w.id})" class="text-red-600 hover:text-red-800"><span class="material-icons text-sm">delete</span></button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) { console.error(e); }
+        }
 
-    function getOrgCategoryName(cat) {
-      const names = { government: 'Cơ quan nhà nước', lawfirm: 'Công ty luật', notary: 'Công chứng', bailiff: 'Thừa phát lại' };
-      return names[cat] || cat;
-    }
+        function showWardModal(ward = null) {
+            modalRoot.innerHTML = `
+                <div class="modal" onclick="if(event.target===this)closeModal()">
+                    <div class="modal-content p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold">${ward ? 'Sửa' : 'Thêm'} Phường/Xã</h2>
+                            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><span class="material-icons">close</span></button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Thuộc Tỉnh/Thành *</label>
+                                <select id="ward-province" class="input-field">
+                                    <option value="">-- Chọn --</option>
+                                    ${provinces.map(p => `<option value="${p.id}" ${(ward?.province_id || selectedProvinceForWards) == p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tên Phường/Xã *</label>
+                                <input type="text" id="ward-name" class="input-field" value="${ward?.name || ''}" placeholder="VD: Phường Tân Phú">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Mã (tùy chọn)</label>
+                                <input type="text" id="ward-code" class="input-field" value="${ward?.code || ''}" placeholder="VD: tanphu">
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-3 mt-6">
+                            <button onclick="closeModal()" class="px-6 py-2 border rounded-lg">Hủy</button>
+                            <button onclick="saveWard(${ward?.id || 'null'})" class="btn-primary">Lưu</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // LAWYER AVATAR HELPERS
-    // ═══════════════════════════════════════════════════════════════════════
-    function getLawyerInitials(name) {
-      if (!name) return 'LS';
-      const words = name.trim().split(' ').filter(w => w.length > 0);
-      if (words.length === 0) return 'LS';
-      if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
-      // Lấy chữ cái đầu của từ đầu tiên và từ cuối cùng
-      const first = words[0].charAt(0);
-      const last = words[words.length - 1].charAt(0);
-      return (first + last).toUpperCase();
-    }
+        async function saveWard(id) {
+            const data = {
+                province_id: document.getElementById('ward-province').value,
+                name: document.getElementById('ward-name').value,
+                code: document.getElementById('ward-code').value || null
+            };
+            if (!data.province_id || !data.name) { alert('Vui lòng nhập đầy đủ'); return; }
+            try {
+                const res = await fetch(API + '/admin/wards' + (id ? '/' + id : ''), {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) { closeModal(); filterWardsByProvince(); }
+                else alert(result.message || 'Lỗi');
+            } catch (e) { alert('Lỗi kết nối'); }
+        }
 
-    function updateLawyerInitials() {
-      const name = document.getElementById('lawyerName').value;
-      const initials = getLawyerInitials(name);
-      const initialsEl = document.getElementById('lawyerAvatarInitials');
-      if (initialsEl) {
-        initialsEl.textContent = initials;
-      }
-    }
+        async function deleteWard(id) {
+            if (!confirm('Xóa phường/xã này?')) return;
+            try {
+                const res = await fetch(API + '/admin/wards/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                if ((await res.json()).success) filterWardsByProvince();
+            } catch (e) { alert('Lỗi'); }
+        }
 
-    function previewLawyerAvatar() {
-      const avatarUrl = document.getElementById('lawyerAvatarUrl').value.trim();
-      const previewDiv = document.getElementById('lawyerAvatarPreview');
-      const name = document.getElementById('lawyerName').value;
-      const initials = getLawyerInitials(name);
-      
-      if (avatarUrl) {
-        // Tạo image để test URL
-        const img = new Image();
-        img.onload = function() {
-          previewDiv.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
-        };
-        img.onerror = function() {
-          // Fallback về initials nếu URL không hợp lệ
-          previewDiv.innerHTML = `<span id="lawyerAvatarInitials" style="color: white; font-size: 32px; font-weight: bold;">${initials}</span>`;
-        };
-        img.src = avatarUrl;
-      } else {
-        // Hiển thị initials
-        previewDiv.innerHTML = `<span id="lawyerAvatarInitials" style="color: white; font-size: 32px; font-weight: bold;">${initials}</span>`;
-      }
-    }
+        // ========== LAWYERS ==========
+        async function loadLawyers() {
+            document.getElementById('content').innerHTML = '<div class="text-center py-10">Đang tải...</div>';
+            try {
+                const res = await fetch(API + '/admin/lawyers', { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('content').innerHTML = `
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-bold">Luật sư hỗ trợ</h1>
+                            <button onclick="showLawyerModal()" class="btn-primary flex items-center gap-2"><span class="material-icons text-sm">add</span> Thêm mới</button>
+                        </div>
+                        <div class="card overflow-hidden">
+                            <table class="w-full">
+                                <thead><tr class="text-left text-sm text-gray-500 bg-gray-50"><th class="p-4">HỌ TÊN</th><th class="p-4">CÔNG TY</th><th class="p-4">ĐIỆN THOẠI</th><th class="p-4">ĐỊA CHỈ</th><th class="p-4">ONLINE</th><th class="p-4">THAO TÁC</th></tr></thead>
+                                <tbody>${data.data.map(l => `
+                                    <tr class="table-row border-t">
+                                        <td class="p-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="avatar-preview w-10 h-10 text-sm">${l.avatar_url ? `<img src="${l.avatar_url}" onerror="this.style.display='none';this.parentElement.innerHTML='${l.name.charAt(0)}'">` : l.name.charAt(0)}</div>
+                                                <div><div class="font-medium">${l.name}</div>${l.is_primary ? '<span class="badge badge-blue text-xs">Chính</span>' : ''}</div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 text-gray-600">${l.company || '-'}</td>
+                                        <td class="p-4">${l.phone || '-'}</td>
+                                        <td class="p-4 text-sm text-gray-500">${[l.ward_name, l.province_name].filter(Boolean).join(', ') || '-'}</td>
+                                        <td class="p-4"><span class="badge ${l.is_online ? 'badge-green' : 'badge-red'}">${l.is_online ? 'Online' : 'Offline'}</span></td>
+                                        <td class="p-4">
+                                            <button onclick='showLawyerModal(${JSON.stringify(l).replace(/'/g, "\\'")})' class="text-blue-600 hover:text-blue-800 mr-2"><span class="material-icons text-sm">edit</span></button>
+                                            <button onclick="deleteLawyer(${l.id})" class="text-red-600 hover:text-red-800"><span class="material-icons text-sm">delete</span></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}</tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (e) { console.error(e); }
+        }
 
-    function resetLawyerAvatarPreview() {
-      const previewDiv = document.getElementById('lawyerAvatarPreview');
-      previewDiv.innerHTML = `<span id="lawyerAvatarInitials" style="color: white; font-size: 32px; font-weight: bold;">LS</span>`;
-    }
-  </script>
+        function showLawyerModal(lawyer = null) {
+            modalRoot.innerHTML = `
+                <div class="modal" onclick="if(event.target===this)closeModal()">
+                    <div class="modal-content p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold">${lawyer ? 'Sửa' : 'Thêm'} luật sư</h2>
+                            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><span class="material-icons">close</span></button>
+                        </div>
+                        <div class="flex gap-6 mb-6">
+                            <div class="flex flex-col items-center">
+                                <div class="avatar-preview" id="lawyer-avatar-preview">${lawyer?.avatar_url ? `<img src="${lawyer.avatar_url}" onerror="this.style.display='none'">` : (lawyer?.name?.charAt(0) || 'LS')}</div>
+                                <span class="text-xs text-gray-400 mt-2">Xem trước Avatar</span>
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-sm font-semibold mb-2">🖼️ URL Ảnh đại diện</label>
+                                <input type="text" id="lawyer-avatar" class="input-field" value="${lawyer?.avatar_url || ''}" placeholder="https://example.com/avatar.jpg" oninput="updateLawyerAvatarPreview()">
+                                <p class="text-xs text-gray-400 mt-1">Nhập URL hình ảnh (khuyến nghị: 200x200px, định dạng JPG/PNG)</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Họ tên *</label>
+                                <input type="text" id="lawyer-name" class="input-field" value="${lawyer?.name || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Công ty</label>
+                                <input type="text" id="lawyer-company" class="input-field" value="${lawyer?.company || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Điện thoại</label>
+                                <input type="text" id="lawyer-phone" class="input-field" value="${lawyer?.phone || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Zalo</label>
+                                <input type="text" id="lawyer-zalo" class="input-field" value="${lawyer?.zalo || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Email</label>
+                                <input type="email" id="lawyer-email" class="input-field" value="${lawyer?.email || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Chuyên môn</label>
+                                <input type="text" id="lawyer-spec" class="input-field" value="${lawyer?.specialization || ''}" placeholder="VD: Thuế, M&A, Lao động">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tỉnh/Thành phố</label>
+                                <select id="lawyer-province" class="input-field" onchange="loadLawyerWards()">
+                                    <option value="">-- Chọn --</option>
+                                    ${provinces.map(p => `<option value="${p.id}" ${lawyer?.province_id == p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Phường/Xã</label>
+                                <select id="lawyer-ward" class="input-field">
+                                    <option value="">-- Chọn tỉnh/thành trước --</option>
+                                </select>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-semibold mb-2">Địa chỉ cụ thể</label>
+                                <input type="text" id="lawyer-address" class="input-field" value="${lawyer?.address || ''}" placeholder="Số nhà, đường...">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Giờ làm việc</label>
+                                <input type="text" id="lawyer-hours" class="input-field" value="${lawyer?.working_hours || ''}" placeholder="VD: 8:00 - 18:00">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Ngày làm việc</label>
+                                <input type="text" id="lawyer-days" class="input-field" value="${lawyer?.working_days || ''}" placeholder="VD: Thứ 2 - Thứ 6">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-semibold mb-2">Giới thiệu</label>
+                                <textarea id="lawyer-bio" class="input-field" rows="2">${lawyer?.bio || ''}</textarea>
+                            </div>
+                        </div>
+                        <div class="flex gap-6 mt-4">
+                            <label class="flex items-center gap-2"><input type="checkbox" id="lawyer-online" ${lawyer?.is_online !== false ? 'checked' : ''}> Đang online</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" id="lawyer-primary" ${lawyer?.is_primary ? 'checked' : ''}> Luật sư chính</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" id="lawyer-active" ${lawyer?.is_active !== false ? 'checked' : ''}> Kích hoạt</label>
+                        </div>
+                        <div class="flex justify-end gap-3 mt-6">
+                            <button onclick="closeModal()" class="px-6 py-2 border rounded-lg">Hủy</button>
+                            <button onclick="saveLawyer(${lawyer?.id || 'null'})" class="btn-primary">💾 Lưu</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            // Load wards if province selected
+            if (lawyer?.province_id) {
+                setTimeout(() => loadLawyerWards(lawyer.ward_id), 100);
+            }
+        }
+
+        async function loadLawyerWards(selectedWardId = null) {
+            const provinceId = document.getElementById('lawyer-province').value;
+            const wardSelect = document.getElementById('lawyer-ward');
+            if (!provinceId) {
+                wardSelect.innerHTML = '<option value="">-- Chọn tỉnh/thành trước --</option>';
+                return;
+            }
+            const wardsData = await loadWards(provinceId);
+            wardSelect.innerHTML = '<option value="">-- Chọn --</option>' + wardsData.map(w => 
+                `<option value="${w.id}" ${selectedWardId == w.id ? 'selected' : ''}>${w.name}</option>`
+            ).join('');
+        }
+
+        function updateLawyerAvatarPreview() {
+            const url = document.getElementById('lawyer-avatar').value;
+            const preview = document.getElementById('lawyer-avatar-preview');
+            if (url) {
+                preview.innerHTML = `<img src="${url}" onerror="this.style.display='none';this.parentElement.innerHTML='LS'">`;
+            } else {
+                const name = document.getElementById('lawyer-name')?.value || 'LS';
+                preview.innerHTML = name.charAt(0);
+            }
+        }
+
+        async function saveLawyer(id) {
+            const data = {
+                name: document.getElementById('lawyer-name').value,
+                company: document.getElementById('lawyer-company').value,
+                phone: document.getElementById('lawyer-phone').value,
+                zalo: document.getElementById('lawyer-zalo').value,
+                email: document.getElementById('lawyer-email').value,
+                avatar_url: document.getElementById('lawyer-avatar').value,
+                address: document.getElementById('lawyer-address').value,
+                province_id: document.getElementById('lawyer-province').value || null,
+                ward_id: document.getElementById('lawyer-ward').value || null,
+                working_hours: document.getElementById('lawyer-hours').value,
+                working_days: document.getElementById('lawyer-days').value,
+                bio: document.getElementById('lawyer-bio').value,
+                specialization: document.getElementById('lawyer-spec').value,
+                is_online: document.getElementById('lawyer-online').checked,
+                is_primary: document.getElementById('lawyer-primary').checked,
+                is_active: document.getElementById('lawyer-active').checked
+            };
+            if (!data.name) { alert('Vui lòng nhập họ tên'); return; }
+            try {
+                const res = await fetch(API + '/admin/lawyers' + (id ? '/' + id : ''), {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) { closeModal(); loadLawyers(); }
+                else alert(result.message || 'Lỗi');
+            } catch (e) { alert('Lỗi kết nối'); }
+        }
+
+        async function deleteLawyer(id) {
+            if (!confirm('Xóa luật sư này?')) return;
+            try {
+                const res = await fetch(API + '/admin/lawyers/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                if ((await res.json()).success) loadLawyers();
+            } catch (e) { alert('Lỗi'); }
+        }
+
+        // ========== ORGANIZATIONS ==========
+        async function loadOrganizations() {
+            document.getElementById('content').innerHTML = '<div class="text-center py-10">Đang tải...</div>';
+            try {
+                const res = await fetch(API + '/admin/organizations', { headers: { 'Authorization': 'Bearer ' + token } });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('content').innerHTML = `
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-bold">Cơ quan tra cứu</h1>
+                            <button onclick="showOrgModal()" class="btn-primary flex items-center gap-2"><span class="material-icons text-sm">add</span> Thêm mới</button>
+                        </div>
+                        <div class="card overflow-hidden">
+                            <table class="w-full">
+                                <thead><tr class="text-left text-sm text-gray-500 bg-gray-50"><th class="p-4">TÊN CƠ QUAN</th><th class="p-4">LOẠI</th><th class="p-4">TỈNH/THÀNH</th><th class="p-4">TRẠNG THÁI</th><th class="p-4">THAO TÁC</th></tr></thead>
+                                <tbody>${data.data.length === 0 ? '<tr><td colspan="5" class="p-8 text-center text-gray-400">Chưa có dữ liệu</td></tr>' : data.data.map(o => `
+                                    <tr class="table-row border-t">
+                                        <td class="p-4 font-medium">${o.name}</td>
+                                        <td class="p-4"><span class="badge badge-blue">${o.type_name || '-'}</span></td>
+                                        <td class="p-4 text-gray-600">${[o.ward_name, o.province_name].filter(Boolean).join(', ') || '-'}</td>
+                                        <td class="p-4"><span class="badge ${o.is_active ? 'badge-green' : 'badge-red'}">${o.is_active ? 'Hoạt động' : 'Ẩn'}</span></td>
+                                        <td class="p-4">
+                                            <button onclick='showOrgModal(${JSON.stringify(o).replace(/'/g, "\\'")})' class="text-blue-600 hover:text-blue-800 mr-2"><span class="material-icons text-sm">edit</span></button>
+                                            <button onclick="deleteOrg(${o.id})" class="text-red-600 hover:text-red-800"><span class="material-icons text-sm">delete</span></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}</tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function showOrgModal(org = null) {
+            modalRoot.innerHTML = `
+                <div class="modal" onclick="if(event.target===this)closeModal()">
+                    <div class="modal-content p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold">${org ? 'Sửa' : 'Thêm'} cơ quan</h2>
+                            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><span class="material-icons">close</span></button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-span-2">
+                                <label class="block text-sm font-semibold mb-2">Tên cơ quan *</label>
+                                <input type="text" id="org-name" class="input-field" value="${org?.name || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Loại cơ quan</label>
+                                <select id="org-type" class="input-field">
+                                    <option value="">-- Chọn loại --</option>
+                                    ${orgTypes.map(t => `<option value="${t.id}" ${org?.type_id == t.id ? 'selected' : ''}>${t.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tỉnh/Thành phố</label>
+                                <select id="org-province" class="input-field" onchange="loadOrgWards()">
+                                    <option value="">-- Chọn --</option>
+                                    ${provinces.map(p => `<option value="${p.id}" ${org?.province_id == p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Phường/Xã</label>
+                                <select id="org-ward" class="input-field">
+                                    <option value="">-- Chọn tỉnh/thành trước --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Địa chỉ cụ thể</label>
+                                <input type="text" id="org-address" class="input-field" value="${org?.address || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Điện thoại</label>
+                                <input type="text" id="org-phone" class="input-field" value="${org?.phone || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Email</label>
+                                <input type="email" id="org-email" class="input-field" value="${org?.email || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Website</label>
+                                <input type="text" id="org-website" class="input-field" value="${org?.website || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Giờ làm việc</label>
+                                <input type="text" id="org-hours" class="input-field" value="${org?.working_hours || ''}" placeholder="VD: 7:30 - 16:30">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-semibold mb-2">Mô tả / Dịch vụ</label>
+                                <textarea id="org-desc" class="input-field" rows="2">${org?.description || ''}</textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="flex items-center gap-2"><input type="checkbox" id="org-active" ${org?.is_active !== false ? 'checked' : ''}> Kích hoạt</label>
+                        </div>
+                        <div class="flex justify-end gap-3 mt-6">
+                            <button onclick="closeModal()" class="px-6 py-2 border rounded-lg">Hủy</button>
+                            <button onclick="saveOrg(${org?.id || 'null'})" class="btn-primary">💾 Lưu</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (org?.province_id) setTimeout(() => loadOrgWards(org.ward_id), 100);
+        }
+
+        async function loadOrgWards(selectedWardId = null) {
+            const provinceId = document.getElementById('org-province').value;
+            const wardSelect = document.getElementById('org-ward');
+            if (!provinceId) {
+                wardSelect.innerHTML = '<option value="">-- Chọn tỉnh/thành trước --</option>';
+                return;
+            }
+            const wardsData = await loadWards(provinceId);
+            wardSelect.innerHTML = '<option value="">-- Chọn --</option>' + wardsData.map(w => 
+                `<option value="${w.id}" ${selectedWardId == w.id ? 'selected' : ''}>${w.name}</option>`
+            ).join('');
+        }
+
+        async function saveOrg(id) {
+            const data = {
+                name: document.getElementById('org-name').value,
+                type_id: document.getElementById('org-type').value || null,
+                province_id: document.getElementById('org-province').value || null,
+                ward_id: document.getElementById('org-ward').value || null,
+                address: document.getElementById('org-address').value,
+                phone: document.getElementById('org-phone').value,
+                email: document.getElementById('org-email').value,
+                website: document.getElementById('org-website').value,
+                working_hours: document.getElementById('org-hours').value,
+                description: document.getElementById('org-desc').value,
+                is_active: document.getElementById('org-active').checked
+            };
+            if (!data.name) { alert('Vui lòng nhập tên'); return; }
+            try {
+                const res = await fetch(API + '/admin/organizations' + (id ? '/' + id : ''), {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) { closeModal(); loadOrganizations(); }
+                else alert(result.message || 'Lỗi');
+            } catch (e) { alert('Lỗi kết nối'); }
+        }
+
+        async function deleteOrg(id) {
+            if (!confirm('Xóa cơ quan này?')) return;
+            try {
+                const res = await fetch(API + '/admin/organizations/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+                if ((await res.json()).success) loadOrganizations();
+            } catch (e) { alert('Lỗi'); }
+        }
+
+        // ========== PLACEHOLDER SECTIONS ==========
+        function loadEvents() { document.getElementById('content').innerHTML = '<h1 class="text-2xl font-bold mb-6">Lịch pháp lý</h1><div class="card p-6">Coming soon...</div>'; }
+        function loadNews() { document.getElementById('content').innerHTML = '<h1 class="text-2xl font-bold mb-6">Tin tức</h1><div class="card p-6">Coming soon...</div>'; }
+        function loadSupport() { document.getElementById('content').innerHTML = '<h1 class="text-2xl font-bold mb-6">Yêu cầu tư vấn</h1><div class="card p-6">Coming soon...</div>'; }
+        function loadSettings() { document.getElementById('content').innerHTML = '<h1 class="text-2xl font-bold mb-6">Cài đặt App</h1><div class="card p-6">Coming soon...</div>'; }
+
+        function closeModal() { modalRoot.innerHTML = ''; }
+
+        // Init
+        checkAuth();
+    </script>
 </body>
 </html>
