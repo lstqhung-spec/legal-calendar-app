@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HTIC LEGAL CALENDAR - BACKEND v17.0 (NO DISTRICTS - ADMIN MANAGED)
+// HTIC LEGAL CALENDAR - BACKEND v17.1 (WITH MIGRATION)
 // Cấu trúc địa điểm: Tỉnh/Thành → Phường/Xã (không có Quận/Huyện)
 // Dữ liệu provinces và wards do Admin tự nhập vào
 // ═══════════════════════════════════════════════════════════════════════════
@@ -25,7 +25,7 @@ let pool = null;
 
 console.log('');
 console.log('╔═══════════════════════════════════════════════════════════╗');
-console.log('║     HTIC Legal Calendar API v17.0 - Starting...           ║');
+console.log('║     HTIC Legal Calendar API v17.1 - Starting...           ║');
 console.log('╚═══════════════════════════════════════════════════════════╝');
 console.log('');
 console.log('🔧 Environment check:');
@@ -94,6 +94,51 @@ async function initDatabase() {
   const client = await pool.connect();
   try {
     console.log('📝 Creating tables...');
+    
+    // ========== MIGRATION v17: Xử lý database cũ ==========
+    console.log('🔄 Running v17 migration...');
+    
+    // Drop districts table nếu tồn tại (không còn dùng)
+    await client.query(`DROP TABLE IF EXISTS districts CASCADE`);
+    
+    // Kiểm tra và drop wards cũ nếu có district_id
+    const wardsCheck = await client.query(`
+      SELECT column_name FROM information_schema.columns 
+      WHERE table_name = 'wards' AND column_name = 'district_id'
+    `);
+    if (wardsCheck.rows.length > 0) {
+      console.log('   Dropping old wards table (had district_id)...');
+      await client.query(`DROP TABLE IF EXISTS wards CASCADE`);
+    }
+    
+    // Đảm bảo organizations có đúng cột
+    const orgsExists = await client.query(`
+      SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'organizations')
+    `);
+    if (orgsExists.rows[0].exists) {
+      console.log('   Checking organizations table...');
+      await client.query(`ALTER TABLE organizations DROP COLUMN IF EXISTS district_id`);
+      await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS province_id INT`);
+      await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS ward_id INT`);
+      await client.query(`ALTER TABLE organizations ADD COLUMN IF NOT EXISTS type_id INT`);
+    }
+    
+    // Đảm bảo lawyers có đúng cột
+    const lawyersExists = await client.query(`
+      SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'lawyers')
+    `);
+    if (lawyersExists.rows[0].exists) {
+      console.log('   Checking lawyers table...');
+      await client.query(`ALTER TABLE lawyers DROP COLUMN IF EXISTS district_id`);
+      await client.query(`ALTER TABLE lawyers DROP COLUMN IF EXISTS title`);
+      await client.query(`ALTER TABLE lawyers ADD COLUMN IF NOT EXISTS province_id INT`);
+      await client.query(`ALTER TABLE lawyers ADD COLUMN IF NOT EXISTS ward_id INT`);
+      await client.query(`ALTER TABLE lawyers ADD COLUMN IF NOT EXISTS address TEXT`);
+      await client.query(`ALTER TABLE lawyers ADD COLUMN IF NOT EXISTS specialization TEXT`);
+    }
+    
+    console.log('✅ Migration completed');
+    // ========== END MIGRATION ==========
     
     // Categories table
     await client.query(`
@@ -381,7 +426,7 @@ async function initDatabase() {
       console.log('   ✓ Agencies seeded');
     } catch (e) { console.log('   ⚠ Agencies already exist or error:', e.message); }
 
-    console.log('✅ Database initialized with v17.0 schema');
+    console.log('✅ Database initialized with v17.1 schema');
   } finally {
     client.release();
   }
@@ -394,7 +439,7 @@ async function initDatabase() {
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    version: '17.0.0', 
+    version: '17.1.0', 
     timestamp: new Date().toISOString(),
     database: dbConnected ? 'connected' : 'disconnected',
     message: dbConnected ? 'All systems operational' : 'Database not connected - please configure DATABASE_URL'
@@ -743,7 +788,10 @@ app.delete('/api/admin/news/:id', adminAuth, async (req, res) => {
 app.get('/api/admin/organizations', adminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT o.*, t.name as type_name, t.key as type_key, 
+      SELECT o.id, o.name, o.type_id, o.category, o.address, o.province_id, o.ward_id,
+             o.phone, o.email, o.website, o.working_hours, o.description, o.services,
+             o.lat, o.lng, o.is_active, o.created_at,
+             t.name as type_name, t.key as type_key, 
              p.name as province_name, w.name as ward_name
       FROM organizations o 
       LEFT JOIN org_types t ON o.type_id = t.id 
@@ -753,6 +801,7 @@ app.get('/api/admin/organizations', adminAuth, async (req, res) => {
     `);
     res.json({ success: true, data: result.rows });
   } catch (err) {
+    console.error('Organizations GET error:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -798,14 +847,19 @@ app.delete('/api/admin/organizations/:id', adminAuth, async (req, res) => {
 app.get('/api/admin/lawyers', adminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT l.*, p.name as province_name, w.name as ward_name
+      SELECT l.id, l.name, l.company, l.phone, l.zalo, l.email, l.avatar_url,
+             l.address, l.province_id, l.ward_id, l.working_hours, l.working_days,
+             l.bio, l.specialization, l.is_online, l.is_primary, l.is_active,
+             l.sort_order, l.created_at,
+             p.name as province_name, w.name as ward_name
       FROM lawyers l
       LEFT JOIN provinces p ON l.province_id = p.id
       LEFT JOIN wards w ON l.ward_id = w.id
-      ORDER BY l.is_primary DESC, l.sort_order ASC
+      ORDER BY l.is_primary DESC, l.sort_order ASC, l.name ASC
     `);
     res.json({ success: true, data: result.rows });
   } catch (err) {
+    console.error('Lawyers GET error:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -1131,7 +1185,7 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════╗');
-    console.log('║     HTIC Legal Calendar API v17.0                         ║');
+    console.log('║     HTIC Legal Calendar API v17.1                         ║');
     console.log('╠═══════════════════════════════════════════════════════════╣');
     console.log(`║  🚀 Server running on port ${PORT}                           ║`);
     if (dbConnected) {
