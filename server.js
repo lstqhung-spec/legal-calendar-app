@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HTIC LEGAL CALENDAR - BACKEND v15.0 (FIXED DATABASE CONNECTION)
+// HTIC LEGAL CALENDAR - BACKEND v15.1 (GRACEFUL DATABASE CONNECTION)
 // Railway PostgreSQL + Express.js
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -17,54 +17,77 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DATABASE CONNECTION - Railway PostgreSQL
+// DATABASE CONNECTION - Railway PostgreSQL (Graceful)
 // ═══════════════════════════════════════════════════════════════════════════
+let dbConnected = false;
+let pool = null;
+
+console.log('');
+console.log('╔═══════════════════════════════════════════════════════════╗');
+console.log('║     HTIC Legal Calendar API v15.1 - Starting...           ║');
+console.log('╚═══════════════════════════════════════════════════════════╝');
+console.log('');
 console.log('🔧 Environment check:');
 console.log('   PORT:', PORT);
 console.log('   NODE_ENV:', process.env.NODE_ENV || 'development');
-console.log('   DATABASE_URL:', process.env.DATABASE_URL ? '✅ SET (hidden)' : '❌ NOT SET');
+console.log('   DATABASE_URL:', process.env.DATABASE_URL ? '✅ SET' : '❌ NOT SET');
 
-// Kiểm tra DATABASE_URL
-if (!process.env.DATABASE_URL) {
-  console.error('❌ CRITICAL: DATABASE_URL is not set!');
-  console.error('   Please configure DATABASE_URL in Railway Variables');
-  console.error('   Format: postgresql://user:pass@host:port/database');
+if (process.env.DATABASE_URL) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+
+  pool.on('error', (err) => {
+    console.error('❌ PostgreSQL pool error:', err.message);
+    dbConnected = false;
+  });
+} else {
+  console.error('');
+  console.error('⚠️  WARNING: DATABASE_URL is not set!');
+  console.error('   Server will start but database features will not work.');
+  console.error('   Please add DATABASE_URL to Railway Variables:');
+  console.error('   DATABASE_URL = ${{Postgres.DATABASE_URL}}');
+  console.error('');
 }
 
-// PostgreSQL Connection với cấu hình Railway
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false  // Required for Railway PostgreSQL
-  },
-  // Connection pool settings
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-});
-
-// Test connection on startup
-pool.on('connect', () => {
-  console.log('✅ PostgreSQL client connected');
-});
-
-pool.on('error', (err) => {
-  console.error('❌ PostgreSQL pool error:', err.message);
-});
+// Helper to check DB connection
+function requireDB(res) {
+  if (!dbConnected || !pool) {
+    res.status(503).json({ 
+      success: false, 
+      message: 'Database not connected. Please configure DATABASE_URL.',
+      hint: 'Add DATABASE_URL variable in Railway Dashboard'
+    });
+    return false;
+  }
+  return true;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DATABASE INITIALIZATION
+// DATABASE INITIALIZATION (Graceful - won't crash if DB unavailable)
 // ═══════════════════════════════════════════════════════════════════════════
 async function initDatabase() {
+  if (!pool) {
+    console.log('⚠️  Skipping database initialization (no DATABASE_URL)');
+    return false;
+  }
+
   console.log('📦 Initializing database...');
   
   // Test connection first
   try {
     const testResult = await pool.query('SELECT NOW() as now, current_database() as db');
     console.log('✅ Database connected:', testResult.rows[0].db, 'at', testResult.rows[0].now);
+    dbConnected = true;
   } catch (testErr) {
-    console.error('❌ Database connection test failed:', testErr.message);
-    throw testErr;
+    console.error('❌ Database connection failed:', testErr.message);
+    console.error('   Server will continue but database features unavailable.');
+    dbConnected = false;
+    return false;
   }
 
   const client = await pool.connect();
@@ -245,97 +268,119 @@ async function initDatabase() {
       )
     `);
 
-    // SEED DEFAULT DATA
-    const defaultCategories = [
-      { name: 'Thuế', key: 'tax', icon: 'receipt_long', color: '#F97316' },
-      { name: 'Lao động', key: 'labor', icon: 'people', color: '#06B6D4' },
-      { name: 'Bảo hiểm', key: 'insurance', icon: 'health_and_safety', color: '#10B981' },
-      { name: 'Tài chính', key: 'finance', icon: 'account_balance', color: '#8B5CF6' },
-      { name: 'Đầu tư', key: 'investment', icon: 'trending_up', color: '#6366F1' },
-      { name: 'Khác', key: 'other', icon: 'event', color: '#3B82F6' }
-    ];
-    for (const cat of defaultCategories) {
-      await client.query(
-        `INSERT INTO categories (name, key, icon, color, sort_order) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (key) DO NOTHING`,
-        [cat.name, cat.key, cat.icon, cat.color, defaultCategories.indexOf(cat)]
-      );
-    }
+    // SEED DEFAULT DATA (wrapped in try-catch to not crash if data exists)
+    console.log('📝 Seeding default data...');
+    
+    try {
+      const defaultCategories = [
+        { name: 'Thuế', key: 'tax', icon: 'receipt_long', color: '#F97316' },
+        { name: 'Lao động', key: 'labor', icon: 'people', color: '#06B6D4' },
+        { name: 'Bảo hiểm', key: 'insurance', icon: 'health_and_safety', color: '#10B981' },
+        { name: 'Tài chính', key: 'finance', icon: 'account_balance', color: '#8B5CF6' },
+        { name: 'Đầu tư', key: 'investment', icon: 'trending_up', color: '#6366F1' },
+        { name: 'Khác', key: 'other', icon: 'event', color: '#3B82F6' }
+      ];
+      for (let i = 0; i < defaultCategories.length; i++) {
+        const cat = defaultCategories[i];
+        await client.query(
+          `INSERT INTO categories (name, key, icon, color, sort_order) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (key) DO NOTHING`,
+          [cat.name, cat.key, cat.icon, cat.color, i]
+        );
+      }
+      console.log('   ✓ Categories seeded');
+    } catch (e) { console.log('   ⚠ Categories already exist or error:', e.message); }
 
-    const defaultProvinces = [
-      { name: 'TP. Hồ Chí Minh', code: 'hcm', region: 'south' },
-      { name: 'Hà Nội', code: 'hanoi', region: 'north' },
-      { name: 'Đà Nẵng', code: 'danang', region: 'central' },
-      { name: 'Bình Dương', code: 'binhduong', region: 'south' },
-      { name: 'Đồng Nai', code: 'dongnai', region: 'south' }
-    ];
-    for (const prov of defaultProvinces) {
-      await client.query(
-        `INSERT INTO provinces (name, code, region) VALUES ($1, $2, $3) ON CONFLICT (code) DO NOTHING`,
-        [prov.name, prov.code, prov.region]
-      );
-    }
+    try {
+      const defaultProvinces = [
+        { name: 'TP. Hồ Chí Minh', code: 'hcm', region: 'south' },
+        { name: 'Hà Nội', code: 'hanoi', region: 'north' },
+        { name: 'Đà Nẵng', code: 'danang', region: 'central' },
+        { name: 'Bình Dương', code: 'binhduong', region: 'south' },
+        { name: 'Đồng Nai', code: 'dongnai', region: 'south' }
+      ];
+      for (const prov of defaultProvinces) {
+        await client.query(
+          `INSERT INTO provinces (name, code, region) VALUES ($1, $2, $3) ON CONFLICT (code) DO NOTHING`,
+          [prov.name, prov.code, prov.region]
+        );
+      }
+      console.log('   ✓ Provinces seeded');
+    } catch (e) { console.log('   ⚠ Provinces already exist or error:', e.message); }
 
-    const defaultOrgTypes = [
-      { name: 'Cơ quan nhà nước', key: 'government', icon: 'account_balance', color: '#3B82F6' },
-      { name: 'Công ty luật', key: 'lawfirm', icon: 'gavel', color: '#8B5CF6' },
-      { name: 'Văn phòng công chứng', key: 'notary', icon: 'verified', color: '#F97316' },
-      { name: 'Thừa phát lại', key: 'bailiff', icon: 'assignment', color: '#10B981' },
-      { name: 'Cơ quan thuế', key: 'tax', icon: 'receipt_long', color: '#EF4444' },
-      { name: 'Bảo hiểm xã hội', key: 'insurance', icon: 'shield', color: '#06B6D4' },
-      { name: 'Sở LĐTBXH', key: 'labor', icon: 'people', color: '#EC4899' },
-      { name: 'Khác', key: 'other', icon: 'business', color: '#64748B' }
-    ];
-    for (const type of defaultOrgTypes) {
-      await client.query(
-        `INSERT INTO org_types (name, key, icon, color, sort_order) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (key) DO NOTHING`,
-        [type.name, type.key, type.icon, type.color, defaultOrgTypes.indexOf(type)]
-      );
-    }
+    try {
+      const defaultOrgTypes = [
+        { name: 'Cơ quan nhà nước', key: 'government', icon: 'account_balance', color: '#3B82F6' },
+        { name: 'Công ty luật', key: 'lawfirm', icon: 'gavel', color: '#8B5CF6' },
+        { name: 'Văn phòng công chứng', key: 'notary', icon: 'verified', color: '#F97316' },
+        { name: 'Thừa phát lại', key: 'bailiff', icon: 'assignment', color: '#10B981' },
+        { name: 'Cơ quan thuế', key: 'tax', icon: 'receipt_long', color: '#EF4444' },
+        { name: 'Bảo hiểm xã hội', key: 'insurance', icon: 'shield', color: '#06B6D4' },
+        { name: 'Sở LĐTBXH', key: 'labor', icon: 'people', color: '#EC4899' },
+        { name: 'Khác', key: 'other', icon: 'business', color: '#64748B' }
+      ];
+      for (let i = 0; i < defaultOrgTypes.length; i++) {
+        const type = defaultOrgTypes[i];
+        await client.query(
+          `INSERT INTO org_types (name, key, icon, color, sort_order) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (key) DO NOTHING`,
+          [type.name, type.key, type.icon, type.color, i]
+        );
+      }
+      console.log('   ✓ Org types seeded');
+    } catch (e) { console.log('   ⚠ Org types already exist or error:', e.message); }
 
-    const defaultSettings = [
-      { key: 'app_name', value: 'HTIC Legal Calendar', description: 'Tên ứng dụng' },
-      { key: 'app_version', value: '1.0.0', description: 'Phiên bản ứng dụng' },
-      { key: 'app_logo', value: '', description: 'URL logo ứng dụng' },
-      { key: 'company_name', value: 'Công ty Luật TNHH HTIC', description: 'Tên công ty' },
-      { key: 'company_slogan', value: 'Đồng hành pháp lý doanh nghiệp', description: 'Slogan công ty' },
-      { key: 'address', value: '79/6 Hoàng Văn Thái, P.Tân Phú, Quận 7, TP.HCM', description: 'Địa chỉ' },
-      { key: 'hotline', value: '0918 682 879', description: 'Số hotline' },
-      { key: 'zalo_link', value: 'https://zalo.me/0918682879', description: 'Link Zalo' },
-      { key: 'contact_email', value: 'contact@htic.com.vn', description: 'Email liên hệ' },
-      { key: 'support_email', value: 'support@htic.com.vn', description: 'Email hỗ trợ' },
-      { key: 'website', value: 'https://htic.com.vn', description: 'Website' },
-      { key: 'facebook', value: 'https://facebook.com/hticlaw', description: 'Facebook' },
-      { key: 'working_hours', value: '8:00 - 18:00', description: 'Giờ làm việc' },
-      { key: 'working_days', value: 'Thứ 2 - Thứ 6', description: 'Ngày làm việc' },
-      { key: 'about_content', value: 'HTIC Law Firm là công ty luật hàng đầu tại Việt Nam với hơn 15 năm kinh nghiệm trong lĩnh vực tư vấn pháp luật doanh nghiệp.', description: 'Nội dung giới thiệu' }
-    ];
-    for (const setting of defaultSettings) {
-      await client.query(
-        `INSERT INTO settings (key, value, description) VALUES ($1, $2, $3) ON CONFLICT (key) DO NOTHING`,
-        [setting.key, setting.value, setting.description]
-      );
-    }
+    try {
+      const defaultSettings = [
+        { key: 'app_name', value: 'HTIC Legal Calendar', description: 'Tên ứng dụng' },
+        { key: 'app_version', value: '1.0.0', description: 'Phiên bản ứng dụng' },
+        { key: 'app_logo', value: '', description: 'URL logo ứng dụng' },
+        { key: 'company_name', value: 'Công ty Luật TNHH HTIC', description: 'Tên công ty' },
+        { key: 'company_slogan', value: 'Đồng hành pháp lý doanh nghiệp', description: 'Slogan công ty' },
+        { key: 'address', value: '79/6 Hoàng Văn Thái, P.Tân Phú, Quận 7, TP.HCM', description: 'Địa chỉ' },
+        { key: 'hotline', value: '0918 682 879', description: 'Số hotline' },
+        { key: 'zalo_link', value: 'https://zalo.me/0918682879', description: 'Link Zalo' },
+        { key: 'contact_email', value: 'contact@htic.com.vn', description: 'Email liên hệ' },
+        { key: 'support_email', value: 'support@htic.com.vn', description: 'Email hỗ trợ' },
+        { key: 'website', value: 'https://htic.com.vn', description: 'Website' },
+        { key: 'facebook', value: 'https://facebook.com/hticlaw', description: 'Facebook' },
+        { key: 'working_hours', value: '8:00 - 18:00', description: 'Giờ làm việc' },
+        { key: 'working_days', value: 'Thứ 2 - Thứ 6', description: 'Ngày làm việc' },
+        { key: 'about_content', value: 'HTIC Law Firm là công ty luật hàng đầu tại Việt Nam với hơn 15 năm kinh nghiệm trong lĩnh vực tư vấn pháp luật doanh nghiệp.', description: 'Nội dung giới thiệu' }
+      ];
+      for (const setting of defaultSettings) {
+        await client.query(
+          `INSERT INTO settings (key, value, description) VALUES ($1, $2, $3) ON CONFLICT (key) DO NOTHING`,
+          [setting.key, setting.value, setting.description]
+        );
+      }
+      console.log('   ✓ Settings seeded');
+    } catch (e) { console.log('   ⚠ Settings already exist or error:', e.message); }
 
-    await client.query(`
-      INSERT INTO lawyers (name, title, company, phone, zalo, email, working_hours, working_days, bio, specialization, is_online, is_primary, sort_order)
-      SELECT 'Luật sư HTIC', 'Luật sư điều hành', 'Công ty Luật TNHH HTIC', '0918 682 879', '0918682879', 'contact@htic.com.vn',
-             '8:00 - 18:00', 'Thứ 2 - Thứ 6', 'Hơn 15 năm kinh nghiệm tư vấn pháp luật doanh nghiệp.', 'Thuế, M&A, Đầu tư nước ngoài', true, true, 0
-      WHERE NOT EXISTS (SELECT 1 FROM lawyers WHERE is_primary = true)
-    `);
+    try {
+      await client.query(`
+        INSERT INTO lawyers (name, title, company, phone, zalo, email, working_hours, working_days, bio, specialization, is_online, is_primary, sort_order)
+        SELECT 'Luật sư HTIC', 'Luật sư điều hành', 'Công ty Luật TNHH HTIC', '0918 682 879', '0918682879', 'contact@htic.com.vn',
+               '8:00 - 18:00', 'Thứ 2 - Thứ 6', 'Hơn 15 năm kinh nghiệm tư vấn pháp luật doanh nghiệp.', 'Thuế, M&A, Đầu tư nước ngoài', true, true, 0
+        WHERE NOT EXISTS (SELECT 1 FROM lawyers WHERE is_primary = true)
+      `);
+      console.log('   ✓ Default lawyer seeded');
+    } catch (e) { console.log('   ⚠ Lawyer already exist or error:', e.message); }
 
-    const defaultAgencies = [
-      { name: 'Tổng cục Thuế', short_name: 'TCT' },
-      { name: 'Bảo hiểm Xã hội Việt Nam', short_name: 'BHXHVN' },
-      { name: 'Bộ Lao động - Thương binh và Xã hội', short_name: 'BLĐTBXH' }
-    ];
-    for (const agency of defaultAgencies) {
-      await client.query(
-        `INSERT INTO agencies (name, short_name) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM agencies WHERE name = $1)`,
-        [agency.name, agency.short_name]
-      );
-    }
+    try {
+      const defaultAgencies = [
+        { name: 'Tổng cục Thuế', short_name: 'TCT' },
+        { name: 'Bảo hiểm Xã hội Việt Nam', short_name: 'BHXHVN' },
+        { name: 'Bộ Lao động - Thương binh và Xã hội', short_name: 'BLĐTBXH' }
+      ];
+      for (const agency of defaultAgencies) {
+        await client.query(
+          `INSERT INTO agencies (name, short_name) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM agencies WHERE name = $1)`,
+          [agency.name, agency.short_name]
+        );
+      }
+      console.log('   ✓ Agencies seeded');
+    } catch (e) { console.log('   ⚠ Agencies already exist or error:', e.message); }
 
-    console.log('✅ Database initialized with v14 schema');
+    console.log('✅ Database initialized with v15.1 schema');
   } finally {
     client.release();
   }
@@ -346,7 +391,13 @@ async function initDatabase() {
 // ═══════════════════════════════════════════════════════════════════════════
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '14.0.0', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    version: '15.1.0', 
+    timestamp: new Date().toISOString(),
+    database: dbConnected ? 'connected' : 'disconnected',
+    message: dbConnected ? 'All systems operational' : 'Database not connected - please configure DATABASE_URL'
+  });
 });
 
 app.get('/api/events', async (req, res) => {
@@ -832,39 +883,88 @@ app.get('/api/admin/org-types', adminAuth, async (req, res) => {
   }
 });
 
+// Status page khi database chưa kết nối
+const statusPage = `
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTIC Legal - Server Status</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { background: white; border-radius: 20px; padding: 40px; max-width: 500px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .icon { font-size: 60px; margin-bottom: 20px; }
+    h1 { color: #1e3a5f; margin-bottom: 10px; }
+    .status { padding: 10px 20px; border-radius: 10px; margin: 20px 0; font-weight: 600; }
+    .status.error { background: #FEE2E2; color: #DC2626; }
+    .status.success { background: #D1FAE5; color: #059669; }
+    .info { color: #64748B; line-height: 1.6; margin: 20px 0; }
+    .code { background: #F1F5F9; padding: 15px; border-radius: 10px; font-family: monospace; font-size: 14px; text-align: left; margin: 15px 0; }
+    .btn { display: inline-block; padding: 12px 30px; background: #3B82F6; color: white; text-decoration: none; border-radius: 10px; font-weight: 600; margin-top: 20px; }
+    .btn:hover { background: #2563EB; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">⚖️</div>
+    <h1>HTIC Legal Calendar</h1>
+    <div class="status error">❌ Database Not Connected</div>
+    <p class="info">Server đang chạy nhưng chưa kết nối được database PostgreSQL.</p>
+    <div class="code">
+      <strong>Cách khắc phục:</strong><br><br>
+      1. Vào Railway Dashboard<br>
+      2. Chọn Backend service → Variables<br>
+      3. Thêm biến:<br>
+      &nbsp;&nbsp;DATABASE_URL = ${"$"}{{Postgres.DATABASE_URL}}<br>
+      4. Redeploy
+    </div>
+    <a href="/api/health" class="btn">Kiểm tra API Status</a>
+  </div>
+</body>
+</html>
+`;
+
 app.get('/admin', (req, res) => {
+  if (!dbConnected) {
+    return res.send(statusPage);
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/', (req, res) => {
+  if (!dbConnected) {
+    return res.send(statusPage);
+  }
   res.redirect('/admin');
 });
 
-initDatabase().then(() => {
+// ═══════════════════════════════════════════════════════════════════════════
+// START SERVER (Always starts, even without DB)
+// ═══════════════════════════════════════════════════════════════════════════
+async function startServer() {
+  // Try to init database (won't crash if fails)
+  await initDatabase().catch(err => {
+    console.error('⚠️  Database init failed:', err.message);
+  });
+
   app.listen(PORT, () => {
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════╗');
-    console.log('║     HTIC Legal Calendar API v15.0                         ║');
+    console.log('║     HTIC Legal Calendar API v15.1                         ║');
     console.log('╠═══════════════════════════════════════════════════════════╣');
     console.log(`║  🚀 Server running on port ${PORT}                           ║`);
-    console.log('║  ✅ Database connected successfully                        ║');
-    console.log('║  📱 API ready for Flutter app                              ║');
+    if (dbConnected) {
+      console.log('║  ✅ Database: Connected                                    ║');
+    } else {
+      console.log('║  ❌ Database: NOT CONNECTED                                ║');
+      console.log('║     → Add DATABASE_URL in Railway Variables                ║');
+    }
+    console.log('║  📱 API ready for requests                                 ║');
     console.log('╚═══════════════════════════════════════════════════════════╝');
     console.log('');
   });
-}).catch(err => {
-  console.error('');
-  console.error('╔═══════════════════════════════════════════════════════════╗');
-  console.error('║  ❌ STARTUP FAILED                                         ║');
-  console.error('╠═══════════════════════════════════════════════════════════╣');
-  console.error('║  Error:', err.message.substring(0, 45).padEnd(45), '║');
-  console.error('╠═══════════════════════════════════════════════════════════╣');
-  console.error('║  Please check:                                            ║');
-  console.error('║  1. DATABASE_URL is set in Railway Variables              ║');
-  console.error('║  2. PostgreSQL service is running                         ║');
-  console.error('║  3. Network connection to database                        ║');
-  console.error('╚═══════════════════════════════════════════════════════════╝');
-  console.error('');
-  // Don't exit - let Railway handle restart
-  // process.exit(1);
-});
+}
+
+startServer();
