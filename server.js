@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HTIC LEGAL CALENDAR - BACKEND v15.1 (GRACEFUL DATABASE CONNECTION)
-// Railway PostgreSQL + Express.js
+// HTIC LEGAL CALENDAR - BACKEND v17.0 (NO DISTRICTS - ADMIN MANAGED)
+// Cấu trúc địa điểm: Tỉnh/Thành → Phường/Xã (không có Quận/Huyện)
+// Dữ liệu provinces và wards do Admin tự nhập vào
 // ═══════════════════════════════════════════════════════════════════════════
 
 const express = require('express');
@@ -108,13 +109,25 @@ async function initDatabase() {
       )
     `);
 
-    // Provinces table
+    // Provinces table (Tỉnh/Thành phố)
     await client.query(`
       CREATE TABLE IF NOT EXISTS provinces (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         code VARCHAR(20) UNIQUE,
         region VARCHAR(50),
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Wards table (Phường/Xã) - link trực tiếp với provinces (bỏ quận/huyện)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS wards (
+        id SERIAL PRIMARY KEY,
+        province_id INT REFERENCES provinces(id) ON DELETE CASCADE,
+        name VARCHAR(100) NOT NULL,
+        code VARCHAR(50),
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -199,8 +212,8 @@ async function initDatabase() {
         type_id INT REFERENCES org_types(id),
         category VARCHAR(50) DEFAULT 'government',
         address TEXT,
-        district VARCHAR(100),
         province_id INT REFERENCES provinces(id),
+        ward_id INT REFERENCES wards(id),
         phone VARCHAR(50),
         email VARCHAR(100),
         website TEXT,
@@ -220,12 +233,14 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS lawyers (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
-        title VARCHAR(100),
         company VARCHAR(255),
         phone VARCHAR(50),
         zalo VARCHAR(50),
         email VARCHAR(100),
         avatar_url TEXT,
+        address TEXT,
+        province_id INT REFERENCES provinces(id),
+        ward_id INT REFERENCES wards(id),
         working_hours VARCHAR(100),
         working_days VARCHAR(100),
         bio TEXT,
@@ -290,22 +305,8 @@ async function initDatabase() {
       console.log('   ✓ Categories seeded');
     } catch (e) { console.log('   ⚠ Categories already exist or error:', e.message); }
 
-    try {
-      const defaultProvinces = [
-        { name: 'TP. Hồ Chí Minh', code: 'hcm', region: 'south' },
-        { name: 'Hà Nội', code: 'hanoi', region: 'north' },
-        { name: 'Đà Nẵng', code: 'danang', region: 'central' },
-        { name: 'Bình Dương', code: 'binhduong', region: 'south' },
-        { name: 'Đồng Nai', code: 'dongnai', region: 'south' }
-      ];
-      for (const prov of defaultProvinces) {
-        await client.query(
-          `INSERT INTO provinces (name, code, region) VALUES ($1, $2, $3) ON CONFLICT (code) DO NOTHING`,
-          [prov.name, prov.code, prov.region]
-        );
-      }
-      console.log('   ✓ Provinces seeded');
-    } catch (e) { console.log('   ⚠ Provinces already exist or error:', e.message); }
+    // NOTE: Provinces và Wards không seed sẵn - do Admin tự nhập vào
+    console.log('   ℹ Provinces và Wards: Admin sẽ tự nhập dữ liệu');
 
     try {
       const defaultOrgTypes = [
@@ -357,8 +358,8 @@ async function initDatabase() {
 
     try {
       await client.query(`
-        INSERT INTO lawyers (name, title, company, phone, zalo, email, working_hours, working_days, bio, specialization, is_online, is_primary, sort_order)
-        SELECT 'Luật sư HTIC', 'Luật sư điều hành', 'Công ty Luật TNHH HTIC', '0918 682 879', '0918682879', 'contact@htic.com.vn',
+        INSERT INTO lawyers (name, company, phone, zalo, email, working_hours, working_days, bio, specialization, is_online, is_primary, sort_order)
+        SELECT 'Luật sư HTIC', 'Công ty Luật TNHH HTIC', '0918 682 879', '0918682879', 'contact@htic.com.vn',
                '8:00 - 18:00', 'Thứ 2 - Thứ 6', 'Hơn 15 năm kinh nghiệm tư vấn pháp luật doanh nghiệp.', 'Thuế, M&A, Đầu tư nước ngoài', true, true, 0
         WHERE NOT EXISTS (SELECT 1 FROM lawyers WHERE is_primary = true)
       `);
@@ -698,8 +699,13 @@ app.delete('/api/admin/news/:id', adminAuth, async (req, res) => {
 app.get('/api/admin/organizations', adminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT o.*, t.name as type_name, t.key as type_key, p.name as province_name
-      FROM organizations o LEFT JOIN org_types t ON o.type_id = t.id LEFT JOIN provinces p ON o.province_id = p.id ORDER BY o.name ASC
+      SELECT o.*, t.name as type_name, t.key as type_key, 
+             p.name as province_name, w.name as ward_name
+      FROM organizations o 
+      LEFT JOIN org_types t ON o.type_id = t.id 
+      LEFT JOIN provinces p ON o.province_id = p.id 
+      LEFT JOIN wards w ON o.ward_id = w.id
+      ORDER BY o.name ASC
     `);
     res.json({ success: true, data: result.rows });
   } catch (err) {
@@ -709,10 +715,11 @@ app.get('/api/admin/organizations', adminAuth, async (req, res) => {
 
 app.post('/api/admin/organizations', adminAuth, async (req, res) => {
   try {
-    const { name, type_id, category, address, district, province_id, phone, email, website, working_hours, description, services, lat, lng, is_active } = req.body;
+    const { name, type_id, category, address, province_id, ward_id, phone, email, website, working_hours, description, services, lat, lng, is_active } = req.body;
     const result = await pool.query(
-      `INSERT INTO organizations (name, type_id, category, address, district, province_id, phone, email, website, working_hours, description, services, lat, lng, is_active) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
-      [name, type_id, category, address, district, province_id || null, phone, email, website, working_hours, description, services, lat, lng, is_active !== false]
+      `INSERT INTO organizations (name, type_id, category, address, province_id, ward_id, phone, email, website, working_hours, description, services, lat, lng, is_active) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+      [name, type_id, category, address, province_id || null, ward_id || null, phone, email, website, working_hours, description, services, lat, lng, is_active !== false]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -723,10 +730,10 @@ app.post('/api/admin/organizations', adminAuth, async (req, res) => {
 app.put('/api/admin/organizations/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type_id, category, address, district, province_id, phone, email, website, working_hours, description, services, lat, lng, is_active } = req.body;
+    const { name, type_id, category, address, province_id, ward_id, phone, email, website, working_hours, description, services, lat, lng, is_active } = req.body;
     const result = await pool.query(
-      `UPDATE organizations SET name=$1, type_id=$2, category=$3, address=$4, district=$5, province_id=$6, phone=$7, email=$8, website=$9, working_hours=$10, description=$11, services=$12, lat=$13, lng=$14, is_active=$15, updated_at=CURRENT_TIMESTAMP WHERE id=$16 RETURNING *`,
-      [name, type_id, category, address, district, province_id || null, phone, email, website, working_hours, description, services, lat, lng, is_active, id]
+      `UPDATE organizations SET name=$1, type_id=$2, category=$3, address=$4, province_id=$5, ward_id=$6, phone=$7, email=$8, website=$9, working_hours=$10, description=$11, services=$12, lat=$13, lng=$14, is_active=$15, updated_at=CURRENT_TIMESTAMP WHERE id=$16 RETURNING *`,
+      [name, type_id, category, address, province_id || null, ward_id || null, phone, email, website, working_hours, description, services, lat, lng, is_active, id]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -746,7 +753,13 @@ app.delete('/api/admin/organizations/:id', adminAuth, async (req, res) => {
 // LAWYERS CRUD
 app.get('/api/admin/lawyers', adminAuth, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM lawyers ORDER BY is_primary DESC, sort_order ASC');
+    const result = await pool.query(`
+      SELECT l.*, p.name as province_name, w.name as ward_name
+      FROM lawyers l
+      LEFT JOIN provinces p ON l.province_id = p.id
+      LEFT JOIN wards w ON l.ward_id = w.id
+      ORDER BY l.is_primary DESC, l.sort_order ASC
+    `);
     res.json({ success: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -755,10 +768,11 @@ app.get('/api/admin/lawyers', adminAuth, async (req, res) => {
 
 app.post('/api/admin/lawyers', adminAuth, async (req, res) => {
   try {
-    const { name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order } = req.body;
+    const { name, company, phone, zalo, email, avatar_url, address, province_id, ward_id, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order } = req.body;
     const result = await pool.query(
-      `INSERT INTO lawyers (name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
-      [name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online !== false, is_primary || false, is_active !== false, sort_order || 0]
+      `INSERT INTO lawyers (name, company, phone, zalo, email, avatar_url, address, province_id, ward_id, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+      [name, company, phone, zalo, email, avatar_url, address, province_id || null, ward_id || null, working_hours, working_days, bio, specialization, is_online !== false, is_primary || false, is_active !== false, sort_order || 0]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -769,10 +783,10 @@ app.post('/api/admin/lawyers', adminAuth, async (req, res) => {
 app.put('/api/admin/lawyers/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order } = req.body;
+    const { name, company, phone, zalo, email, avatar_url, address, province_id, ward_id, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order } = req.body;
     const result = await pool.query(
-      `UPDATE lawyers SET name=$1, title=$2, company=$3, phone=$4, zalo=$5, email=$6, avatar_url=$7, working_hours=$8, working_days=$9, bio=$10, specialization=$11, is_online=$12, is_primary=$13, is_active=$14, sort_order=$15 WHERE id=$16 RETURNING *`,
-      [name, title, company, phone, zalo, email, avatar_url, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order, id]
+      `UPDATE lawyers SET name=$1, company=$2, phone=$3, zalo=$4, email=$5, avatar_url=$6, address=$7, province_id=$8, ward_id=$9, working_hours=$10, working_days=$11, bio=$12, specialization=$13, is_online=$14, is_primary=$15, is_active=$16, sort_order=$17 WHERE id=$18 RETURNING *`,
+      [name, company, phone, zalo, email, avatar_url, address, province_id || null, ward_id || null, working_hours, working_days, bio, specialization, is_online, is_primary, is_active, sort_order, id]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -869,6 +883,127 @@ app.get('/api/admin/provinces', adminAuth, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM provinces ORDER BY name ASC');
     res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Public API for provinces (for app)
+app.get('/api/provinces', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM provinces WHERE is_active = true ORDER BY name ASC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Provinces CRUD (Admin tự nhập dữ liệu)
+app.post('/api/admin/provinces', adminAuth, async (req, res) => {
+  try {
+    const { name, code, region } = req.body;
+    const result = await pool.query(
+      'INSERT INTO provinces (name, code, region) VALUES ($1, $2, $3) RETURNING *',
+      [name, code || null, region || null]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/provinces/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, code, region, is_active } = req.body;
+    const result = await pool.query(
+      'UPDATE provinces SET name=$1, code=$2, region=$3, is_active=$4 WHERE id=$5 RETURNING *',
+      [name, code, region, is_active !== false, id]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/admin/provinces/:id', adminAuth, async (req, res) => {
+  try {
+    // Xóa wards thuộc province trước
+    await pool.query('DELETE FROM wards WHERE province_id = $1', [req.params.id]);
+    await pool.query('DELETE FROM provinces WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Wards API (Phường/Xã - link trực tiếp với Tỉnh/Thành, không qua Quận/Huyện)
+app.get('/api/wards', async (req, res) => {
+  try {
+    const { province_id } = req.query;
+    let query = 'SELECT * FROM wards WHERE is_active = true';
+    const params = [];
+    if (province_id) {
+      params.push(province_id);
+      query += ` AND province_id = $${params.length}`;
+    }
+    query += ' ORDER BY name ASC';
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/admin/wards', adminAuth, async (req, res) => {
+  try {
+    const { province_id } = req.query;
+    let query = `SELECT w.*, p.name as province_name FROM wards w 
+                 LEFT JOIN provinces p ON w.province_id = p.id`;
+    const params = [];
+    if (province_id) {
+      params.push(province_id);
+      query += ` WHERE w.province_id = $${params.length}`;
+    }
+    query += ' ORDER BY p.name ASC, w.name ASC';
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/wards', adminAuth, async (req, res) => {
+  try {
+    const { province_id, name, code } = req.body;
+    const result = await pool.query(
+      'INSERT INTO wards (province_id, name, code) VALUES ($1, $2, $3) RETURNING *',
+      [province_id, name, code || null]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/wards/:id', adminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { province_id, name, code, is_active } = req.body;
+    const result = await pool.query(
+      'UPDATE wards SET province_id=$1, name=$2, code=$3, is_active=$4 WHERE id=$5 RETURNING *',
+      [province_id, name, code, is_active !== false, id]
+    );
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/admin/wards/:id', adminAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM wards WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
