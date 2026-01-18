@@ -100,7 +100,7 @@
           <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
         </button>
       </form>
-      <p class="text-muted mt-3 mb-0" style="font-size: 12px;">Admin Dashboard v15.0</p>
+      <p class="text-muted mt-3 mb-0" style="font-size: 12px;">Admin Dashboard v14.0</p>
     </div>
   </div>
 
@@ -110,7 +110,7 @@
     <div class="sidebar">
       <div class="sidebar-brand">
         <h4>⚖️ HTIC Admin</h4>
-        <small>Legal Calendar v15.0</small>
+        <small>Legal Calendar v14.0</small>
       </div>
       <ul class="nav flex-column">
         <li class="nav-item"><a class="nav-link active" href="#" data-page="dashboard"><i class="bi bi-grid-1x2-fill"></i>Tổng quan</a></li>
@@ -211,10 +211,7 @@
       <div id="page-news" class="page-content hidden">
         <div class="page-header d-flex justify-content-between align-items-center">
           <h2>📰 Quản lý Tin tức</h2>
-          <div>
-            <button class="btn btn-warning me-2" onclick="cleanNewsHtml()"><i class="bi bi-magic me-2"></i>Clean HTML</button>
-            <button class="btn btn-primary" onclick="openNewsModal()"><i class="bi bi-plus-lg me-2"></i>Thêm tin mới</button>
-          </div>
+          <button class="btn btn-primary" onclick="openNewsModal()"><i class="bi bi-plus-lg me-2"></i>Thêm tin mới</button>
         </div>
         <div class="card">
           <div class="card-body p-0">
@@ -664,10 +661,28 @@
         </div>
         <div class="modal-body">
           <input type="hidden" id="lawyerId">
+          
+          <!-- Avatar Section -->
+          <div class="row mb-4">
+            <div class="col-md-3 text-center">
+              <div id="lawyerAvatarPreview" style="width: 100px; height: 100px; border-radius: 16px; background: linear-gradient(135deg, #3B82F6, #60A5FA); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(59,130,246,0.3);">
+                <span id="lawyerAvatarInitials" style="color: white; font-size: 32px; font-weight: bold;">LS</span>
+              </div>
+              <small class="text-muted">Xem trước Avatar</small>
+            </div>
+            <div class="col-md-9">
+              <label class="form-label"><i class="bi bi-image me-1"></i>URL Ảnh đại diện</label>
+              <input type="url" class="form-control" id="lawyerAvatarUrl" placeholder="https://example.com/avatar.jpg" oninput="previewLawyerAvatar()">
+              <small class="text-muted">Nhập URL hình ảnh (khuyến nghị: 200x200px, định dạng JPG/PNG). Để trống sẽ hiển thị chữ viết tắt.</small>
+            </div>
+          </div>
+          
+          <hr class="my-3">
+          
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Họ tên *</label>
-              <input type="text" class="form-control" id="lawyerName" required>
+              <input type="text" class="form-control" id="lawyerName" required oninput="updateLawyerInitials()">
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Chức danh</label>
@@ -1098,25 +1113,6 @@
       }
     }
 
-    // Clean HTML từ tất cả tin tức trong database
-    async function cleanNewsHtml() {
-      if (!confirm('Bạn có chắc muốn clean HTML từ tất cả tin tức?\n\nThao tác này sẽ loại bỏ tất cả HTML tags và chỉ giữ lại nội dung văn bản thuần.')) {
-        return;
-      }
-      
-      try {
-        const result = await api('/api/admin/clean-news-html', { method: 'POST' });
-        if (result.success) {
-          alert(`✅ ${result.message}`);
-          loadNews();
-        } else {
-          alert('❌ Lỗi: ' + result.message);
-        }
-      } catch (err) {
-        alert('❌ Lỗi kết nối: ' + err.message);
-      }
-    }
-
     function formatText(command) {
       document.execCommand(command, false, null);
       document.getElementById('newsContent').focus();
@@ -1220,9 +1216,21 @@
       const data = await api('/api/admin/lawyers');
       const tbody = document.getElementById('lawyersTable');
       if (data.success) {
-        tbody.innerHTML = data.data.map(l => `
+        tbody.innerHTML = data.data.map(l => {
+          const initials = getLawyerInitials(l.name);
+          const avatarHtml = l.avatar_url 
+            ? `<img src="${l.avatar_url}" style="width: 40px; height: 40px; border-radius: 10px; object-fit: cover;" onerror="this.outerHTML='<div style=\\'width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #3B82F6, #60A5FA); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;\\'>${initials}</div>'">`
+            : `<div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #3B82F6, #60A5FA); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">${initials}</div>`;
+          return `
           <tr>
-            <td><strong>${l.name}</strong>${l.is_primary ? ' <span class="badge bg-warning">Chính</span>' : ''}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                ${avatarHtml}
+                <div>
+                  <strong>${l.name}</strong>${l.is_primary ? ' <span class="badge bg-warning">Chính</span>' : ''}
+                </div>
+              </div>
+            </td>
             <td>${l.title || '-'}</td>
             <td>${l.company || '-'}</td>
             <td>${l.phone || '-'}</td>
@@ -1232,7 +1240,7 @@
               <button class="btn btn-sm btn-outline-danger btn-action" onclick="deleteLawyer(${l.id})"><i class="bi bi-trash"></i></button>
             </td>
           </tr>
-        `).join('');
+        `}).join('');
       }
     }
 
@@ -1251,7 +1259,10 @@
       document.getElementById('lawyerOnline').checked = true;
       document.getElementById('lawyerPrimary').checked = false;
       document.getElementById('lawyerActive').checked = true;
+      document.getElementById('lawyerAvatarUrl').value = '';
       document.getElementById('lawyerModalTitle').textContent = 'Thêm luật sư';
+      // Reset avatar preview
+      resetLawyerAvatarPreview();
       new bootstrap.Modal(document.getElementById('lawyerModal')).show();
     }
 
@@ -1273,7 +1284,11 @@
         document.getElementById('lawyerOnline').checked = lawyer.is_online;
         document.getElementById('lawyerPrimary').checked = lawyer.is_primary;
         document.getElementById('lawyerActive').checked = lawyer.is_active;
+        document.getElementById('lawyerAvatarUrl').value = lawyer.avatar_url || '';
         document.getElementById('lawyerModalTitle').textContent = 'Sửa luật sư';
+        // Update avatar preview
+        updateLawyerInitials();
+        previewLawyerAvatar();
         new bootstrap.Modal(document.getElementById('lawyerModal')).show();
       }
     }
@@ -1293,7 +1308,8 @@
         bio: document.getElementById('lawyerBio').value,
         is_online: document.getElementById('lawyerOnline').checked,
         is_primary: document.getElementById('lawyerPrimary').checked,
-        is_active: document.getElementById('lawyerActive').checked
+        is_active: document.getElementById('lawyerActive').checked,
+        avatar_url: document.getElementById('lawyerAvatarUrl').value
       };
       
       const url = id ? `/api/admin/lawyers/${id}` : '/api/admin/lawyers';
@@ -1435,6 +1451,57 @@
     function getOrgCategoryName(cat) {
       const names = { government: 'Cơ quan nhà nước', lawfirm: 'Công ty luật', notary: 'Công chứng', bailiff: 'Thừa phát lại' };
       return names[cat] || cat;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LAWYER AVATAR HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+    function getLawyerInitials(name) {
+      if (!name) return 'LS';
+      const words = name.trim().split(' ').filter(w => w.length > 0);
+      if (words.length === 0) return 'LS';
+      if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
+      // Lấy chữ cái đầu của từ đầu tiên và từ cuối cùng
+      const first = words[0].charAt(0);
+      const last = words[words.length - 1].charAt(0);
+      return (first + last).toUpperCase();
+    }
+
+    function updateLawyerInitials() {
+      const name = document.getElementById('lawyerName').value;
+      const initials = getLawyerInitials(name);
+      const initialsEl = document.getElementById('lawyerAvatarInitials');
+      if (initialsEl) {
+        initialsEl.textContent = initials;
+      }
+    }
+
+    function previewLawyerAvatar() {
+      const avatarUrl = document.getElementById('lawyerAvatarUrl').value.trim();
+      const previewDiv = document.getElementById('lawyerAvatarPreview');
+      const name = document.getElementById('lawyerName').value;
+      const initials = getLawyerInitials(name);
+      
+      if (avatarUrl) {
+        // Tạo image để test URL
+        const img = new Image();
+        img.onload = function() {
+          previewDiv.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
+        };
+        img.onerror = function() {
+          // Fallback về initials nếu URL không hợp lệ
+          previewDiv.innerHTML = `<span id="lawyerAvatarInitials" style="color: white; font-size: 32px; font-weight: bold;">${initials}</span>`;
+        };
+        img.src = avatarUrl;
+      } else {
+        // Hiển thị initials
+        previewDiv.innerHTML = `<span id="lawyerAvatarInitials" style="color: white; font-size: 32px; font-weight: bold;">${initials}</span>`;
+      }
+    }
+
+    function resetLawyerAvatarPreview() {
+      const previewDiv = document.getElementById('lawyerAvatarPreview');
+      previewDiv.innerHTML = `<span id="lawyerAvatarInitials" style="color: white; font-size: 32px; font-weight: bold;">LS</span>`;
     }
   </script>
 </body>
