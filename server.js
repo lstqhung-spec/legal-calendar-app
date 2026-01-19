@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HTIC LEGAL CALENDAR - BACKEND v17.2 (WITH CLEAN HTML)
+// HTIC LEGAL CALENDAR - BACKEND v17.3 (WITH CLEAN HTML)
 // Cấu trúc địa điểm: Tỉnh/Thành → Phường/Xã (không có Quận/Huyện)
 // Dữ liệu provinces và wards do Admin tự nhập vào
 // Fix: Loại bỏ CSS Tailwind từ nội dung news
@@ -19,32 +19,63 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CLEAN HTML - Loại bỏ CSS Tailwind và style attributes (v17.2)
+// CLEAN HTML - Loại bỏ CSS Tailwind và style attributes (v17.3)
 // ═══════════════════════════════════════════════════════════════════════════
+
+// Xóa TOÀN BỘ HTML tags, chỉ giữ lại text thuần (dùng cho summary)
+function stripHTML(html) {
+    if (!html || typeof html !== 'string') return html || '';
+    let text = html;
+    // Decode HTML entities
+    text = text.replace(/&nbsp;/gi, ' ');
+    text = text.replace(/&amp;/gi, '&');
+    text = text.replace(/&lt;/gi, '<');
+    text = text.replace(/&gt;/gi, '>');
+    text = text.replace(/&quot;/gi, '"');
+    // Xóa tất cả HTML tags
+    text = text.replace(/<[^>]*>/g, '');
+    // Xóa CSS variables còn sót
+    text = text.replace(/--[\w-]+\s*:[^;]*;?\s*/g, '');
+    // Clean up whitespace
+    text = text.replace(/\s+/g, ' ');
+    return text.trim();
+}
+
+// Giữ HTML structure nhưng xóa style/class (dùng cho content)
 function cleanHTML(html) {
     if (!html || typeof html !== 'string') return html || '';
     let text = html;
     // Loại bỏ style attributes chứa CSS variables
-    text = text.replace(/style\s*=\s*"[^"]*"/gi, '');
-    text = text.replace(/style\s*=\s*'[^']*'/gi, '');
+    text = text.replace(/\s*style\s*=\s*"[^"]*"/gi, '');
+    text = text.replace(/\s*style\s*=\s*'[^']*'/gi, '');
     // Loại bỏ class attributes
-    text = text.replace(/class\s*=\s*"[^"]*"/gi, '');
-    text = text.replace(/class\s*=\s*'[^']*'/gi, '');
+    text = text.replace(/\s*class\s*=\s*"[^"]*"/gi, '');
+    text = text.replace(/\s*class\s*=\s*'[^']*'/gi, '');
     // Loại bỏ data-* attributes
-    text = text.replace(/data-[\w-]+\s*=\s*"[^"]*"/gi, '');
-    text = text.replace(/data-[\w-]+\s*=\s*'[^']*'/gi, '');
+    text = text.replace(/\s*data-[\w-]+\s*=\s*"[^"]*"/gi, '');
+    text = text.replace(/\s*data-[\w-]+\s*=\s*'[^']*'/gi, '');
     // Loại bỏ CSS variables còn sót
     text = text.replace(/--[\w-]+\s*:[^;]*;?\s*/g, '');
-    // Clean up whitespace nhưng giữ newlines
-    text = text.replace(/[ \t]+/g, ' ');
-    text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+    // Clean up whitespace trong tags
+    text = text.replace(/<(\w+)\s+>/g, '<$1>');
     return text.trim();
 }
 
+// Clean news data: summary = plain text, content = clean HTML
 function cleanNewsData(data) {
     const cleaned = { ...data };
-    if (cleaned.summary) cleaned.summary = cleanHTML(cleaned.summary);
+    if (cleaned.summary) cleaned.summary = stripHTML(cleaned.summary);
     if (cleaned.content) cleaned.content = cleanHTML(cleaned.content);
+    return cleaned;
+}
+
+function cleanEventsData(data) {
+    const cleaned = { ...data };
+    if (cleaned.title) cleaned.title = stripHTML(cleaned.title);
+    if (cleaned.description) cleaned.description = stripHTML(cleaned.description);
+    if (cleaned.legal_basis) cleaned.legal_basis = stripHTML(cleaned.legal_basis);
+    if (cleaned.penalty) cleaned.penalty = stripHTML(cleaned.penalty);
+    if (cleaned.notes) cleaned.notes = stripHTML(cleaned.notes);
     return cleaned;
 }
 
@@ -56,7 +87,7 @@ let pool = null;
 
 console.log('');
 console.log('╔═══════════════════════════════════════════════════════════╗');
-console.log('║     HTIC Legal Calendar API v17.2 - Starting...           ║');
+console.log('║     HTIC Legal Calendar API v17.3 - Starting...           ║');
 console.log('╚═══════════════════════════════════════════════════════════╝');
 console.log('');
 console.log('🔧 Environment check:');
@@ -457,7 +488,7 @@ async function initDatabase() {
       console.log('   ✓ Agencies seeded');
     } catch (e) { console.log('   ⚠ Agencies already exist or error:', e.message); }
 
-    console.log('✅ Database initialized with v17.2 schema');
+    console.log('✅ Database initialized with v17.3 schema');
   } finally {
     client.release();
   }
@@ -470,7 +501,7 @@ async function initDatabase() {
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    version: '17.2.0', 
+    version: '17.3.0', 
     timestamp: new Date().toISOString(),
     database: dbConnected ? 'connected' : 'disconnected',
     message: dbConnected ? 'All systems operational' : 'Database not connected - please configure DATABASE_URL'
@@ -734,7 +765,9 @@ app.get('/api/admin/events', adminAuth, async (req, res) => {
 
 app.post('/api/admin/events', adminAuth, async (req, res) => {
   try {
-    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = req.body;
+    // Clean HTML trước khi lưu (loại bỏ CSS Tailwind)
+    const cleanedData = cleanEventsData(req.body);
+    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = cleanedData;
     const result = await pool.query(
       `INSERT INTO events (title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
@@ -749,7 +782,9 @@ app.post('/api/admin/events', adminAuth, async (req, res) => {
 app.put('/api/admin/events/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = req.body;
+    // Clean HTML trước khi cập nhật (loại bỏ CSS Tailwind)
+    const cleanedData = cleanEventsData(req.body);
+    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = cleanedData;
     const result = await pool.query(
       `UPDATE events SET title=$1, description=$2, category=$3, deadline=$4, frequency=$5, legal_basis=$6, penalty=$7, agency_id=$8, province_id=$9, applies_to=$10, priority=$11, reminder_days=$12, notes=$13, source=$14, source_url=$15, is_active=$16, updated_at=CURRENT_TIMESTAMP WHERE id=$17 RETURNING *`,
       [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days, notes, source, source_url, is_active, id]
@@ -828,7 +863,7 @@ app.get('/api/admin/clean-news', adminAuth, async (req, res) => {
     let cleanedCount = 0;
     
     for (const item of news) {
-      const cleanedSummary = cleanHTML(item.summary || '');
+      const cleanedSummary = stripHTML(item.summary || '');
       const cleanedContent = cleanHTML(item.content || '');
       
       if (cleanedSummary !== (item.summary || '') || cleanedContent !== (item.content || '')) {
@@ -1255,7 +1290,7 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════╗');
-    console.log('║     HTIC Legal Calendar API v17.2                         ║');
+    console.log('║     HTIC Legal Calendar API v17.3                         ║');
     console.log('╠═══════════════════════════════════════════════════════════╣');
     console.log(`║  🚀 Server running on port ${PORT}                           ║`);
     if (dbConnected) {
