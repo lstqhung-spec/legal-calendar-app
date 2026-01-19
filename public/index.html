@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HTIC Legal Calendar - Admin v17.2</title>
+    <title>HTIC Legal Calendar - Admin v17.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -62,21 +62,41 @@
         const modalRoot = document.getElementById('modal-root');
 
         // ========== CLEAN HTML - Loại bỏ CSS Tailwind ==========
+        // Xóa TOÀN BỘ HTML tags, chỉ giữ lại text thuần (dùng cho summary)
+        function stripHTML(html) {
+            if (!html) return '';
+            let text = html;
+            // Decode HTML entities
+            text = text.replace(/&nbsp;/gi, ' ');
+            text = text.replace(/&amp;/gi, '&');
+            text = text.replace(/&lt;/gi, '<');
+            text = text.replace(/&gt;/gi, '>');
+            text = text.replace(/&quot;/gi, '"');
+            // Xóa tất cả HTML tags
+            text = text.replace(/<[^>]*>/g, '');
+            // Xóa CSS variables còn sót
+            text = text.replace(/--[\w-]+\s*:[^;]*;?\s*/g, '');
+            // Clean up whitespace
+            text = text.replace(/\s+/g, ' ');
+            return text.trim();
+        }
+
+        // Giữ HTML structure nhưng xóa style/class (dùng cho content)
         function cleanHTML(html) {
             if (!html) return '';
             let text = html;
             // Loại bỏ style attributes
-            text = text.replace(/style\s*=\s*"[^"]*"/gi, '');
-            text = text.replace(/style\s*=\s*'[^']*'/gi, '');
+            text = text.replace(/\s*style\s*=\s*"[^"]*"/gi, '');
+            text = text.replace(/\s*style\s*=\s*'[^']*'/gi, '');
             // Loại bỏ class attributes
-            text = text.replace(/class\s*=\s*"[^"]*"/gi, '');
-            text = text.replace(/class\s*=\s*'[^']*'/gi, '');
+            text = text.replace(/\s*class\s*=\s*"[^"]*"/gi, '');
+            text = text.replace(/\s*class\s*=\s*'[^']*'/gi, '');
             // Loại bỏ data-* attributes
-            text = text.replace(/data-[\w-]+\s*=\s*"[^"]*"/gi, '');
+            text = text.replace(/\s*data-[\w-]+\s*=\s*"[^"]*"/gi, '');
             // Loại bỏ CSS variables
             text = text.replace(/--[\w-]+\s*:[^;]*;?\s*/g, '');
-            // Clean up whitespace
-            text = text.replace(/[ \t]+/g, ' ');
+            // Clean up whitespace trong tags
+            text = text.replace(/<(\w+)\s+>/g, '<$1>');
             return text.trim();
         }
 
@@ -145,7 +165,7 @@
                             <div class="w-20 h-20 bg-gradient-to-br from-navy-600 to-navy-700 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <span class="text-white text-3xl font-bold">H</span>
                             </div>
-                            <h1 class="text-2xl font-bold text-gray-900">HTIC Admin v17.2</h1>
+                            <h1 class="text-2xl font-bold text-gray-900">HTIC Admin v17.3</h1>
                             <p class="text-gray-500 mt-2">Đăng nhập để quản lý</p>
                         </div>
                         <div id="loginError" class="hidden bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm"></div>
@@ -555,10 +575,22 @@
                                     <input type="text" id="news-source-url" class="input-field" value="${news?.source_url || ''}" placeholder="https://...">
                                 </div>
                             </div>
-                        </div>
-                        <div class="mt-4 flex gap-4">
-                            <label class="flex items-center gap-2"><input type="checkbox" id="news-featured" ${news?.is_featured ? 'checked' : ''}> Nổi bật</label>
-                            <label class="flex items-center gap-2"><input type="checkbox" id="news-active" ${news?.is_active !== false ? 'checked' : ''}> Kích hoạt</label>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Ngày đăng</label>
+                                    <input type="datetime-local" id="news-published" class="input-field" value="${news?.published_at ? new Date(news.published_at).toISOString().slice(0,16) : new Date().toISOString().slice(0,16)}">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Tác giả</label>
+                                    <input type="text" id="news-author" class="input-field" value="${news?.author || ''}" placeholder="Tên tác giả">
+                                </div>
+                                <div class="flex items-end pb-2">
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2"><input type="checkbox" id="news-featured" ${news?.is_featured ? 'checked' : ''}> Nổi bật</label>
+                                        <label class="flex items-center gap-2"><input type="checkbox" id="news-active" ${news?.is_active !== false ? 'checked' : ''}> Kích hoạt</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="flex justify-end gap-3 mt-6">
                             <button onclick="closeModal()" class="px-6 py-2 border rounded-lg">Hủy</button>
@@ -596,11 +628,13 @@
                 title: document.getElementById('news-title').value,
                 category: document.getElementById('news-category').value,
                 source: document.getElementById('news-source').value,
-                // Clean HTML trước khi gửi (loại bỏ CSS Tailwind)
-                summary: cleanHTML(document.getElementById('news-summary').value),
+                // stripHTML cho summary (plain text), cleanHTML cho content (giữ format)
+                summary: stripHTML(document.getElementById('news-summary').value),
                 content: cleanHTML(window.newsEditor ? window.newsEditor.root.innerHTML : ''),
                 image_url: document.getElementById('news-image').value,
                 source_url: document.getElementById('news-source-url')?.value || '',
+                published_at: document.getElementById('news-published').value || new Date().toISOString(),
+                author: document.getElementById('news-author')?.value || '',
                 is_featured: document.getElementById('news-featured').checked,
                 is_active: document.getElementById('news-active').checked
             };
