@@ -503,6 +503,8 @@
         }
 
         // ========== NEWS ==========
+        let newsData = []; // Lưu danh sách tin tức
+        
         async function loadNewsContent() {
             const content = document.getElementById('content');
             content.innerHTML = '<div class="flex justify-center py-20"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full"></div></div>';
@@ -510,6 +512,7 @@
                 const res = await fetch(API + '/admin/news', { headers: getHeaders() });
                 const data = await res.json();
                 if (data.success) {
+                    newsData = data.data || []; // Lưu vào biến
                     content.innerHTML = `
                         <div class="flex justify-between items-center mb-6">
                             <h1 class="text-2xl font-bold">Tin tức</h1>
@@ -660,15 +663,13 @@
         }
 
         async function editNews(id) {
-            try {
-                const res = await fetch(API + '/admin/news/' + id, { headers: getHeaders() });
-                const data = await res.json();
-                if (data.success) {
-                    showNewsModal(data.data);
-                } else {
-                    alert('Không tìm thấy tin tức');
-                }
-            } catch (e) { alert('Lỗi tải dữ liệu'); }
+            // Tìm tin tức từ dữ liệu đã load
+            const news = newsData.find(n => n.id === id);
+            if (news) {
+                showNewsModal(news);
+            } else {
+                alert('Không tìm thấy tin tức');
+            }
         }
 
         async function deleteNews(id) {
