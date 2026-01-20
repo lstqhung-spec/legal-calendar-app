@@ -100,6 +100,14 @@
             return text.trim();
         }
 
+        // Escape HTML để tránh XSS và lỗi hiển thị
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // ========== CONSTANTS ==========
         const CATEGORIES = [
             { id: 'tax', name: 'Thuế', icon: '💰', color: 'blue' },
@@ -515,12 +523,12 @@
                                 <thead><tr class="bg-gray-50 text-left text-sm text-gray-500"><th class="p-4">TIÊU ĐỀ</th><th class="p-4">DANH MỤC</th><th class="p-4">NGÀY ĐĂNG</th><th class="p-4">TRẠNG THÁI</th><th class="p-4">THAO TÁC</th></tr></thead>
                                 <tbody>${data.data.length === 0 ? '<tr><td colspan="5" class="p-8 text-center text-gray-400">Chưa có tin tức</td></tr>' : data.data.map(n => `
                                     <tr class="table-row border-t">
-                                        <td class="p-4"><div class="font-medium">${n.title}</div></td>
-                                        <td class="p-4"><span class="badge badge-blue">${n.category || '-'}</span></td>
+                                        <td class="p-4"><div class="font-medium" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(n.title || '')}</div></td>
+                                        <td class="p-4"><span class="badge badge-blue">${escapeHtml(n.category || '-')}</span></td>
                                         <td class="p-4 text-sm">${n.published_at ? new Date(n.published_at).toLocaleDateString('vi-VN') : '-'}</td>
                                         <td class="p-4"><span class="badge ${n.is_active ? 'badge-green' : 'badge-gray'}">${n.is_active ? 'Hoạt động' : 'Ẩn'}</span></td>
                                         <td class="p-4">
-                                            <button onclick='showNewsModal(${JSON.stringify(n).replace(/'/g, "\\'")})' class="text-blue-600 hover:text-blue-800 mr-2"><span class="material-icons text-sm">edit</span></button>
+                                            <button onclick="editNews(${n.id})" class="text-blue-600 hover:text-blue-800 mr-2"><span class="material-icons text-sm">edit</span></button>
                                             <button onclick="deleteNews(${n.id})" class="text-red-600 hover:text-red-800"><span class="material-icons text-sm">delete</span></button>
                                         </td>
                                     </tr>
@@ -649,6 +657,18 @@
                 if (result.success) { closeModal(); loadNewsContent(); }
                 else alert(result.message || 'Lỗi');
             } catch (e) { alert('Lỗi kết nối'); }
+        }
+
+        async function editNews(id) {
+            try {
+                const res = await fetch(API + '/admin/news/' + id, { headers: getHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    showNewsModal(data.data);
+                } else {
+                    alert('Không tìm thấy tin tức');
+                }
+            } catch (e) { alert('Lỗi tải dữ liệu'); }
         }
 
         async function deleteNews(id) {
