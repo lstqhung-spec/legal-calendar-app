@@ -1,6 +1,44 @@
-# 🚂 HTIC Legal Calendar - Railway Deployment
+# 🚂 HTIC Legal Calendar - Backend v18.0 (Security Hardened)
 
-## 📦 Nội dung package
+## 🔐 BẢO MẬT QUAN TRỌNG
+
+### Environment Variables (BẮT BUỘC cho Production)
+
+Thêm các biến môi trường sau vào Railway/Server:
+
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@host:port/database
+
+# Admin credentials - BẮT BUỘC đổi trong production!
+ADMIN_USER=admin
+ADMIN_PASS_HASH=<bcrypt_hash_của_password>
+
+# JWT Secret - BẮT BUỘC đổi trong production!
+JWT_SECRET=<random_string_32_chars>
+
+# CORS (optional)
+ALLOWED_ORIGINS=https://lca.htic.com.vn,https://your-domain.com
+
+# Environment
+NODE_ENV=production
+```
+
+### Tạo Password Hash
+
+```bash
+# Chạy lệnh này để tạo hash cho password của bạn
+node -e "console.log(require('bcryptjs').hashSync('your-password', 10))"
+```
+
+### Tạo JWT Secret
+
+```bash
+# Tạo random string
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+## 📦 Cài đặt
 
 ```
 railway_deploy/
@@ -67,12 +105,12 @@ git push origin main
 
 ---
 
-## 🔐 Thông tin đăng nhập Admin
+## 🔐 Thông tin đăng nhập Admin (Development)
 
 - **Username:** `admin`
-- **Password:** `htic2025`
+- **Password:** `htic@2026`
 
-> ⚠️ Hãy đổi mật khẩu sau khi đăng nhập lần đầu!
+> ⚠️ **QUAN TRỌNG:** Trong production, phải đặt `ADMIN_PASS_HASH` environment variable với bcrypt hash của password thực!
 
 ---
 

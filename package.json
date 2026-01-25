@@ -1,7 +1,7 @@
 {
   "name": "htic-legal-calendar-api",
-  "version": "12.0.0",
-  "description": "HTIC Legal Calendar Backend API v12 - Full Features with PostgreSQL",
+  "version": "18.0.0",
+  "description": "HTIC Legal Calendar Backend API v18 - Security Hardened",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,7 +11,8 @@
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "bcryptjs": "^2.4.3",
-    "pg": "^8.11.3"
+    "pg": "^8.11.3",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
