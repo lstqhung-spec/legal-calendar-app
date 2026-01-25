@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// HTIC LEGAL CALENDAR - BACKEND v18.0 (SECURITY HARDENED)
+// HTIC LEGAL CALENDAR - BACKEND v19.0 (SECURITY HARDENED + WARDS API)
 // Fixes: Environment variables, bcrypt, JWT, rate limiting, CORS, validation
+// Added: Wards (Phường/Xã) CRUD API endpoints
 // ═══════════════════════════════════════════════════════════════════════════
 
 const express = require('express');
@@ -155,7 +156,7 @@ let pool = null;
 
 console.log('');
 console.log('╔═══════════════════════════════════════════════════════════╗');
-console.log('║     HTIC Legal Calendar API v18.0 - Security Hardened     ║');
+console.log('║     HTIC Legal Calendar API v19.0 - Security Hardened     ║');
 console.log('╚═══════════════════════════════════════════════════════════╝');
 console.log('');
 console.log('🔧 Environment:');
@@ -928,6 +929,158 @@ app.get('/api/admin/org-types', adminAuth, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// WARDS (PHƯỜNG/XÃ) CRUD
+// ═══════════════════════════════════════════════════════════════════════════
+
+// GET all wards (with optional province_id filter)
+app.get('/api/admin/wards', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { province_id } = req.query;
+    let query = `
+      SELECT w.*, p.name as province_name 
+      FROM wards w 
+      LEFT JOIN provinces p ON w.province_id = p.id
+    `;
+    const params = [];
+    
+    if (province_id) {
+      query += ' WHERE w.province_id = $1';
+      params.push(province_id);
+    }
+    
+    query += ' ORDER BY p.name ASC, w.name ASC';
+    
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    log('ERROR', 'Get wards failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET wards for public API (by province)
+app.get('/api/wards', async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { province_id } = req.query;
+    let query = 'SELECT * FROM wards WHERE is_active = true';
+    const params = [];
+    
+    if (province_id) {
+      query += ' AND province_id = $1';
+      params.push(province_id);
+    }
+    
+    query += ' ORDER BY name ASC';
+    
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST new ward
+app.post('/api/admin/wards', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { name, province_id, code, is_active } = req.body;
+    
+    if (!name || !province_id) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Tên phường/xã và tỉnh/thành phố là bắt buộc' 
+      });
+    }
+    
+    // Check if province exists
+    const provinceCheck = await pool.query('SELECT id FROM provinces WHERE id = $1', [province_id]);
+    if (provinceCheck.rows.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Tỉnh/thành phố không tồn tại' 
+      });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO wards (name, province_id, code, is_active) 
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [name.trim(), province_id, code || null, is_active !== false]
+    );
+    
+    log('INFO', 'Ward created', { id: result.rows[0].id, name });
+    res.json({ success: true, data: result.rows[0], message: 'Thêm phường/xã thành công' });
+  } catch (err) {
+    log('ERROR', 'Create ward failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PUT update ward
+app.put('/api/admin/wards/:id', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { id } = req.params;
+    const { name, province_id, code, is_active } = req.body;
+    
+    if (!name || !province_id) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Tên phường/xã và tỉnh/thành phố là bắt buộc' 
+      });
+    }
+    
+    const result = await pool.query(
+      `UPDATE wards SET name=$1, province_id=$2, code=$3, is_active=$4 
+       WHERE id=$5 RETURNING *`,
+      [name.trim(), province_id, code || null, is_active !== false, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy phường/xã' });
+    }
+    
+    log('INFO', 'Ward updated', { id, name });
+    res.json({ success: true, data: result.rows[0], message: 'Cập nhật phường/xã thành công' });
+  } catch (err) {
+    log('ERROR', 'Update ward failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE ward
+app.delete('/api/admin/wards/:id', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { id } = req.params;
+    
+    // Check if ward is used by organizations or lawyers
+    const orgCheck = await pool.query('SELECT COUNT(*) FROM organizations WHERE ward_id = $1', [id]);
+    const lawyerCheck = await pool.query('SELECT COUNT(*) FROM lawyers WHERE ward_id = $1', [id]);
+    
+    if (parseInt(orgCheck.rows[0].count) > 0 || parseInt(lawyerCheck.rows[0].count) > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Không thể xóa phường/xã đang được sử dụng bởi tổ chức hoặc luật sư' 
+      });
+    }
+    
+    const result = await pool.query('DELETE FROM wards WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy phường/xã' });
+    }
+    
+    log('INFO', 'Ward deleted', { id });
+    res.json({ success: true, message: 'Xóa phường/xã thành công' });
+  } catch (err) {
+    log('ERROR', 'Delete ward failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // STATIC PAGES
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -951,7 +1104,7 @@ async function startServer() {
   app.listen(PORT, () => {
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════╗');
-    console.log('║     HTIC Legal Calendar API v18.0 - Ready!                ║');
+    console.log('║     HTIC Legal Calendar API v19.0 - Ready!                ║');
     console.log('╠═══════════════════════════════════════════════════════════╣');
     console.log(`║  🚀 Server: http://localhost:${PORT}                         ║`);
     console.log(`║  📊 Database: ${dbConnected ? '✅ Connected' : '❌ Not Connected'}                        ║`);
