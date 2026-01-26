@@ -536,10 +536,13 @@ app.get('/api/organizations', async (req, res) => {
   try {
     const { category, type, province_id, search } = req.query;
     let query = `
-      SELECT o.*, t.name as type_name, t.key as type_key, t.icon as type_icon, t.color as type_color, p.name as province_name
+      SELECT o.*, t.name as type_name, t.key as type_key, t.icon as type_icon, t.color as type_color, 
+             p.name as province_name, p.code as province_code,
+             w.name as ward_name, w.code as ward_code
       FROM organizations o
       LEFT JOIN org_types t ON o.type_id = t.id
       LEFT JOIN provinces p ON o.province_id = p.id
+      LEFT JOIN wards w ON o.ward_id = w.id
       WHERE o.is_active = true
     `;
     const params = [];
@@ -615,19 +618,19 @@ app.get('/api/provinces', async (req, res) => {
       const provinceWards = wards.filter(w => w.province_id === province.id);
       return {
         ...province,
-        code: province.code || province.id.toString(),
-        // App cần cấu trúc districts -> wards, nhưng ta có thể đơn giản hóa
+        code: province.id.toString(),  // Dùng id làm code để match với organization.province_id
+        // App cần cấu trúc districts -> wards
         districts: [{
           code: 'all',
           name: 'Tất cả quận/huyện',
           wards: provinceWards.map(w => ({
-            code: w.code || w.id.toString(),
+            code: w.id.toString(),  // Dùng ward.id để match với organization.ward_id
             name: w.name
           }))
         }],
-        // Hoặc trả về wards trực tiếp để app có thể dùng
+        // Trả về wards trực tiếp
         wards: provinceWards.map(w => ({
-          code: w.code || w.id.toString(),
+          code: w.id.toString(),  // Dùng ward.id để match với organization.ward_id
           name: w.name
         }))
       };
