@@ -602,8 +602,38 @@ app.get('/api/categories', async (req, res) => {
 app.get('/api/provinces', async (req, res) => {
   if (!requireDB(res)) return;
   try {
-    const result = await pool.query('SELECT * FROM provinces WHERE is_active = true ORDER BY name ASC');
-    res.json({ success: true, data: result.rows });
+    // Lấy tất cả provinces
+    const provincesResult = await pool.query('SELECT * FROM provinces WHERE is_active = true ORDER BY name ASC');
+    const provinces = provincesResult.rows;
+    
+    // Lấy tất cả wards
+    const wardsResult = await pool.query('SELECT * FROM wards WHERE is_active = true ORDER BY name ASC');
+    const wards = wardsResult.rows;
+    
+    // Gắn wards vào provinces (theo cấu trúc districts -> wards cho tương thích app)
+    const provincesWithWards = provinces.map(province => {
+      const provinceWards = wards.filter(w => w.province_id === province.id);
+      return {
+        ...province,
+        code: province.code || province.id.toString(),
+        // App cần cấu trúc districts -> wards, nhưng ta có thể đơn giản hóa
+        districts: [{
+          code: 'all',
+          name: 'Tất cả quận/huyện',
+          wards: provinceWards.map(w => ({
+            code: w.code || w.id.toString(),
+            name: w.name
+          }))
+        }],
+        // Hoặc trả về wards trực tiếp để app có thể dùng
+        wards: provinceWards.map(w => ({
+          code: w.code || w.id.toString(),
+          name: w.name
+        }))
+      };
+    });
+    
+    res.json({ success: true, data: provincesWithWards });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -924,6 +954,83 @@ app.get('/api/admin/org-types', adminAuth, async (req, res) => {
     const result = await pool.query('SELECT * FROM org_types ORDER BY sort_order ASC');
     res.json({ success: true, data: result.rows });
   } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ORGANIZATIONS CRUD (Cơ quan tra cứu)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// POST - Thêm cơ quan mới
+app.post('/api/admin/organizations', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { name, type_id, category, address, province_id, ward_id, phone, email, website, working_hours, description, services, lat, lng, is_active } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Tên cơ quan là bắt buộc' });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO organizations (name, type_id, category, address, province_id, ward_id, phone, email, website, working_hours, description, services, lat, lng, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
+      [name, type_id || null, category || 'government', address, province_id || null, ward_id || null, phone, email, website, working_hours, description, services, lat || null, lng || null, is_active !== false]
+    );
+    
+    log('INFO', 'Organization created', { id: result.rows[0].id, name });
+    res.json({ success: true, data: result.rows[0], message: 'Thêm cơ quan thành công' });
+  } catch (err) {
+    log('ERROR', 'Create organization failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// PUT - Cập nhật cơ quan
+app.put('/api/admin/organizations/:id', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { id } = req.params;
+    const { name, type_id, category, address, province_id, ward_id, phone, email, website, working_hours, description, services, lat, lng, is_active } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Tên cơ quan là bắt buộc' });
+    }
+    
+    const result = await pool.query(
+      `UPDATE organizations SET name=$1, type_id=$2, category=$3, address=$4, province_id=$5, ward_id=$6, phone=$7, email=$8, website=$9, working_hours=$10, description=$11, services=$12, lat=$13, lng=$14, is_active=$15, updated_at=CURRENT_TIMESTAMP
+       WHERE id=$16 RETURNING *`,
+      [name, type_id || null, category, address, province_id || null, ward_id || null, phone, email, website, working_hours, description, services, lat || null, lng || null, is_active, id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy cơ quan' });
+    }
+    
+    log('INFO', 'Organization updated', { id, name });
+    res.json({ success: true, data: result.rows[0], message: 'Cập nhật cơ quan thành công' });
+  } catch (err) {
+    log('ERROR', 'Update organization failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE - Xóa cơ quan
+app.delete('/api/admin/organizations/:id', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query('DELETE FROM organizations WHERE id = $1 RETURNING *', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy cơ quan' });
+    }
+    
+    log('INFO', 'Organization deleted', { id });
+    res.json({ success: true, message: 'Xóa cơ quan thành công' });
+  } catch (err) {
+    log('ERROR', 'Delete organization failed', { error: err.message });
     res.status(500).json({ success: false, message: err.message });
   }
 });
