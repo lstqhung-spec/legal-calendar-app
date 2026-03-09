@@ -402,6 +402,27 @@ async function initDatabase() {
       )
     `);
 
+    // Newsletters table (Bản tin chuyên ngành)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS newsletters (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(500) NOT NULL,
+        summary TEXT,
+        content TEXT,
+        industry VARCHAR(50),
+        category VARCHAR(50) DEFAULT 'general',
+        type VARCHAR(50) DEFAULT 'regulation',
+        priority VARCHAR(20) DEFAULT 'normal',
+        legal_doc VARCHAR(255),
+        effective_date DATE,
+        is_published BOOLEAN DEFAULT false,
+        is_active BOOLEAN DEFAULT true,
+        published_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Seed default data
     const defaultCategories = [
       { name: 'Thuế', key: 'tax', icon: 'receipt_long', color: '#F97316' },
@@ -602,6 +623,33 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
+// PUBLIC: Get newsletters by industry
+app.get('/api/newsletters', async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { industry, category, limit } = req.query;
+    let query = 'SELECT * FROM newsletters WHERE is_active = true AND is_published = true';
+    const params = [];
+    if (industry && industry !== 'all') {
+      params.push(industry);
+      query += ` AND industry = $${params.length}`;
+    }
+    if (category && category !== 'all') {
+      params.push(category);
+      query += ` AND category = $${params.length}`;
+    }
+    query += ' ORDER BY published_at DESC';
+    if (limit) {
+      params.push(parseInt(limit));
+      query += ` LIMIT $${params.length}`;
+    }
+    const result = await pool.query(query, params);
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 app.get('/api/provinces', async (req, res) => {
   if (!requireDB(res)) return;
   try {
@@ -760,12 +808,13 @@ const adminAuth = (req, res, next) => {
 app.get('/api/admin/stats', adminAuth, async (req, res) => {
   if (!requireDB(res)) return;
   try {
-    const [events, news, orgs, lawyers, pending] = await Promise.all([
+    const [events, news, orgs, lawyers, pending, newsletters] = await Promise.all([
       pool.query('SELECT COUNT(*) as count FROM events WHERE is_active = true'),
       pool.query('SELECT COUNT(*) as count FROM news WHERE is_active = true'),
       pool.query('SELECT COUNT(*) as count FROM organizations WHERE is_active = true'),
       pool.query('SELECT COUNT(*) as count FROM lawyers WHERE is_active = true'),
-      pool.query("SELECT COUNT(*) as count FROM support_requests WHERE status = 'pending'")
+      pool.query("SELECT COUNT(*) as count FROM support_requests WHERE status = 'pending'"),
+      pool.query('SELECT COUNT(*) as count FROM newsletters WHERE is_active = true').catch(() => ({ rows: [{ count: 0 }] }))
     ]);
     res.json({
       success: true,
@@ -774,7 +823,8 @@ app.get('/api/admin/stats', adminAuth, async (req, res) => {
         news: parseInt(news.rows[0].count),
         organizations: parseInt(orgs.rows[0].count),
         lawyers: parseInt(lawyers.rows[0].count),
-        pendingRequests: parseInt(pending.rows[0].count)
+        pendingRequests: parseInt(pending.rows[0].count),
+        newsletters: parseInt(newsletters.rows[0].count)
       }
     });
   } catch (err) {
@@ -1186,6 +1236,82 @@ app.delete('/api/admin/wards/:id', adminAuth, async (req, res) => {
     res.json({ success: true, message: 'Xóa phường/xã thành công' });
   } catch (err) {
     log('ERROR', 'Delete ward failed', { error: err.message });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NEWSLETTERS CRUD (Bản tin chuyên ngành)
+// ═══════════════════════════════════════════════════════════════════════════
+
+app.get('/api/admin/newsletters', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const result = await pool.query('SELECT * FROM newsletters ORDER BY created_at DESC');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/admin/newsletters', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { title, summary, content, industry, category, type, priority, legal_doc, effective_date, is_published, is_active } = req.body;
+    if (!title) {
+      return res.status(400).json({ success: false, message: 'Tiêu đề là bắt buộc' });
+    }
+    const published_at = is_published ? new Date() : null;
+    const result = await pool.query(
+      `INSERT INTO newsletters (title, summary, content, industry, category, type, priority, legal_doc, effective_date, is_published, is_active, published_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [title, summary || null, content || null, industry || 'all', category || 'general', type || 'regulation', priority || 'normal', legal_doc || null, effective_date || null, is_published || false, is_active !== false, published_at]
+    );
+    log('INFO', 'Newsletter created', { id: result.rows[0].id, title });
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.put('/api/admin/newsletters/:id', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { id } = req.params;
+    const { title, summary, content, industry, category, type, priority, legal_doc, effective_date, is_published, is_active } = req.body;
+
+    // If publishing for the first time, set published_at
+    const existing = await pool.query('SELECT is_published, published_at FROM newsletters WHERE id = $1', [id]);
+    let published_at = existing.rows[0]?.published_at;
+    if (is_published && !existing.rows[0]?.is_published) {
+      published_at = new Date();
+    }
+
+    const result = await pool.query(
+      `UPDATE newsletters SET title=$1, summary=$2, content=$3, industry=$4, category=$5, type=$6, priority=$7, legal_doc=$8, effective_date=$9, is_published=$10, is_active=$11, published_at=$12, updated_at=CURRENT_TIMESTAMP
+       WHERE id=$13 RETURNING *`,
+      [title, summary, content, industry, category, type, priority, legal_doc, effective_date || null, is_published, is_active, published_at, id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bản tin' });
+    }
+    log('INFO', 'Newsletter updated', { id, title });
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.delete('/api/admin/newsletters/:id', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const result = await pool.query('DELETE FROM newsletters WHERE id = $1 RETURNING *', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy bản tin' });
+    }
+    log('INFO', 'Newsletter deleted', { id: req.params.id });
+    res.json({ success: true, message: 'Xóa bản tin thành công' });
+  } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });

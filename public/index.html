@@ -258,6 +258,9 @@
                             <div onclick="loadSection('support')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3" data-section="support">
                                 <span class="material-icons text-sm">support_agent</span> Yêu cầu tư vấn
                             </div>
+                            <div onclick="loadSection('newsletters')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3" data-section="newsletters">
+                                <span class="material-icons text-sm">campaign</span> Bản tin chuyên ngành
+                            </div>
                             <div class="border-t border-white/10 my-2"></div>
                             <div onclick="loadSection('locations')" class="sidebar-item px-6 py-3 cursor-pointer flex items-center gap-3" data-section="locations">
                                 <span class="material-icons text-sm">location_on</span> Quản lý địa điểm
@@ -294,6 +297,7 @@
                 case 'organizations': loadOrganizationsContent(); break;
                 case 'lawyers': loadLawyersContent(); break;
                 case 'support': loadSupportContent(); break;
+                case 'newsletters': loadNewslettersContent(); break;
                 case 'locations': loadLocationsContent(); break;
                 case 'settings': loadSettingsContent(); break;
             }
@@ -335,7 +339,15 @@
                             <div class="card p-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center"><span class="material-icons text-orange-600">support_agent</span></div>
-                                    <div><div class="text-2xl font-bold">${s.support_requests?.pending || 0}</div><div class="text-sm text-gray-500">Yêu cầu chờ xử lý</div></div>
+                                    <div><div class="text-2xl font-bold">${s.support_requests?.pending || s.pendingRequests || 0}</div><div class="text-sm text-gray-500">Yêu cầu chờ xử lý</div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="card p-6">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center"><span class="material-icons text-indigo-600">campaign</span></div>
+                                    <div><div class="text-2xl font-bold">${s.newsletters || 0}</div><div class="text-sm text-gray-500">Bản tin chuyên ngành</div></div>
                                 </div>
                             </div>
                         </div>
@@ -1446,6 +1458,230 @@
                     });
                 }
                 alert('Đã lưu cài đặt');
+            } catch (e) { alert('Lỗi'); }
+        }
+
+        // ========== NEWSLETTERS (Bản tin chuyên ngành) ==========
+        const INDUSTRIES = [
+            { id: 'all', name: 'Tất cả ngành', icon: '📋' },
+            { id: 'fnb', name: 'F&B - Nhà hàng', icon: '🍴' },
+            { id: 'construction', name: 'Xây dựng', icon: '🏗️' },
+            { id: 'real_estate', name: 'Bất động sản', icon: '🏢' },
+            { id: 'it', name: 'Công nghệ thông tin', icon: '💻' },
+            { id: 'manufacturing', name: 'Sản xuất', icon: '🏭' },
+            { id: 'retail', name: 'Bán lẻ - Thương mại', icon: '🛒' },
+            { id: 'logistics', name: 'Vận tải - Logistics', icon: '🚛' },
+            { id: 'education', name: 'Giáo dục - Đào tạo', icon: '🎓' },
+            { id: 'healthcare', name: 'Y tế - Dược phẩm', icon: '🏥' },
+            { id: 'tourism', name: 'Du lịch - Khách sạn', icon: '✈️' },
+            { id: 'agriculture', name: 'Nông nghiệp', icon: '🌾' },
+            { id: 'finance_banking', name: 'Tài chính - Ngân hàng', icon: '🏦' }
+        ];
+
+        const NL_TYPES = [
+            { id: 'regulation', name: 'Nghị định / Thông tư mới' },
+            { id: 'warning', name: 'Cảnh báo thay đổi pháp lý' },
+            { id: 'deadline', name: 'Deadline mới phát sinh' },
+            { id: 'guide', name: 'Hướng dẫn tuân thủ' },
+            { id: 'news', name: 'Tin tức pháp lý chung' }
+        ];
+
+        const NL_CATEGORIES = ['Thuế', 'BHXH', 'Lao động', 'Môi trường', 'Đầu tư', 'Doanh nghiệp', 'Pháp luật'];
+
+        let newslettersData = [];
+
+        async function loadNewslettersContent() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="flex justify-center py-20"><div class="animate-spin w-8 h-8 border-4 border-navy-500 border-t-transparent rounded-full"></div></div>';
+            try {
+                const res = await fetch(API + '/admin/newsletters', { headers: getHeaders() });
+                const data = await res.json();
+                if (data.success) {
+                    newslettersData = data.data || [];
+                    const published = newslettersData.filter(n => n.is_published).length;
+                    const draft = newslettersData.filter(n => !n.is_published).length;
+                    content.innerHTML = `
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h1 class="text-2xl font-bold">Bản tin chuyên ngành</h1>
+                                <p class="text-sm text-gray-500 mt-1">Quản lý bản tin pháp lý gửi đến user Pro theo ngành nghề</p>
+                            </div>
+                            <button onclick="showNewsletterModal()" class="btn-primary flex items-center gap-2"><span class="material-icons text-sm">add</span> Tạo bản tin</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="card p-4 flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="material-icons text-blue-600 text-sm">campaign</span></div>
+                                <div><div class="text-xl font-bold">${newslettersData.length}</div><div class="text-xs text-gray-500">Tổng bản tin</div></div>
+                            </div>
+                            <div class="card p-4 flex items-center gap-3">
+                                <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center"><span class="material-icons text-green-600 text-sm">check_circle</span></div>
+                                <div><div class="text-xl font-bold">${published}</div><div class="text-xs text-gray-500">Đã xuất bản</div></div>
+                            </div>
+                            <div class="card p-4 flex items-center gap-3">
+                                <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center"><span class="material-icons text-yellow-600 text-sm">edit_note</span></div>
+                                <div><div class="text-xl font-bold">${draft}</div><div class="text-xs text-gray-500">Bản nháp</div></div>
+                            </div>
+                        </div>
+                        <div class="card overflow-hidden">
+                            <table class="w-full">
+                                <thead><tr class="bg-gray-50 text-left text-sm text-gray-500"><th class="p-4">TIÊU ĐỀ</th><th class="p-4">NGÀNH</th><th class="p-4">LOẠI</th><th class="p-4">ĐỘ ƯU TIÊN</th><th class="p-4">TRẠNG THÁI</th><th class="p-4">NGÀY TẠO</th><th class="p-4">THAO TÁC</th></tr></thead>
+                                <tbody>${newslettersData.length === 0 ? '<tr><td colspan="7" class="p-8 text-center text-gray-400">Chưa có bản tin nào. Nhấn "Tạo bản tin" để bắt đầu.</td></tr>' : newslettersData.map(n => {
+                                    const ind = INDUSTRIES.find(i => i.id === n.industry) || { name: n.industry || 'Tất cả', icon: '📋' };
+                                    const nlType = NL_TYPES.find(t => t.id === n.type) || { name: n.type || '-' };
+                                    const priorityBadge = n.priority === 'urgent' ? 'badge-red' : n.priority === 'high' ? 'badge-yellow' : 'badge-gray';
+                                    const priorityText = n.priority === 'urgent' ? 'Khẩn cấp' : n.priority === 'high' ? 'Cao' : 'Bình thường';
+                                    return `
+                                    <tr class="table-row border-t">
+                                        <td class="p-4"><div class="font-medium" style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(n.title)}</div><div class="text-xs text-gray-400 mt-1">${escapeHtml(n.legal_doc || '')}</div></td>
+                                        <td class="p-4"><span class="text-sm">${ind.icon} ${ind.name}</span></td>
+                                        <td class="p-4"><span class="badge badge-blue text-xs">${nlType.name}</span></td>
+                                        <td class="p-4"><span class="badge ${priorityBadge} text-xs">${priorityText}</span></td>
+                                        <td class="p-4"><span class="badge ${n.is_published ? 'badge-green' : 'badge-yellow'}">${n.is_published ? 'Đã xuất bản' : 'Nháp'}</span></td>
+                                        <td class="p-4 text-sm text-gray-500">${n.created_at ? new Date(n.created_at).toLocaleDateString('vi-VN') : '-'}</td>
+                                        <td class="p-4">
+                                            <button onclick="editNewsletter(${n.id})" class="text-blue-600 hover:text-blue-800 mr-2"><span class="material-icons text-sm">edit</span></button>
+                                            <button onclick="deleteNewsletter(${n.id})" class="text-red-600 hover:text-red-800"><span class="material-icons text-sm">delete</span></button>
+                                        </td>
+                                    </tr>`;
+                                }).join('')}</tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (e) { content.innerHTML = '<div class="text-red-500">Lỗi tải dữ liệu</div>'; }
+        }
+
+        function showNewsletterModal(nl = null) {
+            modalRoot.innerHTML = `
+                <div class="modal" onclick="if(event.target===this)closeModal()">
+                    <div class="modal-content p-6" style="max-width:900px">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold">${nl ? 'Sửa' : 'Tạo'} bản tin chuyên ngành</h2>
+                            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><span class="material-icons">close</span></button>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tiêu đề bản tin *</label>
+                                <input type="text" id="nl-title" class="input-field" value="${nl?.title || ''}" placeholder="VD: Nghị định mới về quản lý thuế doanh nghiệp F&B">
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Ngành nghề mục tiêu</label>
+                                    <select id="nl-industry" class="input-field">
+                                        ${INDUSTRIES.map(i => `<option value="${i.id}" ${nl?.industry === i.id ? 'selected' : ''}>${i.icon} ${i.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Danh mục</label>
+                                    <select id="nl-category" class="input-field">
+                                        <option value="general" ${!nl?.category || nl?.category === 'general' ? 'selected' : ''}>Chung</option>
+                                        ${NL_CATEGORIES.map(c => `<option value="${c}" ${nl?.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Loại bản tin</label>
+                                    <select id="nl-type" class="input-field">
+                                        ${NL_TYPES.map(t => `<option value="${t.id}" ${nl?.type === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Tóm tắt</label>
+                                <textarea id="nl-summary" class="input-field" rows="2" placeholder="Tóm tắt ngắn gọn nội dung bản tin...">${nl?.summary || ''}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Nội dung chi tiết</label>
+                                <div id="nl-editor" style="border:2px solid #e2e8f0;border-radius:8px;overflow:hidden"></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Văn bản pháp lý</label>
+                                    <input type="text" id="nl-legal-doc" class="input-field" value="${nl?.legal_doc || ''}" placeholder="VD: Nghị định 123/2026/NĐ-CP">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Ngày có hiệu lực</label>
+                                    <input type="date" id="nl-effective-date" class="input-field" value="${nl?.effective_date ? nl.effective_date.split('T')[0] : ''}">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Độ ưu tiên</label>
+                                    <select id="nl-priority" class="input-field">
+                                        <option value="normal" ${!nl?.priority || nl?.priority === 'normal' ? 'selected' : ''}>Bình thường</option>
+                                        <option value="high" ${nl?.priority === 'high' ? 'selected' : ''}>Cao</option>
+                                        <option value="urgent" ${nl?.priority === 'urgent' ? 'selected' : ''}>Khẩn cấp</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex gap-6">
+                                <label class="flex items-center gap-2"><input type="checkbox" id="nl-published" ${nl?.is_published ? 'checked' : ''}> Xuất bản ngay</label>
+                                <label class="flex items-center gap-2"><input type="checkbox" id="nl-active" ${nl?.is_active !== false ? 'checked' : ''}> Kích hoạt</label>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-3 mt-6">
+                            <button onclick="closeModal()" class="px-6 py-2 border rounded-lg">Hủy</button>
+                            <button onclick="saveNewsletter(${nl?.id || 'null'})" class="btn-primary">${nl ? 'Cập nhật' : 'Tạo bản tin'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => {
+                window.nlEditor = new Quill('#nl-editor', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            [{ 'size': ['small', false, 'large', 'huge'] }],
+                            ['bold', 'italic', 'underline'],
+                            [{ 'color': [] }],
+                            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                            ['link'],
+                            ['clean']
+                        ]
+                    },
+                    placeholder: 'Nhập nội dung bản tin...'
+                });
+                if (nl?.content) {
+                    window.nlEditor.root.innerHTML = nl.content;
+                }
+            }, 100);
+        }
+
+        async function saveNewsletter(id) {
+            const data = {
+                title: document.getElementById('nl-title').value,
+                industry: document.getElementById('nl-industry').value,
+                category: document.getElementById('nl-category').value,
+                type: document.getElementById('nl-type').value,
+                summary: document.getElementById('nl-summary').value,
+                content: window.nlEditor ? cleanHTML(window.nlEditor.root.innerHTML) : '',
+                legal_doc: document.getElementById('nl-legal-doc').value,
+                effective_date: document.getElementById('nl-effective-date').value || null,
+                priority: document.getElementById('nl-priority').value,
+                is_published: document.getElementById('nl-published').checked,
+                is_active: document.getElementById('nl-active').checked
+            };
+            if (!data.title) { alert('Vui lòng nhập tiêu đề'); return; }
+            try {
+                const res = await fetch(API + '/admin/newsletters' + (id ? '/' + id : ''), {
+                    method: id ? 'PUT' : 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) { closeModal(); loadNewslettersContent(); }
+                else alert(result.message || 'Lỗi');
+            } catch (e) { alert('Lỗi kết nối'); }
+        }
+
+        function editNewsletter(id) {
+            const nl = newslettersData.find(n => n.id === id);
+            if (nl) showNewsletterModal(nl);
+            else alert('Không tìm thấy bản tin');
+        }
+
+        async function deleteNewsletter(id) {
+            if (!confirm('Xóa bản tin này?')) return;
+            try {
+                const res = await fetch(API + '/admin/newsletters/' + id, { method: 'DELETE', headers: getHeaders() });
+                if ((await res.json()).success) loadNewslettersContent();
             } catch (e) { alert('Lỗi'); }
         }
 
