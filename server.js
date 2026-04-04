@@ -11,6 +11,30 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// ═══════════════════════════════════════════════════════════════════════════
+// FIREBASE ADMIN - Push Notifications via FCM
+// Set FIREBASE_SERVICE_ACCOUNT env var with the JSON content of serviceAccountKey.json
+// ═══════════════════════════════════════════════════════════════════════════
+
+let firebaseAdmin = null;
+
+try {
+  const admin = require('firebase-admin');
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (serviceAccountJson) {
+    const serviceAccount = JSON.parse(serviceAccountJson);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+    firebaseAdmin = admin;
+    console.log('🔔 Firebase Admin SDK initialized');
+  } else {
+    console.warn('⚠️  FIREBASE_SERVICE_ACCOUNT not set — push notifications disabled');
+  }
+} catch (err) {
+  console.warn('⚠️  Firebase Admin init error:', err.message);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -420,6 +444,20 @@ async function initDatabase() {
         published_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // FCM device tokens table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS user_devices (
+        id SERIAL PRIMARY KEY,
+        device_id VARCHAR(255) NOT NULL,
+        fcm_token TEXT NOT NULL,
+        platform VARCHAR(20) DEFAULT 'unknown',
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(device_id)
       )
     `);
 
@@ -923,6 +961,16 @@ app.post('/api/admin/news', adminAuth, async (req, res) => {
       [title, summary, content, category || 'general', image_url, source, source_url, author, is_featured || false, is_active !== false, published_at || new Date()]
     );
     res.json({ success: true, data: result.rows[0] });
+
+    // Send FCM push notification if article is active
+    if (is_active !== false) {
+      const notifBody = summary ? summary.substring(0, 100) : 'Có bài viết pháp luật mới cập nhật';
+      sendFcmToAllDevices(title, notifBody, {
+        type: 'new_news',
+        id: String(result.rows[0].id),
+        category: category || 'general',
+      }).catch(() => {});
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1269,6 +1317,18 @@ app.post('/api/admin/newsletters', adminAuth, async (req, res) => {
     );
     log('INFO', 'Newsletter created', { id: result.rows[0].id, title });
     res.json({ success: true, data: result.rows[0] });
+
+    // Send FCM push notification if newsletter is published
+    if (is_published) {
+      const industryLabel = industry && industry !== 'all' ? `${industry} - ` : '';
+      const notifTitle = `${industryLabel}${title}`;
+      const notifBody = summary ? summary.substring(0, 100) : 'Bản tin pháp lý chuyên ngành mới cập nhật';
+      sendFcmToAllDevices(notifTitle, notifBody, {
+        type: 'newsletter',
+        id: String(result.rows[0].id),
+        industry: industry || 'all',
+      }).catch(() => {});
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1311,6 +1371,72 @@ app.delete('/api/admin/newsletters/:id', adminAuth, async (req, res) => {
     }
     log('INFO', 'Newsletter deleted', { id: req.params.id });
     res.json({ success: true, message: 'Xóa bản tin thành công' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FCM HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function sendFcmToAllDevices(title, body, data = {}) {
+  if (!firebaseAdmin || !pool || !dbConnected) return;
+  try {
+    const result = await pool.query(
+      'SELECT fcm_token FROM user_devices WHERE is_active = true'
+    );
+    const tokens = result.rows.map(r => r.fcm_token).filter(Boolean);
+    if (tokens.length === 0) {
+      log('INFO', 'FCM: no registered devices');
+      return;
+    }
+    const message = {
+      notification: { title, body },
+      data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
+      tokens,
+    };
+    const response = await firebaseAdmin.messaging().sendEachForMulticast(message);
+    log('INFO', `FCM sent: ${response.successCount} ok, ${response.failureCount} failed`);
+
+    // Remove invalid tokens
+    const invalidTokens = [];
+    response.responses.forEach((r, i) => {
+      if (!r.success) {
+        const code = r.error?.code;
+        if (code === 'messaging/registration-token-not-registered' ||
+            code === 'messaging/invalid-registration-token') {
+          invalidTokens.push(tokens[i]);
+        }
+      }
+    });
+    if (invalidTokens.length > 0) {
+      await pool.query(
+        'UPDATE user_devices SET is_active = false WHERE fcm_token = ANY($1)',
+        [invalidTokens]
+      );
+      log('INFO', `FCM: deactivated ${invalidTokens.length} invalid tokens`);
+    }
+  } catch (err) {
+    log('ERROR', 'FCM send error', { error: err.message });
+  }
+}
+
+// Register / update FCM token from Flutter app
+app.post('/api/devices/register-fcm', async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    const { device_id, fcm_token, platform } = req.body;
+    if (!device_id || !fcm_token) {
+      return res.status(400).json({ success: false, message: 'device_id và fcm_token là bắt buộc' });
+    }
+    await pool.query(
+      `INSERT INTO user_devices (device_id, fcm_token, platform, is_active, updated_at)
+       VALUES ($1, $2, $3, true, CURRENT_TIMESTAMP)
+       ON CONFLICT (device_id) DO UPDATE SET fcm_token = $2, platform = $3, is_active = true, updated_at = CURRENT_TIMESTAMP`,
+      [device_id, fcm_token, platform || 'unknown']
+    );
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
