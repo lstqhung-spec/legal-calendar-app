@@ -1427,12 +1427,14 @@ async function sendFcmToAllDevices(title, body, data = {}) {
 app.get('/api/admin/fcm-status', adminAuth, async (req, res) => {
   try {
     const fcmReady = !!firebaseAdmin;
-    let deviceCount = 0;
+    let devices = [];
     if (pool && dbConnected) {
-      const r = await pool.query('SELECT COUNT(*) FROM user_devices WHERE is_active = true');
-      deviceCount = parseInt(r.rows[0].count);
+      const r = await pool.query(
+        'SELECT device_id, platform, is_active, updated_at, LEFT(fcm_token, 20) as token_prefix FROM user_devices ORDER BY updated_at DESC'
+      );
+      devices = r.rows;
     }
-    res.json({ fcm_initialized: fcmReady, active_devices: deviceCount });
+    res.json({ fcm_initialized: fcmReady, total_devices: devices.length, active_devices: devices.filter(d => d.is_active).length, devices });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
