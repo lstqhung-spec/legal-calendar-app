@@ -1459,6 +1459,16 @@ app.post('/api/devices/register-fcm', async (req, res) => {
   }
 });
 
+app.delete('/api/admin/devices/:device_id', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    await pool.query('DELETE FROM user_devices WHERE device_id = $1', [req.params.device_id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // STATIC PAGES
 // ═══════════════════════════════════════════════════════════════════════════
