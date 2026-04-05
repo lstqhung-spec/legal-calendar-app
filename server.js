@@ -1423,6 +1423,21 @@ async function sendFcmToAllDevices(title, body, data = {}) {
 }
 
 // Register / update FCM token from Flutter app
+// Debug endpoint: kiểm tra FCM status (tạm thời)
+app.get('/api/admin/fcm-status', adminAuth, async (req, res) => {
+  try {
+    const fcmReady = !!firebaseAdmin;
+    let deviceCount = 0;
+    if (pool && dbConnected) {
+      const r = await pool.query('SELECT COUNT(*) FROM user_devices WHERE is_active = true');
+      deviceCount = parseInt(r.rows[0].count);
+    }
+    res.json({ fcm_initialized: fcmReady, active_devices: deviceCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/devices/register-fcm', async (req, res) => {
   if (!requireDB(res)) return;
   try {
