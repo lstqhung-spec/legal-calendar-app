@@ -461,6 +461,14 @@ async function initDatabase() {
       )
     `);
 
+    // ─── Idempotent column migrations (safe to re-run) ───
+    // newsletters: bổ sung trường cho "Sự kiện pháp lý"
+    await client.query(`ALTER TABLE newsletters ADD COLUMN IF NOT EXISTS penalty TEXT`);
+    await client.query(`ALTER TABLE newsletters ADD COLUMN IF NOT EXISTS affected_subjects TEXT`);
+    // events: phân biệt lịch chung (Free) và chuyên ngành (Pro)
+    await client.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS scope VARCHAR(20) DEFAULT 'general'`);
+    await client.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS industry VARCHAR(50)`);
+
     // Seed default data
     const defaultCategories = [
       { name: 'Thuế', key: 'tax', icon: 'receipt_long', color: '#F97316' },
@@ -891,16 +899,23 @@ app.post('/api/admin/events', adminAuth, async (req, res) => {
   if (!requireDB(res)) return;
   try {
     const cleanedData = cleanEventsData(req.body);
-    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = cleanedData;
-    
+    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, is_active } = cleanedData;
+
     if (!title) {
       return res.status(400).json({ success: false, message: 'Tiêu đề là bắt buộc' });
     }
-    
+
+    // Validate scope + industry pairing
+    const normalizedScope = scope === 'industry' ? 'industry' : 'general';
+    if (normalizedScope === 'industry' && !industry) {
+      return res.status(400).json({ success: false, message: 'Phải chọn Ngành khi loại lịch là Chuyên ngành' });
+    }
+    const normalizedIndustry = normalizedScope === 'industry' ? industry : null;
+
     const result = await pool.query(
-      `INSERT INTO events (title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *`,
-      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days || 7, notes, source, source_url, is_active !== false]
+      `INSERT INTO events (title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
+      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days || 7, notes, source, source_url, normalizedScope, normalizedIndustry, is_active !== false]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -913,10 +928,17 @@ app.put('/api/admin/events/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const cleanedData = cleanEventsData(req.body);
-    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, is_active } = cleanedData;
+    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, is_active } = cleanedData;
+
+    const normalizedScope = scope === 'industry' ? 'industry' : 'general';
+    if (normalizedScope === 'industry' && !industry) {
+      return res.status(400).json({ success: false, message: 'Phải chọn Ngành khi loại lịch là Chuyên ngành' });
+    }
+    const normalizedIndustry = normalizedScope === 'industry' ? industry : null;
+
     const result = await pool.query(
-      `UPDATE events SET title=$1, description=$2, category=$3, deadline=$4, frequency=$5, legal_basis=$6, penalty=$7, agency_id=$8, province_id=$9, applies_to=$10, priority=$11, reminder_days=$12, notes=$13, source=$14, source_url=$15, is_active=$16, updated_at=CURRENT_TIMESTAMP WHERE id=$17 RETURNING *`,
-      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days, notes, source, source_url, is_active, id]
+      `UPDATE events SET title=$1, description=$2, category=$3, deadline=$4, frequency=$5, legal_basis=$6, penalty=$7, agency_id=$8, province_id=$9, applies_to=$10, priority=$11, reminder_days=$12, notes=$13, source=$14, source_url=$15, scope=$16, industry=$17, is_active=$18, updated_at=CURRENT_TIMESTAMP WHERE id=$19 RETURNING *`,
+      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days, notes, source, source_url, normalizedScope, normalizedIndustry, is_active, id]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -1305,15 +1327,15 @@ app.get('/api/admin/newsletters', adminAuth, async (req, res) => {
 app.post('/api/admin/newsletters', adminAuth, async (req, res) => {
   if (!requireDB(res)) return;
   try {
-    const { title, summary, content, industry, category, type, priority, legal_doc, effective_date, is_published, is_active } = req.body;
+    const { title, summary, content, industry, category, type, priority, legal_doc, effective_date, penalty, affected_subjects, is_published, is_active } = req.body;
     if (!title) {
       return res.status(400).json({ success: false, message: 'Tiêu đề là bắt buộc' });
     }
     const published_at = is_published ? new Date() : null;
     const result = await pool.query(
-      `INSERT INTO newsletters (title, summary, content, industry, category, type, priority, legal_doc, effective_date, is_published, is_active, published_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-      [title, summary || null, content || null, industry || 'all', category || 'general', type || 'regulation', priority || 'normal', legal_doc || null, effective_date || null, is_published || false, is_active !== false, published_at]
+      `INSERT INTO newsletters (title, summary, content, industry, category, type, priority, legal_doc, effective_date, penalty, affected_subjects, is_published, is_active, published_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+      [title, summary || null, content || null, industry || 'all', category || 'general', type || 'regulation', priority || 'normal', legal_doc || null, effective_date || null, penalty || null, affected_subjects || null, is_published || false, is_active !== false, published_at]
     );
     log('INFO', 'Newsletter created', { id: result.rows[0].id, title });
     res.json({ success: true, data: result.rows[0] });
@@ -1338,7 +1360,7 @@ app.put('/api/admin/newsletters/:id', adminAuth, async (req, res) => {
   if (!requireDB(res)) return;
   try {
     const { id } = req.params;
-    const { title, summary, content, industry, category, type, priority, legal_doc, effective_date, is_published, is_active } = req.body;
+    const { title, summary, content, industry, category, type, priority, legal_doc, effective_date, penalty, affected_subjects, is_published, is_active } = req.body;
 
     // If publishing for the first time, set published_at
     const existing = await pool.query('SELECT is_published, published_at FROM newsletters WHERE id = $1', [id]);
@@ -1348,9 +1370,9 @@ app.put('/api/admin/newsletters/:id', adminAuth, async (req, res) => {
     }
 
     const result = await pool.query(
-      `UPDATE newsletters SET title=$1, summary=$2, content=$3, industry=$4, category=$5, type=$6, priority=$7, legal_doc=$8, effective_date=$9, is_published=$10, is_active=$11, published_at=$12, updated_at=CURRENT_TIMESTAMP
-       WHERE id=$13 RETURNING *`,
-      [title, summary, content, industry, category, type, priority, legal_doc, effective_date || null, is_published, is_active, published_at, id]
+      `UPDATE newsletters SET title=$1, summary=$2, content=$3, industry=$4, category=$5, type=$6, priority=$7, legal_doc=$8, effective_date=$9, penalty=$10, affected_subjects=$11, is_published=$12, is_active=$13, published_at=$14, updated_at=CURRENT_TIMESTAMP
+       WHERE id=$15 RETURNING *`,
+      [title, summary, content, industry, category, type, priority, legal_doc, effective_date || null, penalty || null, affected_subjects || null, is_published, is_active, published_at, id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy bản tin' });
@@ -1371,6 +1393,28 @@ app.delete('/api/admin/newsletters/:id', adminAuth, async (req, res) => {
     }
     log('INFO', 'Newsletter deleted', { id: req.params.id });
     res.json({ success: true, message: 'Xóa bản tin thành công' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Endpoint tạm: ẩn toàn bộ newsletters đang active (chuẩn bị reset kho "Sự kiện pháp lý").
+// Yêu cầu body { confirm: "HIDE_ALL_NEWSLETTERS" } để tránh gọi nhầm.
+app.post('/api/admin/newsletters/hide-all', adminAuth, async (req, res) => {
+  if (!requireDB(res)) return;
+  try {
+    if (req.body?.confirm !== 'HIDE_ALL_NEWSLETTERS') {
+      return res.status(400).json({
+        success: false,
+        message: 'Phải gửi body { "confirm": "HIDE_ALL_NEWSLETTERS" } để xác nhận'
+      });
+    }
+    const result = await pool.query(
+      `UPDATE newsletters SET is_active = false, updated_at = CURRENT_TIMESTAMP
+       WHERE is_active = true RETURNING id`
+    );
+    log('WARN', 'Newsletters bulk hidden', { admin: req.admin?.username, count: result.rowCount });
+    res.json({ success: true, hidden: result.rowCount, message: `Đã ẩn ${result.rowCount} bản tin` });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

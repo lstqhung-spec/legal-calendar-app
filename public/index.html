@@ -429,6 +429,7 @@
         }
 
         function showEventModal(event = null) {
+            const currentScope = event?.scope === 'industry' ? 'industry' : 'general';
             modalRoot.innerHTML = `
                 <div class="modal" onclick="if(event.target===this)closeModal()">
                     <div class="modal-content p-6">
@@ -440,6 +441,20 @@
                             <div class="col-span-2">
                                 <label class="block text-sm font-semibold mb-2">Tiêu đề *</label>
                                 <input type="text" id="event-title" class="input-field" value="${event?.title || ''}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Loại lịch *</label>
+                                <select id="event-scope" class="input-field" onchange="toggleEventIndustry(this.value)">
+                                    <option value="general" ${currentScope === 'general' ? 'selected' : ''}>Chung (Free)</option>
+                                    <option value="industry" ${currentScope === 'industry' ? 'selected' : ''}>Chuyên ngành (Pro)</option>
+                                </select>
+                            </div>
+                            <div id="event-industry-wrap" style="${currentScope === 'industry' ? '' : 'display:none'}">
+                                <label class="block text-sm font-semibold mb-2">Ngành *</label>
+                                <select id="event-industry" class="input-field">
+                                    <option value="">-- Chọn ngành --</option>
+                                    ${INDUSTRIES.filter(i => i.id !== 'all').map(i => `<option value="${i.id}" ${event?.industry === i.id ? 'selected' : ''}>${i.icon} ${i.name}</option>`).join('')}
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Danh mục</label>
@@ -454,12 +469,12 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold mb-2">Ngày</label>
-                                <input type="date" id="event-date" class="input-field" value="${event?.date ? event.date.split('T')[0] : ''}">
+                                <label class="block text-sm font-semibold mb-2">Hạn (deadline)</label>
+                                <input type="date" id="event-deadline" class="input-field" value="${event?.deadline ? event.deadline.split('T')[0] : ''}">
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold mb-2">Ngày trong tháng (nếu hàng tháng)</label>
-                                <input type="number" id="event-day" class="input-field" min="1" max="31" value="${event?.day_of_month || ''}">
+                                <label class="block text-sm font-semibold mb-2">Nhắc trước (ngày)</label>
+                                <input type="number" id="event-reminder" class="input-field" min="0" max="365" value="${event?.reminder_days ?? 7}">
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-sm font-semibold mb-2">Mô tả</label>
@@ -468,6 +483,10 @@
                             <div class="col-span-2">
                                 <label class="block text-sm font-semibold mb-2">Căn cứ pháp lý</label>
                                 <input type="text" id="event-legal" class="input-field" value="${event?.legal_basis || ''}">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-semibold mb-2">Mức phạt</label>
+                                <textarea id="event-penalty" class="input-field" rows="2">${event?.penalty || ''}</textarea>
                             </div>
                         </div>
                         <div class="mt-4">
@@ -482,15 +501,30 @@
             `;
         }
 
+        function toggleEventIndustry(scope) {
+            const wrap = document.getElementById('event-industry-wrap');
+            if (!wrap) return;
+            wrap.style.display = scope === 'industry' ? '' : 'none';
+        }
+
         async function saveEvent(id) {
+            const scope = document.getElementById('event-scope').value;
+            const industry = document.getElementById('event-industry').value;
+            if (scope === 'industry' && !industry) {
+                alert('Vui lòng chọn Ngành cho lịch chuyên ngành');
+                return;
+            }
             const data = {
                 title: document.getElementById('event-title').value,
+                scope,
+                industry: scope === 'industry' ? industry : null,
                 category: document.getElementById('event-category').value,
                 frequency: document.getElementById('event-frequency').value,
-                date: document.getElementById('event-date').value || null,
-                day_of_month: document.getElementById('event-day').value || null,
+                deadline: document.getElementById('event-deadline').value || null,
+                reminder_days: parseInt(document.getElementById('event-reminder').value) || 7,
                 description: document.getElementById('event-desc').value,
                 legal_basis: document.getElementById('event-legal').value,
+                penalty: document.getElementById('event-penalty').value,
                 is_active: document.getElementById('event-active').checked
             };
             if (!data.title) { alert('Vui lòng nhập tiêu đề'); return; }
@@ -1593,6 +1627,16 @@
                                 <label class="block text-sm font-semibold mb-2">Nội dung chi tiết</label>
                                 <div id="nl-editor" style="border:2px solid #e2e8f0;border-radius:8px;overflow:hidden"></div>
                             </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Đối tượng áp dụng</label>
+                                    <textarea id="nl-affected-subjects" class="input-field" rows="2" placeholder="VD: Doanh nghiệp F&B, Hộ kinh doanh cá thể...">${nl?.affected_subjects || ''}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Mức phạt (nếu trễ / vi phạm)</label>
+                                    <textarea id="nl-penalty" class="input-field" rows="2" placeholder="VD: Phạt 5-10 triệu đồng, cảnh cáo...">${nl?.penalty || ''}</textarea>
+                                </div>
+                            </div>
                             <div class="grid grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-semibold mb-2">Văn bản pháp lý</label>
@@ -1652,6 +1696,8 @@
                 type: document.getElementById('nl-type').value,
                 summary: document.getElementById('nl-summary').value,
                 content: window.nlEditor ? cleanHTML(window.nlEditor.root.innerHTML) : '',
+                affected_subjects: document.getElementById('nl-affected-subjects').value,
+                penalty: document.getElementById('nl-penalty').value,
                 legal_doc: document.getElementById('nl-legal-doc').value,
                 effective_date: document.getElementById('nl-effective-date').value || null,
                 priority: document.getElementById('nl-priority').value,
