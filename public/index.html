@@ -130,6 +130,25 @@
 
         const NEWS_CATEGORIES = ['Thuế', 'BHXH', 'Doanh nghiệp', 'Lao động', 'Pháp luật'];
 
+        // Industry keys cho LỊCH (events) — phải khớp company.industry trong app
+        const EVENT_INDUSTRIES = [
+            { id: 'fnb', name: 'F&B / Ăn uống' },
+            { id: 'san_xuat', name: 'Sản xuất' },
+            { id: 'xay_dung', name: 'Xây dựng' },
+            { id: 'xnk', name: 'Xuất nhập khẩu' },
+            { id: 'it', name: 'Công nghệ / IT' },
+            { id: 'dich_vu_pl', name: 'Dịch vụ pháp lý' },
+            { id: 'y_te', name: 'Y tế' },
+            { id: 'giao_duc', name: 'Giáo dục' },
+            { id: 'ban_le', name: 'Bán lẻ' },
+            { id: 'du_lich', name: 'Du lịch' },
+            { id: 'bds', name: 'Bất động sản' },
+            { id: 'logistic', name: 'Logistic' },
+            { id: 'tai_chinh', name: 'Tài chính / Ngân hàng' },
+            { id: 'nang_luong', name: 'Năng lượng' },
+            { id: 'khac', name: 'Khác' }
+        ];
+
         // ========== AUTH ==========
         function checkAuth() {
             if (!token) showLogin();
@@ -453,7 +472,7 @@
                                 <label class="block text-sm font-semibold mb-2">Ngành *</label>
                                 <select id="event-industry" class="input-field">
                                     <option value="">-- Chọn ngành --</option>
-                                    ${INDUSTRIES.filter(i => i.id !== 'all').map(i => `<option value="${i.id}" ${event?.industry === i.id ? 'selected' : ''}>${i.icon} ${i.name}</option>`).join('')}
+                                    ${EVENT_INDUSTRIES.map(i => `<option value="${i.id}" ${event?.industry === i.id ? 'selected' : ''}>${i.name}</option>`).join('')}
                                 </select>
                             </div>
                             <div>
