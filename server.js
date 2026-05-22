@@ -168,6 +168,19 @@ function cleanEventsData(data) {
   if (cleaned.legal_basis) cleaned.legal_basis = stripHTML(cleaned.legal_basis);
   if (cleaned.penalty) cleaned.penalty = stripHTML(cleaned.penalty);
   if (cleaned.notes) cleaned.notes = stripHTML(cleaned.notes);
+  // steps: chấp nhận mảng string hoặc 1 chuỗi (mỗi dòng = 1 bước)
+  if (cleaned.steps !== undefined && cleaned.steps !== null) {
+    let arr = cleaned.steps;
+    if (typeof arr === 'string') {
+      arr = arr.split(/\r?\n/);
+    }
+    if (!Array.isArray(arr)) arr = [];
+    cleaned.steps = arr
+      .map(s => (typeof s === 'string' ? stripHTML(s).trim() : ''))
+      .filter(s => s.length > 0);
+  } else {
+    cleaned.steps = [];
+  }
   return cleaned;
 }
 
@@ -468,6 +481,8 @@ async function initDatabase() {
     // events: phân biệt lịch chung (Free) và chuyên ngành (Pro)
     await client.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS scope VARCHAR(20) DEFAULT 'general'`);
     await client.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS industry VARCHAR(50)`);
+    // events: hướng dẫn thực hiện (mảng các bước)
+    await client.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS steps jsonb DEFAULT '[]'::jsonb`);
 
     // Seed default data
     const defaultCategories = [
@@ -524,10 +539,631 @@ async function initDatabase() {
       );
     }
 
+    // Seed lịch tháng 5/2026 — bổ sung steps cho các event hiện có + thêm event lấp ngày trống
+    await seedMay2026Events(client);
+
     log('INFO', 'Database initialized successfully');
   } finally {
     client.release();
   }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// SEED: Lịch tháng 5/2026 (idempotent — UPDATE chỉ khi steps rỗng; INSERT có
+// NOT EXISTS guard theo title+deadline; an toàn khi deploy lại nhiều lần).
+// ───────────────────────────────────────────────────────────────────────────
+async function seedMay2026Events(client) {
+  // ── (A) Bổ sung steps + (nếu trống) description/legal_basis/penalty cho các
+  //       event tháng 5/2026 đã tồn tại trên prod
+  const existingUpdates = [
+    {
+      title: 'Duy trì điều kiện Giấy phép hoạt động cơ sở khám chữa bệnh',
+      deadline: '2026-05-01',
+      steps: [
+        'Rà soát giấy phép hoạt động và danh mục kỹ thuật đang thực hiện',
+        'Kiểm tra hiệu lực chứng chỉ hành nghề của bác sĩ, điều dưỡng, kỹ thuật viên',
+        'Cập nhật hồ sơ trang thiết bị y tế, hồ sơ kiểm định an toàn bức xạ (nếu có)',
+        'Đối chiếu nhân lực, cơ sở vật chất với điều kiện đã đăng ký',
+        'Liên hệ Sở Y tế khi có thay đổi để bổ sung/điều chỉnh giấy phép kịp thời'
+      ],
+      description: 'Cơ sở khám chữa bệnh phải duy trì đầy đủ điều kiện về nhân lực, trang thiết bị, cơ sở vật chất và phạm vi hoạt động chuyên môn như đã được cấp phép. Định kỳ rà soát để chủ động bổ sung hồ sơ khi có thay đổi, sẵn sàng cho thanh tra, hậu kiểm của cơ quan quản lý y tế.',
+      legal_basis: 'Luật Khám bệnh, chữa bệnh và các văn bản hướng dẫn hiện hành',
+      penalty: 'Có thể bị xử phạt hành chính, đình chỉ hoạt động hoặc thu hồi giấy phép tùy mức độ vi phạm. Xem chi tiết tại văn bản được trích dẫn.'
+    },
+    {
+      title: '👷 Nghỉ lễ Ngày Quốc tế Lao động 1/5',
+      deadline: '2026-05-01',
+      steps: [
+        'Thông báo lịch nghỉ lễ cho người lao động trước kỳ nghỉ',
+        'Bố trí trực bảo vệ, đảm bảo an toàn tài sản và PCCC trong thời gian nghỉ',
+        'Trả lương 300% nếu bố trí làm thêm ngày lễ theo Bộ luật Lao động',
+        'Lên kế hoạch khôi phục hoạt động ngay sau kỳ nghỉ'
+      ]
+    },
+    {
+      title: 'Thông báo biến động lao động kỳ tháng 4/2026',
+      deadline: '2026-05-03',
+      steps: [
+        'Tổng hợp danh sách lao động tăng/giảm phát sinh trong tháng 4',
+        'Lập mẫu thông báo biến động lao động theo quy định hiện hành',
+        'Nộp thông báo cho Trung tâm Dịch vụ việc làm trước thời hạn',
+        'Lưu biên nhận, đối chiếu với hồ sơ bảo hiểm xã hội'
+      ]
+    },
+    {
+      title: 'Tạm nộp thuế TNDN quý 1/2026',
+      deadline: '2026-05-04',
+      steps: [
+        'Ước tính lợi nhuận quý 1 và xác định số thuế TNDN tạm tính',
+        'Lập chứng từ nộp tiền vào tài khoản Kho bạc Nhà nước',
+        'Hạch toán bút toán tạm nộp vào sổ kế toán',
+        'Đảm bảo tổng số tạm nộp 4 quý ≥ 80% nghĩa vụ thực tế cả năm để tránh tiền chậm nộp'
+      ]
+    },
+    {
+      title: 'Khai thuế TNCN khấu trừ quý 1/2026',
+      deadline: '2026-05-04',
+      steps: [
+        'Tổng hợp dữ liệu chi trả thu nhập và số thuế đã khấu trừ trong quý 1',
+        'Lập tờ khai mẫu 05/KK-TNCN trên phần mềm HTKK',
+        'Ký số và nộp tờ khai qua thuedientu.gdt.gov.vn',
+        'Nộp tiền thuế (nếu phát sinh) và lưu chứng từ khấu trừ cho từng cá nhân'
+      ]
+    },
+    {
+      title: 'Khai thuế GTGT quý 1/2026',
+      deadline: '2026-05-04',
+      steps: [
+        'Đối chiếu hóa đơn đầu vào, đầu ra trong quý 1',
+        'Lập tờ khai 01/GTGT trên phần mềm HTKK',
+        'Ký số và nộp tờ khai qua thuedientu.gdt.gov.vn',
+        'Nộp số thuế GTGT phát sinh (nếu có) đúng hạn'
+      ]
+    },
+    {
+      title: 'Cá nhân tự quyết toán thuế TNCN năm 2025',
+      deadline: '2026-05-04',
+      steps: [
+        'Tập hợp chứng từ thu nhập, chứng từ khấu trừ thuế cả năm 2025',
+        'Tính lại nghĩa vụ thuế cả năm và đối chiếu với số đã khấu trừ',
+        'Đăng ký giảm trừ gia cảnh cho người phụ thuộc (nếu có)',
+        'Lập tờ khai 02/QTT-TNCN và nộp qua thuedientu hoặc Cổng dịch vụ công',
+        'Nộp bổ sung hoặc đề nghị hoàn thuế nếu phát sinh chênh lệch'
+      ]
+    },
+    {
+      title: 'Tập huấn kiến thức an toàn thực phẩm cho nhân viên F&B',
+      deadline: '2026-05-12',
+      steps: [
+        'Lập danh sách nhân viên thuộc diện phải tập huấn',
+        'Tổ chức lớp tập huấn nội bộ hoặc thuê đơn vị đủ điều kiện',
+        'Đánh giá, cấp/lưu giấy xác nhận kiến thức an toàn thực phẩm',
+        'Cập nhật hồ sơ pháp lý cơ sở, sẵn sàng phục vụ thanh tra'
+      ]
+    },
+    {
+      title: 'Cấp / gia hạn phù hiệu, biển hiệu phương tiện',
+      deadline: '2026-05-15',
+      steps: [
+        'Rà soát danh sách phương tiện kinh doanh vận tải đang hoạt động',
+        'Chuẩn bị hồ sơ: giấy đăng ký, đăng kiểm, hợp đồng vận tải',
+        'Nộp hồ sơ qua Cổng dịch vụ công của Sở Giao thông Vận tải',
+        'Nhận phù hiệu/biển hiệu và dán vào vị trí quy định trên phương tiện'
+      ]
+    },
+    {
+      title: 'Khám sức khỏe định kỳ cho nhân viên chế biến thực phẩm',
+      deadline: '2026-05-15',
+      steps: [
+        'Cập nhật danh sách nhân viên trực tiếp tiếp xúc thực phẩm',
+        'Đăng ký lịch khám tại cơ sở y tế có thẩm quyền',
+        'Lưu giấy khám sức khỏe đủ điều kiện theo quy định Bộ Y tế',
+        'Tạm dừng bố trí làm việc với các trường hợp không đủ điều kiện sức khỏe'
+      ]
+    },
+    {
+      title: 'Quan trắc môi trường lao động định kỳ',
+      deadline: '2026-05-20',
+      steps: [
+        'Xác định các yếu tố nguy cơ tại nơi làm việc cần quan trắc',
+        'Ký hợp đồng với đơn vị quan trắc đã được cấp chứng nhận',
+        'Thực hiện đo đạc và lập báo cáo kết quả quan trắc',
+        'Công bố kết quả cho người lao động, gửi cơ quan y tế và lưu hồ sơ'
+      ]
+    },
+    {
+      title: 'Khai thuế TNCN khấu trừ kỳ tháng 4/2026',
+      deadline: '2026-05-20',
+      steps: [
+        'Tổng hợp danh sách chi trả thu nhập trong tháng 4',
+        'Tính số thuế TNCN phải khấu trừ',
+        'Lập tờ khai 05/KK-TNCN trên HTKK',
+        'Ký số và nộp tờ khai qua thuedientu trước ngày 20/5'
+      ]
+    },
+    {
+      title: 'Khai thuế GTGT kỳ tháng 4/2026',
+      deadline: '2026-05-20',
+      steps: [
+        'Đối chiếu hóa đơn đầu vào, đầu ra trong tháng 4',
+        'Lập tờ khai 01/GTGT trên HTKK',
+        'Ký số, nộp tờ khai và nộp tiền thuế phát sinh (nếu có)',
+        'Lưu chứng từ điện tử và tờ khai đã nộp'
+      ]
+    },
+    {
+      title: 'Kiểm nghiệm định kỳ nguyên liệu, nước dùng chế biến',
+      deadline: '2026-05-20',
+      steps: [
+        'Xác định danh mục mẫu cần kiểm nghiệm theo bản tự công bố',
+        'Lấy mẫu và gửi đơn vị kiểm nghiệm được công nhận',
+        'Lưu phiếu kết quả và đối chiếu với chỉ tiêu đã công bố',
+        'Điều chỉnh quy trình, thay đổi nhà cung cấp nếu kết quả không đạt'
+      ]
+    },
+    {
+      title: 'Rà soát bản tự công bố sản phẩm thực phẩm',
+      deadline: '2026-05-23',
+      steps: [
+        'Liệt kê sản phẩm đang lưu hành và sản phẩm mới phát sinh',
+        'Kiểm tra thông tin trên nhãn, chỉ tiêu chất lượng, hạn dùng',
+        'Tự công bố lại khi có thay đổi công thức, nhà cung cấp nguyên liệu',
+        'Lưu bản tự công bố tại cơ sở và đăng tải theo quy định'
+      ]
+    },
+    {
+      title: 'Kiểm tra, bảo trì hệ thống PCCC khu vực bếp',
+      deadline: '2026-05-27',
+      steps: [
+        'Lập danh mục thiết bị PCCC: bình chữa cháy, hệ thống báo cháy, hút mùi',
+        'Thuê đơn vị có chức năng kiểm tra, bảo dưỡng định kỳ',
+        'Vệ sinh chụp hút, đường ống dầu mỡ và bếp gas',
+        'Cập nhật sổ theo dõi PCCC, biển báo, sơ đồ thoát hiểm'
+      ]
+    },
+    {
+      title: 'Bảo lãnh nhà ở hình thành trong tương lai',
+      deadline: '2026-05-31',
+      steps: [
+        'Lập danh sách dự án đủ điều kiện bán nhà hình thành trong tương lai',
+        'Liên hệ ngân hàng thương mại ký cam kết bảo lãnh',
+        'Gửi văn bản bảo lãnh cho khách hàng cùng hợp đồng mua bán',
+        'Lưu hồ sơ bảo lãnh để phục vụ thanh tra của Sở Xây dựng'
+      ]
+    },
+    {
+      title: 'Gia hạn Chứng chỉ hành nghề hoạt động xây dựng (cá nhân)',
+      deadline: '2026-05-31',
+      steps: [
+        'Rà soát thời hạn các chứng chỉ hành nghề hiện có của nhân sự',
+        'Chuẩn bị hồ sơ gia hạn theo hướng dẫn của Bộ Xây dựng',
+        'Nộp hồ sơ qua Cổng dịch vụ công Bộ Xây dựng hoặc Sở chuyên ngành',
+        'Theo dõi tiến trình xử lý và lưu chứng chỉ mới khi có kết quả'
+      ]
+    },
+    {
+      title: 'Đóng kinh phí công đoàn (KPCĐ) 2% kỳ tháng 4/2026',
+      deadline: '2026-05-31',
+      steps: [
+        'Tính 2% trên quỹ tiền lương làm căn cứ đóng BHXH tháng 4',
+        'Lập ủy nhiệm chi nộp vào tài khoản công đoàn cấp trên',
+        'Hạch toán chi phí, lưu chứng từ chuyển khoản',
+        'Đối chiếu với liên đoàn lao động vào cuối quý'
+      ]
+    },
+    {
+      title: 'Trích nộp BHXH, BHYT, BHTN kỳ tháng 5/2026',
+      deadline: '2026-05-31',
+      steps: [
+        'Cập nhật danh sách lao động tham gia, biến động trong tháng',
+        'Tính số phải nộp BHXH, BHYT, BHTN, BHTNLĐ-BNN',
+        'Lập hồ sơ điện tử trên phần mềm KBHXH hoặc iBHXH',
+        'Nộp tiền qua tài khoản chuyên thu của cơ quan BHXH'
+      ]
+    }
+  ];
+
+  for (const ev of existingUpdates) {
+    await client.query(
+      `UPDATE events
+       SET steps = $1::jsonb,
+           description = COALESCE(NULLIF(description, ''), $2),
+           legal_basis = COALESCE(NULLIF(legal_basis, ''), $3),
+           penalty = COALESCE(NULLIF(penalty, ''), $4),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE title = $5
+         AND deadline = $6::date
+         AND (steps IS NULL OR steps::text = '[]' OR steps::text = 'null')`,
+      [
+        JSON.stringify(ev.steps),
+        ev.description || null,
+        ev.legal_basis || null,
+        ev.penalty || null,
+        ev.title,
+        ev.deadline
+      ]
+    );
+  }
+
+  // ── (B) Lấp các ngày còn trống trong tháng 5/2026 bằng event mới (idempotent)
+  const newEvents = [
+    // ── Lịch CHUNG (general) ────────────────────────────────────────────────
+    {
+      title: 'Báo cáo định kỳ tình hình hoạt động doanh nghiệp Q1/2026',
+      deadline: '2026-05-02',
+      category: 'report',
+      scope: 'general',
+      industry: null,
+      frequency: 'quarterly',
+      priority: 'medium',
+      description: 'Doanh nghiệp tổng hợp tình hình hoạt động kinh doanh quý 1/2026: doanh thu, lao động, đầu tư, nghĩa vụ ngân sách. Báo cáo nội bộ phục vụ điều hành và làm cơ sở đối chiếu khi cơ quan thống kê, thuế yêu cầu cung cấp số liệu.',
+      legal_basis: 'Luật Doanh nghiệp, Luật Thống kê và các văn bản hướng dẫn',
+      penalty: 'Có thể bị nhắc nhở, xử phạt nếu chậm cung cấp số liệu khi cơ quan có thẩm quyền yêu cầu. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Tổng hợp doanh thu, chi phí, lợi nhuận quý 1 từ sổ kế toán',
+        'Đối chiếu số liệu lao động, tiền lương với báo cáo bảo hiểm',
+        'Tổng hợp các khoản đã nộp ngân sách Nhà nước trong quý',
+        'Lập báo cáo nội bộ và lưu trữ phục vụ đối chiếu khi cần'
+      ]
+    },
+    {
+      title: 'Lập kế hoạch huấn luyện ATVSLĐ 6 tháng cuối năm 2026',
+      deadline: '2026-05-05',
+      category: 'safety',
+      scope: 'general',
+      industry: null,
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Doanh nghiệp xây dựng kế hoạch huấn luyện an toàn, vệ sinh lao động (ATVSLĐ) cho 6 tháng cuối năm theo nhóm đối tượng: người sử dụng lao động, cán bộ ATVSLĐ, người lao động làm công việc có yêu cầu nghiêm ngặt và lao động phổ thông.',
+      legal_basis: 'Luật An toàn, vệ sinh lao động và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính nếu không tổ chức huấn luyện theo quy định. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Phân loại lao động theo nhóm huấn luyện ATVSLĐ',
+        'Lập kế hoạch huấn luyện chi tiết: nội dung, thời lượng, đơn vị huấn luyện',
+        'Dự trù kinh phí và bố trí thời gian phù hợp với hoạt động sản xuất',
+        'Trình lãnh đạo phê duyệt và triển khai theo tiến độ'
+      ]
+    },
+    {
+      title: 'Báo cáo tình hình sử dụng hóa đơn điện tử',
+      deadline: '2026-05-08',
+      category: 'tax',
+      scope: 'general',
+      industry: null,
+      frequency: 'monthly',
+      priority: 'medium',
+      description: 'Đối chiếu, tổng hợp số lượng hóa đơn điện tử đã sử dụng, hủy bỏ, điều chỉnh trong kỳ. Đây là dữ liệu quan trọng phục vụ rà soát nội bộ và làm việc với cơ quan thuế khi cần.',
+      legal_basis: 'Quy định hiện hành về hóa đơn điện tử của Bộ Tài chính',
+      penalty: 'Có thể bị xử phạt hành chính nếu kê khai, quản lý hóa đơn không đúng quy định. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Trích xuất dữ liệu hóa đơn điện tử đã phát hành trong kỳ',
+        'Đối chiếu với báo cáo trên Cổng hóa đơn điện tử của Tổng cục Thuế',
+        'Rà soát các hóa đơn đã hủy, điều chỉnh, thay thế',
+        'Lưu trữ dữ liệu hóa đơn an toàn theo thời hạn quy định'
+      ]
+    },
+    {
+      title: 'Rà soát hợp đồng lao động sắp hết hạn',
+      deadline: '2026-05-11',
+      category: 'labor',
+      scope: 'general',
+      industry: null,
+      frequency: 'monthly',
+      priority: 'high',
+      description: 'Quản lý nhân sự rà soát danh sách hợp đồng lao động sắp đến hạn để chủ động gia hạn, ký mới hoặc thông báo chấm dứt theo đúng thời hạn báo trước, tránh phát sinh tranh chấp lao động.',
+      legal_basis: 'Bộ luật Lao động và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính, bồi thường nếu vi phạm quy định về ký kết và chấm dứt hợp đồng lao động. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Lập danh sách hợp đồng lao động hết hạn trong 30-60 ngày tới',
+        'Đánh giá nhu cầu nhân sự, kết quả công việc của từng vị trí',
+        'Soạn thảo phụ lục gia hạn hoặc hợp đồng mới',
+        'Gửi thông báo chấm dứt hợp đồng đúng thời hạn báo trước (nếu có)',
+        'Lưu hồ sơ ký kết để phục vụ thanh tra lao động'
+      ]
+    },
+    {
+      title: 'Báo cáo công tác PCCC định kỳ',
+      deadline: '2026-05-13',
+      category: 'safety',
+      scope: 'general',
+      industry: null,
+      frequency: 'yearly',
+      priority: 'high',
+      description: 'Cơ sở thuộc diện quản lý PCCC định kỳ báo cáo tình hình thực hiện công tác phòng cháy chữa cháy: phương tiện, lực lượng tại chỗ, tình hình kiểm tra, sự cố (nếu có) gửi cơ quan Cảnh sát PCCC quản lý địa bàn.',
+      legal_basis: 'Luật Phòng cháy và chữa cháy và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính, đình chỉ hoạt động nếu không bảo đảm điều kiện PCCC. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Tập hợp hồ sơ kiểm tra, bảo dưỡng PCCC trong kỳ',
+        'Đánh giá tình trạng phương tiện, lực lượng PCCC cơ sở',
+        'Lập báo cáo theo mẫu của cơ quan Cảnh sát PCCC',
+        'Gửi báo cáo và lưu bản sao tại cơ sở'
+      ]
+    },
+    {
+      title: 'Đối chiếu công nợ thuế đầu kỳ',
+      deadline: '2026-05-18',
+      category: 'tax',
+      scope: 'general',
+      industry: null,
+      frequency: 'quarterly',
+      priority: 'medium',
+      description: 'Kế toán đối chiếu số dư công nợ thuế với cơ quan thuế qua tài khoản thuedientu để kịp thời phát hiện chênh lệch, xử lý các khoản tiền chậm nộp, nộp thừa hoặc bù trừ giữa các sắc thuế.',
+      legal_basis: 'Luật Quản lý thuế và các văn bản hướng dẫn',
+      penalty: 'Tính tiền chậm nộp 0,03%/ngày trên số tiền thuế chậm nộp; có thể bị cưỡng chế tài khoản nếu nợ kéo dài. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Đăng nhập thuedientu.gdt.gov.vn và lấy bảng kê nghĩa vụ thuế',
+        'Đối chiếu số phát sinh, đã nộp, còn nợ với sổ kế toán',
+        'Gửi đề nghị tra soát nếu phát hiện chênh lệch',
+        'Nộp bù số còn thiếu và xử lý tiền chậm nộp (nếu có)'
+      ]
+    },
+    {
+      title: 'Cập nhật danh sách cổ đông, thành viên góp vốn',
+      deadline: '2026-05-22',
+      category: 'report',
+      scope: 'general',
+      industry: null,
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Doanh nghiệp rà soát, cập nhật sổ đăng ký cổ đông/thành viên góp vốn khi có biến động về chuyển nhượng, thừa kế, tăng/giảm vốn để bảo đảm tuân thủ và sẵn sàng cho các giao dịch lớn.',
+      legal_basis: 'Luật Doanh nghiệp và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính nếu không cập nhật, lưu giữ sổ đăng ký cổ đông/thành viên theo quy định. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Tổng hợp các biến động về cổ đông/thành viên trong kỳ',
+        'Cập nhật sổ đăng ký theo đúng mẫu quy định',
+        'Lưu hợp đồng chuyển nhượng, biên bản họp, quyết định liên quan',
+        'Cập nhật thông tin lên Cổng dịch vụ công về đăng ký doanh nghiệp khi cần'
+      ]
+    },
+    {
+      title: 'Báo cáo tài chính giữa niên độ — chuẩn bị số liệu',
+      deadline: '2026-05-24',
+      category: 'report',
+      scope: 'general',
+      industry: null,
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Doanh nghiệp thuộc diện lập báo cáo tài chính giữa niên độ chuẩn bị tổng hợp số liệu nửa đầu năm: bảng cân đối kế toán, kết quả hoạt động, lưu chuyển tiền tệ và thuyết minh.',
+      legal_basis: 'Chuẩn mực kế toán Việt Nam và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính, ảnh hưởng đến nghĩa vụ công bố thông tin (đối với DN niêm yết). Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Khóa sổ tạm cuối tháng 4, đối chiếu số dư các tài khoản trọng yếu',
+        'Tổng hợp dự thảo bảng cân đối kế toán và kết quả kinh doanh nửa năm',
+        'Rà soát ước tính kế toán, dự phòng, trích trước cuối kỳ',
+        'Bàn giao dự thảo cho kiểm toán/soát xét (nếu có)'
+      ]
+    },
+    {
+      title: 'Kê khai phí bảo vệ môi trường đối với nước thải Q1/2026',
+      deadline: '2026-05-26',
+      category: 'environment',
+      scope: 'general',
+      industry: null,
+      frequency: 'quarterly',
+      priority: 'medium',
+      description: 'Tổ chức, cá nhân xả nước thải công nghiệp thuộc đối tượng kê khai, nộp phí bảo vệ môi trường thực hiện kê khai số liệu xả thải quý 1 và nộp phí theo quy định.',
+      legal_basis: 'Quy định hiện hành về phí bảo vệ môi trường đối với nước thải',
+      penalty: 'Có thể bị xử phạt hành chính, truy thu phí và tiền chậm nộp nếu kê khai không đầy đủ. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Tổng hợp khối lượng nước thải, kết quả quan trắc chất thải quý 1',
+        'Tính phí cố định và phí biến đổi theo quy định',
+        'Lập tờ khai phí bảo vệ môi trường và nộp cho cơ quan thuế',
+        'Lưu chứng từ nộp tiền và hồ sơ tính toán'
+      ]
+    },
+    {
+      title: 'Báo cáo kết quả quan trắc môi trường định kỳ',
+      deadline: '2026-05-28',
+      category: 'environment',
+      scope: 'general',
+      industry: null,
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Cơ sở thuộc đối tượng phải quan trắc môi trường định kỳ thực hiện báo cáo kết quả gửi cơ quan quản lý môi trường địa phương theo nội dung đã cam kết trong giấy phép môi trường.',
+      legal_basis: 'Luật Bảo vệ môi trường và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính, đình chỉ hoạt động nếu vượt giới hạn cho phép. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Thuê đơn vị quan trắc đã được cấp phép thực hiện đo đạc',
+        'Lập báo cáo kết quả quan trắc theo mẫu quy định',
+        'Gửi báo cáo cho Sở Tài nguyên & Môi trường địa phương',
+        'Lưu hồ sơ tại cơ sở để phục vụ thanh tra, hậu kiểm'
+      ]
+    },
+    {
+      title: 'Rà soát giấy phép con sắp hết hạn',
+      deadline: '2026-05-29',
+      category: 'license',
+      scope: 'general',
+      industry: null,
+      frequency: 'monthly',
+      priority: 'medium',
+      description: 'Doanh nghiệp rà soát toàn bộ giấy phép con (PCCC, vệ sinh ATTP, môi trường, kinh doanh có điều kiện, v.v.) đến hạn để chủ động hồ sơ gia hạn, tránh gián đoạn hoạt động.',
+      legal_basis: 'Các văn bản chuyên ngành liên quan đến từng loại giấy phép',
+      penalty: 'Hoạt động khi giấy phép hết hạn có thể bị xử phạt, đình chỉ và truy thu lợi nhuận. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Lập danh mục toàn bộ giấy phép con đang sở hữu kèm ngày hết hạn',
+        'Đánh dấu các giấy phép hết hạn trong 60-90 ngày tới',
+        'Chuẩn bị hồ sơ gia hạn theo quy định của từng loại giấy phép',
+        'Phân công đầu mối nộp hồ sơ và theo dõi tiến trình xử lý'
+      ]
+    },
+    {
+      title: 'Chuẩn bị hồ sơ hoàn thuế GTGT (nếu phát sinh)',
+      deadline: '2026-05-30',
+      category: 'tax',
+      scope: 'general',
+      industry: null,
+      frequency: 'quarterly',
+      priority: 'medium',
+      description: 'Doanh nghiệp có số thuế GTGT đầu vào chưa khấu trừ hết và đủ điều kiện hoàn thuế chủ động chuẩn bị hồ sơ để rút ngắn thời gian xử lý và sớm thu hồi dòng tiền.',
+      legal_basis: 'Luật Thuế giá trị gia tăng và Luật Quản lý thuế',
+      penalty: 'Hoàn thuế sai quy định có thể bị truy thu, xử phạt và tính tiền chậm nộp. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Đối chiếu số thuế GTGT đầu vào chưa khấu trừ với điều kiện hoàn thuế',
+        'Chuẩn bị hợp đồng, hóa đơn, chứng từ thanh toán không dùng tiền mặt',
+        'Lập đề nghị hoàn thuế theo mẫu và nộp qua thuedientu',
+        'Theo dõi văn bản trả lời, bổ sung hồ sơ khi cơ quan thuế yêu cầu'
+      ]
+    },
+    // ── Lịch CHUYÊN NGÀNH (industry) ────────────────────────────────────────
+    {
+      title: 'Đánh giá rủi ro vệ sinh an toàn thực phẩm tại bếp ăn',
+      deadline: '2026-05-07',
+      category: 'safety',
+      scope: 'industry',
+      industry: 'fnb',
+      frequency: 'yearly',
+      priority: 'high',
+      description: 'Cơ sở dịch vụ ăn uống định kỳ rà soát rủi ro tại bếp: nguồn nguyên liệu, quy trình chế biến, bảo quản, vệ sinh dụng cụ. Hoạt động này giúp giảm sự cố ngộ độc và sẵn sàng cho thanh tra của cơ quan an toàn thực phẩm.',
+      legal_basis: 'Luật An toàn thực phẩm và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính, đình chỉ hoạt động nếu để xảy ra sự cố ngộ độc thực phẩm. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Lập sơ đồ quy trình chế biến và xác định điểm kiểm soát tới hạn',
+        'Kiểm tra hồ sơ nguồn gốc nguyên liệu, hợp đồng nhà cung cấp',
+        'Đánh giá điều kiện bảo quản, nhiệt độ kho lạnh, vệ sinh dụng cụ',
+        'Lập biên bản đánh giá, đề xuất biện pháp khắc phục',
+        'Tổ chức quán triệt cho nhân viên bếp về quy trình mới (nếu có)'
+      ]
+    },
+    {
+      title: 'Kiểm định lại an toàn cẩu tháp, vận thăng tại công trình',
+      deadline: '2026-05-09',
+      category: 'safety',
+      scope: 'industry',
+      industry: 'xay_dung',
+      frequency: 'yearly',
+      priority: 'high',
+      description: 'Cẩu tháp, vận thăng nâng người/hàng tại công trình xây dựng là thiết bị có yêu cầu nghiêm ngặt về an toàn lao động, phải được kiểm định an toàn định kỳ trước khi tiếp tục sử dụng.',
+      legal_basis: 'Luật An toàn, vệ sinh lao động và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính, đình chỉ thiết bị nếu sử dụng khi chưa kiểm định hoặc hết hạn kiểm định. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Lập danh mục thiết bị đến hạn kiểm định trên các công trường',
+        'Ký hợp đồng với tổ chức kiểm định kỹ thuật đã được cấp phép',
+        'Phối hợp dừng vận hành để thực hiện kiểm định',
+        'Dán tem kiểm định, cập nhật hồ sơ thiết bị tại công trường',
+        'Lưu giấy chứng nhận kiểm định để phục vụ thanh tra'
+      ]
+    },
+    {
+      title: 'Báo cáo sử dụng thuốc gây nghiện, hướng tâm thần Q1/2026',
+      deadline: '2026-05-14',
+      category: 'report',
+      scope: 'industry',
+      industry: 'y_te',
+      frequency: 'quarterly',
+      priority: 'high',
+      description: 'Cơ sở khám chữa bệnh, nhà thuốc đang quản lý thuốc gây nghiện, thuốc hướng tâm thần và tiền chất dùng làm thuốc lập báo cáo định kỳ về tình hình nhập, xuất, tồn kho gửi Sở Y tế.',
+      legal_basis: 'Luật Dược và các văn bản hướng dẫn về thuốc kiểm soát đặc biệt',
+      penalty: 'Có thể bị xử phạt hành chính, đình chỉ hoạt động, thu hồi chứng chỉ nếu vi phạm quản lý thuốc kiểm soát đặc biệt. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Đối chiếu sổ theo dõi xuất nhập với hóa đơn, đơn thuốc',
+        'Kiểm kê thực tế thuốc gây nghiện, hướng tâm thần',
+        'Lập báo cáo theo mẫu quy định của Bộ Y tế',
+        'Gửi báo cáo cho Sở Y tế và lưu hồ sơ tại cơ sở'
+      ]
+    },
+    {
+      title: 'Rà soát hợp đồng đại lý, nhượng quyền thương mại',
+      deadline: '2026-05-16',
+      category: 'license',
+      scope: 'industry',
+      industry: 'ban_le',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Doanh nghiệp bán lẻ vận hành hệ thống đại lý, nhượng quyền rà soát các hợp đồng đang có hiệu lực để bảo đảm tuân thủ về điều kiện, đăng ký nhượng quyền và nghĩa vụ thuế.',
+      legal_basis: 'Luật Thương mại và các văn bản hướng dẫn về nhượng quyền thương mại',
+      penalty: 'Có thể bị xử phạt hành chính nếu hoạt động nhượng quyền không đăng ký theo quy định. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Lập danh mục hợp đồng đại lý, nhượng quyền đang hiệu lực',
+        'Đối chiếu nghĩa vụ tài chính, doanh thu phát sinh',
+        'Cập nhật danh sách đại lý lên cơ quan đăng ký (khi có thay đổi)',
+        'Soát xét điều khoản bảo mật, sở hữu trí tuệ, chấm dứt hợp đồng'
+      ]
+    },
+    {
+      title: 'Báo cáo quản lý chất thải nguy hại Q1/2026',
+      deadline: '2026-05-19',
+      category: 'environment',
+      scope: 'industry',
+      industry: 'san_xuat',
+      frequency: 'quarterly',
+      priority: 'high',
+      description: 'Chủ nguồn thải chất thải nguy hại trong lĩnh vực sản xuất tổng hợp khối lượng phát sinh, chuyển giao và xử lý trong quý 1 để báo cáo cơ quan quản lý môi trường.',
+      legal_basis: 'Luật Bảo vệ môi trường và các văn bản hướng dẫn về quản lý chất thải nguy hại',
+      penalty: 'Có thể bị xử phạt hành chính, đình chỉ hoạt động nếu xử lý chất thải nguy hại sai quy định. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Tổng hợp khối lượng chất thải nguy hại phát sinh theo mã CTNH',
+        'Đối chiếu chứng từ chuyển giao với đơn vị xử lý đã có giấy phép',
+        'Lập báo cáo theo mẫu quy định',
+        'Gửi báo cáo cho Sở Tài nguyên & Môi trường và lưu hồ sơ'
+      ]
+    },
+    {
+      title: 'Kiểm tra điều kiện an toàn giao thông phương tiện vận tải',
+      deadline: '2026-05-21',
+      category: 'safety',
+      scope: 'industry',
+      industry: 'logistic',
+      frequency: 'monthly',
+      priority: 'high',
+      description: 'Doanh nghiệp kinh doanh vận tải đường bộ kiểm tra định kỳ điều kiện ATGT của phương tiện và lái xe trước khi xuất bến, đảm bảo đăng kiểm còn hiệu lực, lốp, phanh, thiết bị giám sát hành trình hoạt động bình thường.',
+      legal_basis: 'Luật Giao thông đường bộ và các văn bản hướng dẫn về kinh doanh vận tải',
+      penalty: 'Có thể bị xử phạt hành chính, thu hồi phù hiệu vận tải. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Kiểm tra hạn đăng kiểm, bảo hiểm bắt buộc của phương tiện',
+        'Kiểm tra hoạt động thiết bị giám sát hành trình, camera',
+        'Kiểm tra giấy phép lái xe, sức khỏe của lái xe',
+        'Lập sổ theo dõi kiểm tra trước khi xuất bến',
+        'Ngừng vận hành phương tiện không đảm bảo điều kiện'
+      ]
+    },
+    {
+      title: 'Bồi dưỡng định kỳ chỉ huy trưởng công trình',
+      deadline: '2026-05-25',
+      category: 'labor',
+      scope: 'industry',
+      industry: 'xay_dung',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Chỉ huy trưởng công trình và cán bộ chủ chốt tại công trường xây dựng tham gia bồi dưỡng định kỳ về quản lý dự án, an toàn lao động và pháp luật xây dựng cập nhật.',
+      legal_basis: 'Luật Xây dựng và các văn bản hướng dẫn',
+      penalty: 'Có thể bị xử phạt hành chính, đình chỉ hoạt động cá nhân nếu không đáp ứng điều kiện hành nghề. Xem chi tiết tại văn bản được trích dẫn.',
+      steps: [
+        'Lập danh sách chỉ huy trưởng, cán bộ chủ chốt cần bồi dưỡng',
+        'Đăng ký lớp bồi dưỡng tại cơ sở đào tạo có thẩm quyền',
+        'Theo dõi kết quả và cấp chứng nhận hoàn thành',
+        'Cập nhật hồ sơ năng lực cá nhân và hồ sơ năng lực công ty'
+      ]
+    }
+  ];
+
+  for (const ev of newEvents) {
+    await client.query(
+      `INSERT INTO events
+         (title, description, category, deadline, frequency, legal_basis, penalty,
+          applies_to, priority, reminder_days, scope, industry, steps, is_active)
+       SELECT $1, $2, $3, $4::date, $5, $6, $7,
+              'business', $8, 7, $9, $10, $11::jsonb, true
+       WHERE NOT EXISTS (
+         SELECT 1 FROM events WHERE title = $1 AND deadline = $4::date
+       )`,
+      [
+        ev.title,
+        ev.description,
+        ev.category,
+        ev.deadline,
+        ev.frequency,
+        ev.legal_basis,
+        ev.penalty,
+        ev.priority,
+        ev.scope,
+        ev.industry,
+        JSON.stringify(ev.steps)
+      ]
+    );
+  }
+
+  log('INFO', 'May 2026 event seed completed (idempotent)');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -899,7 +1535,7 @@ app.post('/api/admin/events', adminAuth, async (req, res) => {
   if (!requireDB(res)) return;
   try {
     const cleanedData = cleanEventsData(req.body);
-    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, is_active } = cleanedData;
+    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, steps, is_active } = cleanedData;
 
     if (!title) {
       return res.status(400).json({ success: false, message: 'Tiêu đề là bắt buộc' });
@@ -913,9 +1549,9 @@ app.post('/api/admin/events', adminAuth, async (req, res) => {
     const normalizedIndustry = normalizedScope === 'industry' ? industry : null;
 
     const result = await pool.query(
-      `INSERT INTO events (title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
-      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days || 7, notes, source, source_url, normalizedScope, normalizedIndustry, is_active !== false]
+      `INSERT INTO events (title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, steps, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18::jsonb, $19) RETURNING *`,
+      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days || 7, notes, source, source_url, normalizedScope, normalizedIndustry, JSON.stringify(steps || []), is_active !== false]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -928,7 +1564,7 @@ app.put('/api/admin/events/:id', adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const cleanedData = cleanEventsData(req.body);
-    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, is_active } = cleanedData;
+    const { title, description, category, deadline, frequency, legal_basis, penalty, agency_id, province_id, applies_to, priority, reminder_days, notes, source, source_url, scope, industry, steps, is_active } = cleanedData;
 
     const normalizedScope = scope === 'industry' ? 'industry' : 'general';
     if (normalizedScope === 'industry' && !industry) {
@@ -937,8 +1573,8 @@ app.put('/api/admin/events/:id', adminAuth, async (req, res) => {
     const normalizedIndustry = normalizedScope === 'industry' ? industry : null;
 
     const result = await pool.query(
-      `UPDATE events SET title=$1, description=$2, category=$3, deadline=$4, frequency=$5, legal_basis=$6, penalty=$7, agency_id=$8, province_id=$9, applies_to=$10, priority=$11, reminder_days=$12, notes=$13, source=$14, source_url=$15, scope=$16, industry=$17, is_active=$18, updated_at=CURRENT_TIMESTAMP WHERE id=$19 RETURNING *`,
-      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days, notes, source, source_url, normalizedScope, normalizedIndustry, is_active, id]
+      `UPDATE events SET title=$1, description=$2, category=$3, deadline=$4, frequency=$5, legal_basis=$6, penalty=$7, agency_id=$8, province_id=$9, applies_to=$10, priority=$11, reminder_days=$12, notes=$13, source=$14, source_url=$15, scope=$16, industry=$17, steps=$18::jsonb, is_active=$19, updated_at=CURRENT_TIMESTAMP WHERE id=$20 RETURNING *`,
+      [title, description, category, deadline, frequency, legal_basis, penalty, agency_id || null, province_id || null, applies_to, priority, reminder_days, notes, source, source_url, normalizedScope, normalizedIndustry, JSON.stringify(steps || []), is_active, id]
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {

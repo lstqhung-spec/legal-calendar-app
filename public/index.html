@@ -507,6 +507,10 @@
                                 <label class="block text-sm font-semibold mb-2">Mức phạt</label>
                                 <textarea id="event-penalty" class="input-field" rows="2">${event?.penalty || ''}</textarea>
                             </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm font-semibold mb-2">Hướng dẫn thực hiện <span class="text-xs font-normal text-gray-500">(mỗi dòng = 1 bước)</span></label>
+                                <textarea id="event-steps" class="input-field" rows="6" placeholder="VD:\nTập hợp chứng từ thu nhập\nLập tờ khai trên HTKK\nKý số và nộp qua thuedientu">${Array.isArray(event?.steps) ? event.steps.join('\n') : ''}</textarea>
+                            </div>
                         </div>
                         <div class="mt-4">
                             <label class="flex items-center gap-2"><input type="checkbox" id="event-active" ${event?.is_active !== false ? 'checked' : ''}> Kích hoạt</label>
@@ -544,6 +548,8 @@
                 description: document.getElementById('event-desc').value,
                 legal_basis: document.getElementById('event-legal').value,
                 penalty: document.getElementById('event-penalty').value,
+                steps: (document.getElementById('event-steps')?.value || '')
+                    .split(/\r?\n/).map(s => s.trim()).filter(Boolean),
                 is_active: document.getElementById('event-active').checked
             };
             if (!data.title) { alert('Vui lòng nhập tiêu đề'); return; }
