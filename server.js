@@ -552,6 +552,7 @@ async function initDatabase() {
 // SEED: Lịch tháng 5/2026 (idempotent — UPDATE chỉ khi steps rỗng; INSERT có
 // NOT EXISTS guard theo title+deadline; an toàn khi deploy lại nhiều lần).
 // ───────────────────────────────────────────────────────────────────────────
+let lastMay2026SeedResult = { status: 'not_run' };
 async function seedMay2026Events(client) {
   // ── (A) Bổ sung steps + (nếu trống) description/legal_basis/penalty cho các
   //       event tháng 5/2026 đã tồn tại trên prod
@@ -1137,33 +1138,61 @@ async function seedMay2026Events(client) {
     }
   ];
 
+  let inserted = 0;
+  let skipped = 0;
+  const insertErrors = [];
   for (const ev of newEvents) {
-    await client.query(
-      `INSERT INTO events
-         (title, description, category, deadline, frequency, legal_basis, penalty,
-          applies_to, priority, reminder_days, scope, industry, steps, is_active)
-       SELECT $1, $2, $3, $4::date, $5, $6, $7,
-              'business', $8, 7, $9, $10, $11::jsonb, true
-       WHERE NOT EXISTS (
-         SELECT 1 FROM events WHERE title = $1 AND deadline = $4::date
-       )`,
-      [
-        ev.title,
-        ev.description,
-        ev.category,
-        ev.deadline,
-        ev.frequency,
-        ev.legal_basis,
-        ev.penalty,
-        ev.priority,
-        ev.scope,
-        ev.industry,
-        JSON.stringify(ev.steps)
-      ]
-    );
+    try {
+      const exists = await client.query(
+        `SELECT 1 FROM events WHERE title = $1 AND deadline = $2::date LIMIT 1`,
+        [ev.title, ev.deadline]
+      );
+      if (exists.rowCount > 0) {
+        skipped += 1;
+        continue;
+      }
+      await client.query(
+        `INSERT INTO events
+           (title, description, category, deadline, frequency, legal_basis, penalty,
+            applies_to, priority, reminder_days, scope, industry, steps, is_active)
+         VALUES
+           ($1, $2, $3, $4::date, $5, $6, $7,
+            'business', $8, 7, $9, $10, $11::jsonb, true)`,
+        [
+          ev.title,
+          ev.description || null,
+          ev.category || 'other',
+          ev.deadline,
+          ev.frequency || null,
+          ev.legal_basis || null,
+          ev.penalty || null,
+          ev.priority || 'medium',
+          ev.scope || 'general',
+          ev.industry || null,
+          JSON.stringify(ev.steps || [])
+        ]
+      );
+      inserted += 1;
+    } catch (e) {
+      log('ERROR', 'Seed event insert failed', {
+        title: ev.title,
+        deadline: ev.deadline,
+        error: e.message
+      });
+      insertErrors.push({ title: ev.title, deadline: ev.deadline, error: e.message });
+    }
   }
 
-  log('INFO', 'May 2026 event seed completed (idempotent)');
+  log('INFO', 'May 2026 event seed completed', { inserted, skipped, total: newEvents.length });
+  lastMay2026SeedResult = {
+    status: 'ok',
+    ran_at: new Date().toISOString(),
+    updates_attempted: existingUpdates.length,
+    inserts_attempted: newEvents.length,
+    inserts_done: inserted,
+    inserts_skipped_existing: skipped,
+    insert_errors: insertErrors
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1187,12 +1216,17 @@ function verifyToken(token) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    version: '18.0.0', 
+  res.json({
+    status: 'ok',
+    version: '18.0.0',
     timestamp: new Date().toISOString(),
     database: dbConnected ? 'connected' : 'disconnected'
   });
+});
+
+// Diagnostic (read-only): kết quả seed lịch tháng 5/2026 ở lần boot gần nhất.
+app.get('/api/debug/may2026-seed-status', (req, res) => {
+  res.json({ success: true, data: lastMay2026SeedResult });
 });
 
 app.get('/api/events', async (req, res) => {
