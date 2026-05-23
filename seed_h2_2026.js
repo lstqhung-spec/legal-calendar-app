@@ -931,6 +931,164 @@ const INDUSTRY_FNB_YTE = [
   }
 ];
 
+// ── Lô 4: Xây dựng (4) + BĐS (4) — chuyên ngành Pro 06-12/2026 ────────────
+const INDUSTRY_XAYDUNG_BDS = [
+  // ─── Xây dựng (industry='xay_dung') ─────────────────────────────────────
+  {
+    title: 'Báo cáo định kỳ tình hình triển khai dự án đầu tư xây dựng',
+    deadline: '2026-07-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'xay_dung',
+    frequency: 'quarterly',
+    priority: 'medium',
+    description: 'Chủ đầu tư báo cáo định kỳ tình hình triển khai dự án đầu tư xây dựng (tiến độ thi công, giải ngân, chất lượng, an toàn lao động) cho cơ quan quản lý nhà nước về xây dựng theo phân cấp.',
+    legal_basis: 'Điều 78 và Điều 153 Luật Xây dựng 50/2014/QH13 (sửa đổi bởi Luật 62/2020/QH14); Nghị định 06/2021/NĐ-CP về quản lý chất lượng, thi công xây dựng và bảo trì công trình xây dựng.',
+    penalty: 'Không báo cáo theo quy định: phạt 20-30 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 16/2022/NĐ-CP về xử phạt vi phạm trong lĩnh vực xây dựng. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp tiến độ thi công, giải ngân, chất lượng công trình trong kỳ',
+      'Đối chiếu với hợp đồng tư vấn giám sát và biên bản nghiệm thu giai đoạn',
+      'Lập báo cáo theo mẫu của Sở Xây dựng/Bộ Xây dựng (tùy phân cấp)',
+      'Nộp qua Cổng dịch vụ công của Bộ Xây dựng/Sở Xây dựng',
+      'Lưu hồ sơ kèm minh chứng phục vụ thanh tra'
+    ]
+  },
+  {
+    title: 'Bồi dưỡng nghiệp vụ giám sát thi công xây dựng định kỳ',
+    deadline: '2026-09-30',
+    category: 'labor',
+    scope: 'industry',
+    industry: 'xay_dung',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Cá nhân hành nghề giám sát thi công xây dựng phải tham gia bồi dưỡng nghiệp vụ định kỳ và sát hạch để duy trì/cấp lại chứng chỉ hành nghề. Đây là điều kiện duy trì năng lực HĐXD và phù hợp với cam kết trong hồ sơ năng lực tổ chức.',
+    legal_basis: 'Điều 148, 149 Luật Xây dựng 50/2014 (sửa đổi 62/2020); Nghị định 15/2021/NĐ-CP về quản lý dự án đầu tư XD (sửa đổi NĐ 35/2023/NĐ-CP); Thông tư của Bộ Xây dựng về sát hạch CCHN HĐXD.',
+    penalty: 'Hành nghề khi không đủ điều kiện hoặc chứng chỉ hết hạn: phạt 20-30 triệu (cá nhân) theo Điều 16 Nghị định 16/2022/NĐ-CP; tổ chức sử dụng bị xử phạt liên đới. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Rà soát danh sách cá nhân giám sát thi công đang hành nghề và hiệu lực CCHN',
+      'Đăng ký lớp bồi dưỡng tại cơ sở đào tạo được Bộ Xây dựng công nhận',
+      'Tham gia đầy đủ chương trình và đạt yêu cầu sát hạch',
+      'Cập nhật CCHN còn hiệu lực vào hồ sơ năng lực của tổ chức',
+      'Lưu chứng chỉ và quyết định công nhận năng lực cá nhân'
+    ]
+  },
+  {
+    title: 'Báo cáo công tác ATLĐ trên công trình xây dựng 6 tháng cuối năm 2026',
+    deadline: '2026-12-14',
+    category: 'safety',
+    scope: 'industry',
+    industry: 'xay_dung',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Nhà thầu thi công xây dựng phải tổ chức quản lý ATLĐ trong thi công xây dựng và báo cáo định kỳ kết quả thực hiện cho chủ đầu tư và cơ quan quản lý ATVSLĐ. Báo cáo 6 tháng cuối năm chốt số liệu từ 15/6 đến 14/12.',
+    legal_basis: 'Điều 6, Điều 7 Thông tư 04/2017/TT-BXD về quản lý ATLĐ trong thi công xây dựng; Luật ATVSLĐ 84/2015/QH13; Nghị định 39/2016/NĐ-CP.',
+    penalty: 'Không thực hiện báo cáo ATLĐ trong xây dựng: phạt 5-10 triệu đồng theo Nghị định 12/2022/NĐ-CP (lao động) và Nghị định 16/2022/NĐ-CP (xây dựng). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tập hợp biên bản kiểm tra ATLĐ, tai nạn lao động (nếu có) trên công trường trong kỳ',
+      'Đánh giá việc thực hiện kế hoạch ATLĐ của từng gói thầu',
+      'Lập báo cáo theo Mẫu của Thông tư 04/2017/TT-BXD',
+      'Gửi cho Chủ đầu tư, Sở Xây dựng và Sở Lao động (Sở Nội vụ sau hợp nhất)',
+      'Lưu hồ sơ ATLĐ tại văn phòng dự án trong suốt thời gian thi công và 5 năm sau khi hoàn thành'
+    ]
+  },
+  {
+    title: 'Báo cáo hoàn thành công trình & hồ sơ nghiệm thu đưa vào sử dụng',
+    deadline: '2026-11-30',
+    category: 'license',
+    scope: 'industry',
+    industry: 'xay_dung',
+    frequency: 'once',
+    priority: 'high',
+    description: 'Chủ đầu tư báo cáo hoàn thành công trình và lập hồ sơ nghiệm thu đưa vào sử dụng cho cơ quan chuyên môn về xây dựng. Hồ sơ là cơ sở pháp lý cho hoạt động sử dụng công trình, đăng ký quyền sở hữu, bàn giao. Mốc là minh hoạ theo tiến độ dự án.',
+    legal_basis: 'Điều 124 Luật Xây dựng 50/2014 (sửa đổi 62/2020); Điều 23, 24, 27 Nghị định 06/2021/NĐ-CP về quản lý chất lượng, thi công xây dựng và bảo trì công trình XD.',
+    penalty: 'Đưa công trình vào sử dụng khi chưa được nghiệm thu/chấp thuận: phạt 80-100 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Điều 18 Nghị định 16/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổ chức nghiệm thu hoàn thành công trình theo Điều 23 NĐ 06/2021/NĐ-CP',
+      'Lập hồ sơ hoàn thành công trình theo Phụ lục VI NĐ 06/2021/NĐ-CP',
+      'Gửi báo cáo hoàn thành công trình tới cơ quan chuyên môn về xây dựng đã thẩm định (Sở Xây dựng/Bộ Xây dựng theo phân cấp)',
+      'Chờ thông báo kết quả kiểm tra công tác nghiệm thu trong vòng 20 ngày làm việc',
+      'Lưu hồ sơ hoàn thành công trình tại chủ đầu tư và bàn giao bản sao cho cơ quan quản lý sử dụng'
+    ]
+  },
+  // ─── BĐS (industry='bds') ──────────────────────────────────────────────
+  {
+    title: 'Báo cáo định kỳ tình hình kinh doanh BĐS Q3/2026',
+    deadline: '2026-10-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'bds',
+    frequency: 'quarterly',
+    priority: 'high',
+    description: 'Doanh nghiệp kinh doanh BĐS và sàn giao dịch BĐS báo cáo định kỳ tình hình kinh doanh (số lượng giao dịch, giá trị, sản phẩm đưa vào kinh doanh) cho Sở Xây dựng theo Nghị định 96/2024.',
+    legal_basis: 'Điều 81 Luật Kinh doanh bất động sản 29/2023/QH15; Điều 26, 27 Nghị định 96/2024/NĐ-CP hướng dẫn Luật KDBĐS.',
+    penalty: 'Không báo cáo hoặc báo cáo không đúng: phạt 100-160 triệu (tổ chức) theo Điều 60 Nghị định 16/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp số lượng giao dịch BĐS đã thực hiện trong quý 3 (qua sàn hoặc trực tiếp)',
+      'Tổng hợp danh sách BĐS đưa vào kinh doanh, đã giao dịch, còn tồn trong kỳ',
+      'Lập báo cáo theo Mẫu tại Nghị định 96/2024/NĐ-CP',
+      'Gửi Sở Xây dựng nơi có dự án/sàn hoạt động',
+      'Lưu báo cáo và cập nhật vào Hệ thống thông tin về nhà ở và thị trường BĐS quốc gia'
+    ]
+  },
+  {
+    title: 'Niêm yết, công khai thông tin BĐS đưa vào kinh doanh',
+    deadline: '2026-08-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'bds',
+    frequency: 'once',
+    priority: 'high',
+    description: 'Trước khi đưa BĐS vào kinh doanh, chủ đầu tư phải công khai đầy đủ thông tin về BĐS theo quy định: pháp lý, quy hoạch, tiến độ, giá bán/cho thuê, biện pháp bảo đảm. Mốc là minh hoạ — thực hiện trước mỗi lần mở bán/mở cho thuê.',
+    legal_basis: 'Điều 6 Luật Kinh doanh BĐS 29/2023/QH15; Điều 4 Nghị định 96/2024/NĐ-CP.',
+    penalty: 'Không công khai thông tin hoặc công khai không đúng: phạt 100-200 triệu (tổ chức) theo Điều 58 Nghị định 16/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Chuẩn bị bộ thông tin công khai: GCN ĐKĐT, GCN QSDĐ, văn bản chấp thuận chủ trương, quy hoạch 1/500',
+      'Công bố thông tin trên website doanh nghiệp; niêm yết tại trụ sở và sàn GDBĐS',
+      'Gửi thông tin để cập nhật trên Hệ thống thông tin về nhà ở và thị trường BĐS quốc gia (Bộ Xây dựng)',
+      'Cập nhật ngay khi có thay đổi về pháp lý, tiến độ, giá',
+      'Lưu hồ sơ công khai phục vụ thanh tra và giải quyết tranh chấp'
+    ]
+  },
+  {
+    title: 'Báo cáo hoạt động năm của sàn giao dịch BĐS 2026',
+    deadline: '2026-12-20',
+    category: 'report',
+    scope: 'industry',
+    industry: 'bds',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Sàn giao dịch BĐS báo cáo tổng kết hoạt động năm: số lượng môi giới hành nghề tại sàn, số lượng giao dịch qua sàn, doanh thu hoa hồng, sản phẩm BĐS đã giao dịch.',
+    legal_basis: 'Điều 56-58 Luật Kinh doanh BĐS 29/2023/QH15; Điều 26 Nghị định 96/2024/NĐ-CP.',
+    penalty: 'Không báo cáo: phạt 100-160 triệu (tổ chức) theo Điều 60 Nghị định 16/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp danh sách môi giới hành nghề tại sàn cuối kỳ',
+      'Tổng hợp giao dịch qua sàn (số lượng, giá trị, loại BĐS)',
+      'Lập báo cáo năm theo Mẫu Nghị định 96/2024/NĐ-CP',
+      'Gửi Sở Xây dựng nơi đặt trụ sở chính của sàn',
+      'Cập nhật thông tin lên Hệ thống thông tin về nhà ở và thị trường BĐS quốc gia'
+    ]
+  },
+  {
+    title: 'Cập nhật dữ liệu lên Hệ thống TTQG về nhà ở & thị trường BĐS',
+    deadline: '2026-12-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'bds',
+    frequency: 'quarterly',
+    priority: 'medium',
+    description: 'Tổ chức, cá nhân kinh doanh BĐS có trách nhiệm cung cấp thông tin về dự án/sản phẩm BĐS đưa vào kinh doanh để cập nhật lên Hệ thống thông tin quốc gia về nhà ở và thị trường BĐS do Bộ Xây dựng quản lý.',
+    legal_basis: 'Điều 71-74 Luật Kinh doanh BĐS 29/2023/QH15; Điều 19-25 Nghị định 96/2024/NĐ-CP; Nghị định 44/2022/NĐ-CP về xây dựng, quản lý và sử dụng Hệ thống thông tin về nhà ở và thị trường BĐS.',
+    penalty: 'Không cung cấp/cập nhật thông tin: phạt 60-100 triệu (tổ chức) theo Điều 60 Nghị định 16/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Đăng ký tài khoản trên Hệ thống thông tin về nhà ở và thị trường BĐS quốc gia',
+      'Cập nhật thông tin dự án: pháp lý, quy hoạch, tiến độ, sản phẩm đưa ra thị trường',
+      'Báo cáo định kỳ giao dịch BĐS qua sàn/trực tiếp',
+      'Cập nhật chỉ số giá BĐS, lượng giao dịch theo yêu cầu của Sở Xây dựng',
+      'Lưu xác nhận cập nhật và biên nhận điện tử'
+    ]
+  }
+];
+
 // ── Lô 2: Sự kiện pháp lý — Luật/NĐ có hiệu lực trong H2/2026 ─────────────
 // Mỗi mục có nguồn chính thống (thuvienphapluat.vn / chinhphu.vn / luatvietnam).
 // applies_to để mặc định 'business' khớp pattern các seed khác.
@@ -1045,7 +1203,8 @@ async function seedBackfillStepsHalf2026(client, log) {
   const allInserts = [
     ...NEW_INSERTS.map(e => ({ ...e, _batch: 'lo1_general' })),
     ...LEGAL_MILESTONES.map(e => ({ ...e, _batch: 'lo2_legal_milestone', applies_to: 'all' })),
-    ...INDUSTRY_FNB_YTE.map(e => ({ ...e, _batch: 'lo3_fnb_yte' }))
+    ...INDUSTRY_FNB_YTE.map(e => ({ ...e, _batch: 'lo3_fnb_yte' })),
+    ...INDUSTRY_XAYDUNG_BDS.map(e => ({ ...e, _batch: 'lo4_xaydung_bds' }))
   ];
 
   let inserted = 0;
