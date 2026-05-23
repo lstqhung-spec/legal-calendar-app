@@ -1583,6 +1583,242 @@ const INDUSTRY_IT_TC_DVPL = [
   }
 ];
 
+// ── Lô 8: Bán lẻ (3) + Du lịch (3) + Giáo dục (3) + Khác (3) ─────────────
+const INDUSTRY_BANLE_DULICH_GD_KHAC = [
+  // ─── Bán lẻ (industry='ban_le') ───────────────────────────────────────
+  {
+    title: 'Thông báo chương trình khuyến mại trước khi thực hiện',
+    deadline: '2026-09-01',
+    category: 'license',
+    scope: 'industry',
+    industry: 'ban_le',
+    frequency: 'once',
+    priority: 'medium',
+    description: 'Thương nhân thực hiện khuyến mại theo các hình thức bốc thăm trúng thưởng, tích điểm, giảm giá, tặng hàng phải thông báo/đăng ký với Sở Công Thương trước khi thực hiện ít nhất 03 ngày làm việc. Mốc minh hoạ — thực hiện theo từng chương trình.',
+    legal_basis: 'Điều 17 Luật Thương mại 36/2005/QH11; Điều 19-21 Nghị định 81/2018/NĐ-CP về hoạt động xúc tiến thương mại (sửa đổi NĐ 17/2020).',
+    penalty: 'Khuyến mại không thông báo/không đăng ký: phạt 10-30 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 98/2020/NĐ-CP (sửa đổi NĐ 17/2022). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Xác định hình thức khuyến mại: thông báo (giảm giá, tặng hàng) hay đăng ký (bốc thăm trúng thưởng)',
+      'Chuẩn bị hồ sơ theo NĐ 81/2018: nội dung, thời gian, địa bàn, sản phẩm KM, giải thưởng',
+      'Nộp tại Sở Công Thương (KM trong tỉnh) hoặc Cục Xúc tiến TM (KM nhiều tỉnh) qua Cổng DVC',
+      'Đối với KM bốc thăm: chờ văn bản chấp thuận trước khi triển khai',
+      'Sau KM: lưu sổ trao thưởng, biên bản trao giải; nộp phần thưởng không có người nhận vào NSNN (nếu áp dụng)'
+    ]
+  },
+  {
+    title: 'Báo cáo kết quả thực hiện khuyến mại',
+    deadline: '2026-10-31',
+    category: 'report',
+    scope: 'industry',
+    industry: 'ban_le',
+    frequency: 'once',
+    priority: 'medium',
+    description: 'Thương nhân thực hiện chương trình khuyến mại bốc thăm trúng thưởng phải báo cáo kết quả thực hiện cho cơ quan đã tiếp nhận đăng ký trong vòng 45 ngày kể từ ngày kết thúc chương trình. Mốc minh hoạ — theo từng chương trình.',
+    legal_basis: 'Điều 22 Nghị định 81/2018/NĐ-CP về hoạt động xúc tiến thương mại (sửa đổi NĐ 17/2020/NĐ-CP).',
+    penalty: 'Không báo cáo hoặc báo cáo không đúng: phạt 10-30 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 98/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp danh sách người trúng thưởng, giá trị giải thưởng đã trao',
+      'Lập báo cáo kết quả khuyến mại theo Mẫu Phụ lục NĐ 81/2018',
+      'Nộp 50% giá trị giải thưởng không có người trúng/không nhận giải vào NSNN',
+      'Gửi báo cáo cho cơ quan đã tiếp nhận đăng ký trong 45 ngày kể từ ngày kết thúc',
+      'Lưu hồ sơ trao giải, biên bản và biên nhận nộp NSNN'
+    ]
+  },
+  {
+    title: 'Báo cáo định kỳ hoạt động thương mại điện tử (DN có website/ứng dụng TMĐT)',
+    deadline: '2026-12-31',
+    category: 'report',
+    scope: 'industry',
+    industry: 'ban_le',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Thương nhân, tổ chức cung cấp dịch vụ TMĐT (sàn TMĐT, website bán hàng có chức năng đặt hàng trực tuyến…) báo cáo định kỳ hoạt động cho Bộ Công Thương: số lượng giao dịch, doanh thu, biện pháp bảo vệ quyền lợi NTD.',
+    legal_basis: 'Nghị định 52/2013/NĐ-CP về TMĐT (sửa đổi Nghị định 85/2021/NĐ-CP); hướng dẫn của Cục TMĐT và Kinh tế số.',
+    penalty: 'Không báo cáo: phạt 10-20 triệu (tổ chức) theo Nghị định 98/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp số lượng giao dịch, doanh thu, sản phẩm vi phạm bị xử lý trong năm',
+      'Đối chiếu với dữ liệu trên hệ thống TMĐT của doanh nghiệp',
+      'Lập báo cáo theo Mẫu của Cục TMĐT và Kinh tế số',
+      'Nộp qua Cổng thông tin quản lý hoạt động TMĐT (online.gov.vn) của Bộ Công Thương',
+      'Lưu báo cáo và biên nhận điện tử'
+    ]
+  },
+  // ─── Du lịch (industry='du_lich') ─────────────────────────────────────
+  {
+    title: 'Báo cáo định kỳ hoạt động kinh doanh dịch vụ lữ hành Q3/2026',
+    deadline: '2026-10-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'du_lich',
+    frequency: 'quarterly',
+    priority: 'medium',
+    description: 'DN kinh doanh dịch vụ lữ hành báo cáo định kỳ hoạt động cho Sở Du lịch/Sở VHTTDL: số khách phục vụ, doanh thu, ký quỹ, hợp đồng tour, khiếu nại của khách (nếu có).',
+    legal_basis: 'Điều 73 Luật Du lịch 09/2017/QH14; Điều 18 Nghị định 168/2017/NĐ-CP về thi hành Luật Du lịch (sửa đổi NĐ 142/2018/NĐ-CP).',
+    penalty: 'Không báo cáo: phạt 5-10 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 45/2019/NĐ-CP về XPHC trong lĩnh vực du lịch. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp số khách phục vụ trong quý (chia theo nội địa, quốc tế inbound, outbound)',
+      'Tổng hợp doanh thu, hoa hồng đại lý, tình hình ký quỹ',
+      'Lập báo cáo theo Mẫu của Sở Du lịch/Sở VHTTDL',
+      'Gửi qua Cổng dịch vụ công của Sở Du lịch/Sở VHTTDL',
+      'Lưu báo cáo và sổ theo dõi tour, khách hàng'
+    ]
+  },
+  {
+    title: 'Bồi dưỡng cập nhật nghiệp vụ hướng dẫn viên du lịch (3 năm/lần)',
+    deadline: '2026-11-30',
+    category: 'labor',
+    scope: 'industry',
+    industry: 'du_lich',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Hướng dẫn viên du lịch phải tham gia khoá bồi dưỡng nghiệp vụ định kỳ 03 năm/lần để duy trì hiệu lực thẻ HDV. Tổ chức rà soát cuối năm để đăng ký cho HDV cần bồi dưỡng.',
+    legal_basis: 'Điều 59 Luật Du lịch 09/2017/QH14; Điều 13-14 Nghị định 168/2017/NĐ-CP về thi hành Luật Du lịch; Thông tư 06/2017/TT-BVHTTDL.',
+    penalty: 'HDV không có GCN bồi dưỡng nghiệp vụ định kỳ bị thu hồi thẻ; tổ chức sử dụng HDV không đủ điều kiện bị xử phạt theo Nghị định 45/2019/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Rà soát danh sách HDV của tổ chức và hiệu lực GCN bồi dưỡng',
+      'Đăng ký khoá bồi dưỡng tại trường/cơ sở đào tạo được Bộ VHTTDL công nhận',
+      'HDV tham gia đủ chương trình và đạt yêu cầu kiểm tra',
+      'Nhận Giấy chứng nhận bồi dưỡng nghiệp vụ HDV (hiệu lực 03 năm)',
+      'Lưu vào hồ sơ HDV và xuất trình khi cấp/gia hạn thẻ HDV'
+    ]
+  },
+  {
+    title: 'Báo cáo thống kê du lịch định kỳ tháng/quý cho cơ quan quản lý',
+    deadline: '2026-11-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'du_lich',
+    frequency: 'monthly',
+    priority: 'medium',
+    description: 'Cơ sở lưu trú du lịch, doanh nghiệp lữ hành, doanh nghiệp vận chuyển khách du lịch báo cáo thống kê định kỳ về lượng khách, ngày khách, doanh thu cho Sở Du lịch/VHTTDL phục vụ thống kê ngành.',
+    legal_basis: 'Điều 73 Luật Du lịch 09/2017/QH14; Luật Thống kê 89/2015/QH13 (sửa đổi 01/2021/QH15); hướng dẫn của Tổng cục Du lịch (Cục Du lịch quốc gia) về chế độ báo cáo thống kê du lịch.',
+    penalty: 'Không cung cấp số liệu thống kê: phạt 10-20 triệu (tổ chức) theo Nghị định 95/2016/NĐ-CP (sửa đổi NĐ 100/2021/NĐ-CP) về xử phạt VPHC trong thống kê. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp lượt khách lưu trú/sử dụng dịch vụ, doanh thu, ngày khách trong kỳ',
+      'Cập nhật vào hệ thống thống kê du lịch quốc gia (https://thongkedulich.vn) hoặc Sở DL/VHTTDL',
+      'Đối chiếu với hồ sơ đăng ký tạm trú khách (cơ sở lưu trú)',
+      'Lập báo cáo theo Mẫu của Tổng cục Du lịch',
+      'Lưu báo cáo và xác nhận đã gửi'
+    ]
+  },
+  // ─── Giáo dục (industry='giao_duc') ───────────────────────────────────
+  {
+    title: 'Tổng kết năm học 2025-2026 & báo cáo cho cơ quan quản lý GD',
+    deadline: '2026-08-31',
+    category: 'report',
+    scope: 'industry',
+    industry: 'giao_duc',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Cơ sở giáo dục (mầm non, phổ thông, GDNN, ĐH, trung tâm) tổng kết năm học 2025-2026, lập báo cáo các chỉ tiêu: số lượng học sinh/sinh viên, tỷ lệ tốt nghiệp, kết quả thi, đội ngũ giáo viên, kết quả công khai cam kết chất lượng GD.',
+    legal_basis: 'Luật Giáo dục 43/2019/QH14; Điều lệ trường mầm non/phổ thông/GDNN/ĐH; Quy chế công khai cơ sở giáo dục của Bộ GDĐT.',
+    penalty: 'Không báo cáo: xử lý theo quy định nội bộ ngành; vi phạm chế độ thống kê bị xử phạt theo Nghị định 95/2016/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp chỉ tiêu cuối năm học: số HS/SV, lên lớp, lưu ban, tốt nghiệp',
+      'Đánh giá kết quả thực hiện kế hoạch năm học và Quy chế công khai',
+      'Lập báo cáo theo hướng dẫn của Sở/Phòng GDĐT',
+      'Gửi qua Hệ thống cơ sở dữ liệu ngành GD (https://csdl.moet.gov.vn) hoặc văn bản',
+      'Lưu báo cáo và công khai trên website cơ sở giáo dục'
+    ]
+  },
+  {
+    title: 'Báo cáo đầu năm học 2026-2027 với Sở/Phòng GDĐT',
+    deadline: '2026-09-30',
+    category: 'report',
+    scope: 'industry',
+    industry: 'giao_duc',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Cơ sở giáo dục báo cáo đầu năm học 2026-2027: số lớp, sĩ số, đội ngũ giáo viên, cơ sở vật chất, kế hoạch giáo dục năm học, học phí.',
+    legal_basis: 'Luật Giáo dục 43/2019/QH14; Điều lệ trường mầm non/phổ thông/GDNN/ĐH; văn bản hướng dẫn nhiệm vụ năm học của Bộ GDĐT.',
+    penalty: 'Không báo cáo: ảnh hưởng đến phê duyệt kế hoạch năm học và phân bổ ngân sách (đối với công lập); vi phạm chế độ thống kê theo Nghị định 95/2016/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp số lớp, sĩ số HS/SV đầu năm học',
+      'Cập nhật danh sách giáo viên, nhân viên và bằng cấp tương ứng',
+      'Lập kế hoạch giáo dục năm học, kế hoạch thu-chi',
+      'Gửi báo cáo cho Sở/Phòng GDĐT qua hệ thống quản lý của ngành',
+      'Công khai kế hoạch và học phí trên website cơ sở giáo dục'
+    ]
+  },
+  {
+    title: 'Đánh giá, xếp loại giáo viên cuối năm học theo chuẩn nghề nghiệp',
+    deadline: '2026-08-25',
+    category: 'labor',
+    scope: 'industry',
+    industry: 'giao_duc',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Cơ sở giáo dục tổ chức đánh giá, xếp loại giáo viên cuối năm học theo Chuẩn nghề nghiệp giáo viên do Bộ GDĐT ban hành. Kết quả là cơ sở cho công tác bồi dưỡng, sử dụng và đãi ngộ.',
+    legal_basis: 'Luật Giáo dục 43/2019/QH14; Thông tư 20/2018/TT-BGDĐT (Chuẩn nghề nghiệp GV mầm non), TT 14/2018/TT-BGDĐT (GV phổ thông), TT 21/2017/TT-BGDĐT (GV trung tâm GDTX) và các văn bản cập nhật.',
+    penalty: 'Không thực hiện đánh giá: ảnh hưởng đến phê duyệt thi đua khen thưởng, lương, thăng hạng; vi phạm chế độ quản lý cán bộ. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Phổ biến quy trình đánh giá cho giáo viên đầu kỳ',
+      'Giáo viên tự đánh giá theo 5 tiêu chuẩn của Chuẩn nghề nghiệp',
+      'Tổ chuyên môn nhận xét, đánh giá đồng nghiệp',
+      'Hiệu trưởng/lãnh đạo cơ sở xếp loại cuối cùng',
+      'Lưu kết quả đánh giá vào hồ sơ giáo viên; báo cáo Sở/Phòng GDĐT'
+    ]
+  },
+  // ─── Khác (industry='khac') ──────────────────────────────────────────
+  {
+    title: 'Cập nhật thông tin đăng ký doanh nghiệp khi có thay đổi',
+    deadline: '2026-12-31',
+    category: 'license',
+    scope: 'industry',
+    industry: 'khac',
+    frequency: 'once',
+    priority: 'high',
+    description: 'Khi có thay đổi nội dung đăng ký DN (tên, địa chỉ, vốn, người đại diện theo PL, ngành nghề, cổ đông sáng lập), DN phải đăng ký thay đổi với Phòng Đăng ký kinh doanh trong 10 ngày. Mốc minh hoạ — thực hiện theo từng lần thay đổi.',
+    legal_basis: 'Điều 30 Luật Doanh nghiệp 59/2020/QH14 (sửa đổi 76/2025/QH15); Nghị định 01/2021/NĐ-CP về đăng ký doanh nghiệp.',
+    penalty: 'Đăng ký chậm 1-30 ngày: phạt 3-5 triệu; quá 30 ngày: phạt 10-15 triệu; không đăng ký: 20-30 triệu theo Nghị định 122/2021/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập danh sách thay đổi (kèm Quyết định/Biên bản họp HĐTV/ĐHĐCĐ tương ứng)',
+      'Chuẩn bị hồ sơ thay đổi theo từng nội dung (Nghị định 01/2021)',
+      'Nộp qua Cổng thông tin quốc gia về đăng ký doanh nghiệp (https://dangkykinhdoanh.gov.vn) trong 10 ngày làm việc',
+      'Đóng lệ phí và nhận GCN ĐKDN mới',
+      'Cập nhật thông tin tại cơ quan thuế, ngân hàng, BHXH và các bên liên quan'
+    ]
+  },
+  {
+    title: 'Kiểm toán độc lập báo cáo tài chính năm 2026 (DN thuộc diện)',
+    deadline: '2026-12-30',
+    category: 'report',
+    scope: 'industry',
+    industry: 'khac',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'DN có vốn ĐTNN, DN niêm yết, công ty đại chúng, TCTD, công ty bảo hiểm, DN nhà nước và DN khác thuộc diện phải kiểm toán độc lập BCTC năm. Cuối năm cần ký hợp đồng kiểm toán và bàn giao sổ sách.',
+    legal_basis: 'Điều 37 Luật Kiểm toán độc lập 67/2011/QH12; Nghị định 17/2012/NĐ-CP về kiểm toán độc lập; Thông tư 39/2011/TT-BTC.',
+    penalty: 'DN thuộc diện kiểm toán bắt buộc mà không kiểm toán: phạt 20-30 triệu theo Nghị định 41/2018/NĐ-CP (sửa đổi NĐ 102/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Xác định DN có thuộc diện kiểm toán bắt buộc hay không (theo Đ.37 Luật KTĐL)',
+      'Ký hợp đồng kiểm toán với DN kiểm toán đủ điều kiện (có trong Danh sách của Bộ Tài chính/UBCKNN)',
+      'Khóa sổ kế toán cuối năm và chuẩn bị bộ chứng từ cho kiểm toán viên',
+      'Hợp tác cung cấp tài liệu, giải trình trong quá trình kiểm toán',
+      'Nhận Báo cáo kiểm toán; nộp BCTC đã kiểm toán cho cơ quan thuế trước 31/3/2027 và các bên liên quan'
+    ]
+  },
+  {
+    title: 'Rà soát, gia hạn các giấy phép con của doanh nghiệp',
+    deadline: '2026-12-15',
+    category: 'license',
+    scope: 'industry',
+    industry: 'khac',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Cuối năm là thời điểm hợp lý để doanh nghiệp rà soát toàn bộ giấy phép con đang sử dụng (ATTP, ANTT, ATVSLĐ, PCCC, môi trường, lao động nước ngoài, GP con ngành nghề…), lập kế hoạch gia hạn các GP sắp hết hạn trong năm sau để tránh gián đoạn hoạt động.',
+    legal_basis: 'Luật Doanh nghiệp 59/2020/QH14; Luật Đầu tư 61/2020/QH14; các Luật chuyên ngành tương ứng và NĐ 31/2021/NĐ-CP về hướng dẫn thi hành Luật ĐT.',
+    penalty: 'Hoạt động không có GP còn hiệu lực: xử phạt theo NĐ chuyên ngành tương ứng; có thể bị đình chỉ hoạt động, truy thu lợi nhuận bất hợp pháp. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập danh mục toàn bộ giấy phép con của DN: số GP, ngày cấp, ngày hết hạn, cơ quan cấp',
+      'Lọc các GP sắp hết hạn trong 6 tháng tới',
+      'Phân công bộ phận chịu trách nhiệm chuẩn bị hồ sơ gia hạn',
+      'Lập kế hoạch nộp hồ sơ trước hạn ≥ 60 ngày để bảo đảm có GP mới khi GP cũ hết hạn',
+      'Cập nhật danh mục sau mỗi lần gia hạn và lưu vào hồ sơ pháp lý của DN'
+    ]
+  }
+];
+
 // ── Lô 2: Sự kiện pháp lý — Luật/NĐ có hiệu lực trong H2/2026 ─────────────
 // Mỗi mục có nguồn chính thống (thuvienphapluat.vn / chinhphu.vn / luatvietnam).
 // applies_to để mặc định 'business' khớp pattern các seed khác.
@@ -1701,7 +1937,8 @@ async function seedBackfillStepsHalf2026(client, log) {
     ...INDUSTRY_XAYDUNG_BDS.map(e => ({ ...e, _batch: 'lo4_xaydung_bds' })),
     ...INDUSTRY_XNK_LOGISTIC.map(e => ({ ...e, _batch: 'lo5_xnk_logistic' })),
     ...INDUSTRY_SANXUAT_NANGLUONG.map(e => ({ ...e, _batch: 'lo6_sx_nl' })),
-    ...INDUSTRY_IT_TC_DVPL.map(e => ({ ...e, _batch: 'lo7_it_tc_dvpl' }))
+    ...INDUSTRY_IT_TC_DVPL.map(e => ({ ...e, _batch: 'lo7_it_tc_dvpl' })),
+    ...INDUSTRY_BANLE_DULICH_GD_KHAC.map(e => ({ ...e, _batch: 'lo8_bl_dl_gd_khac' }))
   ];
 
   let inserted = 0;
