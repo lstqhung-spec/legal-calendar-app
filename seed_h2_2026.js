@@ -1405,6 +1405,184 @@ const INDUSTRY_SANXUAT_NANGLUONG = [
   }
 ];
 
+// ── Lô 7: IT (3) + Tài chính (3) + Dịch vụ pháp lý (3) ────────────────────
+const INDUSTRY_IT_TC_DVPL = [
+  // ─── IT (industry='it') ────────────────────────────────────────────────
+  {
+    title: 'Đánh giá tác động xử lý dữ liệu cá nhân (DPIA) định kỳ',
+    deadline: '2026-10-15',
+    category: 'license',
+    scope: 'industry',
+    industry: 'it',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Tổ chức xử lý dữ liệu cá nhân phải lập và lưu giữ Hồ sơ đánh giá tác động xử lý DLCN (DPIA — Data Processing Impact Assessment), Hồ sơ đánh giá tác động chuyển DLCN ra nước ngoài. Cập nhật khi có thay đổi hoặc định kỳ theo quy định của Bộ Công an.',
+    legal_basis: 'Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15 (hiệu lực 01/01/2026); Điều 24, 25 Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân.',
+    penalty: 'Không lập DPIA hoặc không cung cấp khi cơ quan có thẩm quyền yêu cầu: phạt theo quy định mới của NĐ xử phạt VPHC trong lĩnh vực BVDLCN. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập danh mục hoạt động xử lý DLCN tại doanh nghiệp',
+      'Đánh giá rủi ro: loại DLCN, mục đích, biện pháp bảo vệ, nguy cơ rò rỉ',
+      'Lập Hồ sơ DPIA theo Mẫu Phụ lục Nghị định 13/2023/NĐ-CP',
+      'Gửi Cục An ninh mạng và phòng chống tội phạm sử dụng công nghệ cao (A05) — Bộ Công an trong 60 ngày kể từ khi bắt đầu xử lý DLCN',
+      'Cập nhật DPIA khi có thay đổi hoạt động xử lý hoặc bổ sung loại DLCN nhạy cảm'
+    ]
+  },
+  {
+    title: 'Phê duyệt cấp độ và phương án bảo đảm ATTT hệ thống thông tin',
+    deadline: '2026-09-30',
+    category: 'safety',
+    scope: 'industry',
+    industry: 'it',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Chủ quản hệ thống thông tin (HTTT) phải phân loại HTTT theo cấp độ 1-5 và lập phương án bảo đảm ATTT theo cấp độ, được cơ quan có thẩm quyền phê duyệt. Định kỳ rà soát, cập nhật cấp độ và phương án.',
+    legal_basis: 'Điều 21 Luật An toàn thông tin mạng 86/2015/QH13; Nghị định 85/2016/NĐ-CP về bảo đảm ATTT theo cấp độ; Thông tư 12/2022/TT-BTTTT.',
+    penalty: 'Không phân loại cấp độ hoặc không bảo đảm ATTT theo cấp độ: phạt 30-50 triệu (tổ chức) theo Nghị định 15/2020/NĐ-CP (sửa đổi NĐ 14/2022/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Phân loại HTTT theo Phụ lục Nghị định 85/2016/NĐ-CP (cấp độ 1-5 dựa trên mức độ quan trọng)',
+      'Lập Hồ sơ đề xuất cấp độ ATTT cho từng HTTT',
+      'Trình phê duyệt: cấp 1-3 do DN tự phê duyệt; cấp 4-5 cần Bộ TT&KH (sau hợp nhất) phê duyệt',
+      'Triển khai phương án ATTT theo cấp độ đã phê duyệt (kiểm soát truy cập, mã hóa, sao lưu, giám sát)',
+      'Rà soát và cập nhật định kỳ ít nhất 1 năm/lần'
+    ]
+  },
+  {
+    title: 'Báo cáo định kỳ hoạt động dịch vụ MXH/TTĐT/game (NĐ 147/2024)',
+    deadline: '2026-12-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'it',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'DN cung cấp dịch vụ mạng xã hội, trang thông tin điện tử tổng hợp, dịch vụ trò chơi điện tử trên mạng (G1/G2/G3/G4) báo cáo định kỳ hoạt động cho cơ quan quản lý: số tài khoản, lượng truy cập, biện pháp xử lý nội dung vi phạm.',
+    legal_basis: 'Nghị định 147/2024/NĐ-CP về quản lý, cung cấp, sử dụng dịch vụ Internet và thông tin trên mạng (thay thế NĐ 72/2013/NĐ-CP).',
+    penalty: 'Không báo cáo hoặc báo cáo không đúng: phạt 10-30 triệu (tổ chức) theo Nghị định 147/2024 và Nghị định 15/2020 (sửa đổi 14/2022). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp số tài khoản đăng ký, tài khoản hoạt động, lượng truy cập, doanh thu trong kỳ',
+      'Tổng hợp các trường hợp xử lý nội dung vi phạm (gỡ bỏ, khóa tài khoản)',
+      'Lập báo cáo theo Mẫu của Cục PTTH&TTĐT/Sở TT&TT',
+      'Gửi báo cáo qua Cổng dịch vụ công của Bộ TT&TT (Bộ KH&CN sau hợp nhất) hoặc Sở TT&TT theo phân cấp',
+      'Lưu báo cáo và xác nhận hoàn thành định danh người dùng (nếu yêu cầu)'
+    ]
+  },
+  // ─── Tài chính (industry='tai_chinh') ──────────────────────────────────
+  {
+    title: 'Báo cáo phòng chống rửa tiền (AML) định kỳ Q3/2026',
+    deadline: '2026-10-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'tai_chinh',
+    frequency: 'quarterly',
+    priority: 'high',
+    description: 'Đối tượng báo cáo (TCTD, công ty chứng khoán, công ty bảo hiểm, kinh doanh trò chơi có thưởng, sàn vàng, môi giới BĐS…) thực hiện báo cáo giao dịch lớn, giao dịch đáng ngờ và báo cáo định kỳ cho Cục Phòng chống rửa tiền (NHNN).',
+    legal_basis: 'Điều 25-26 Luật Phòng chống rửa tiền 14/2022/QH15; Nghị định 19/2023/NĐ-CP; Thông tư 09/2023/TT-NHNN.',
+    penalty: 'Không báo cáo giao dịch đáng ngờ/lớn: phạt 30-50 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 88/2019/NĐ-CP (sửa đổi NĐ 143/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp giao dịch giá trị lớn (≥ 400tr đồng/ngày) và giao dịch chuyển tiền điện tử quốc tế trong kỳ',
+      'Rà soát phát hiện giao dịch đáng ngờ theo tiêu chí của Cục Phòng chống rửa tiền',
+      'Lập báo cáo điện tử qua hệ thống AMLIS (NHNN)',
+      'Lưu hồ sơ giao dịch và biện pháp nhận biết khách hàng (KYC) trong tối thiểu 5 năm',
+      'Tổ chức đào tạo nội bộ về PCRT định kỳ cho nhân viên'
+    ]
+  },
+  {
+    title: 'Báo cáo tình hình hoạt động định kỳ với NHNN (TCTD, CTTC, công ty cho thuê TC)',
+    deadline: '2026-12-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'tai_chinh',
+    frequency: 'monthly',
+    priority: 'high',
+    description: 'Tổ chức tín dụng, công ty tài chính, công ty cho thuê tài chính, văn phòng đại diện TCTD nước ngoài thực hiện báo cáo định kỳ về tình hình tài chính, hoạt động, an toàn vốn cho Ngân hàng Nhà nước theo chế độ báo cáo thống kê ngành Ngân hàng.',
+    legal_basis: 'Luật Các tổ chức tín dụng 32/2024/QH15; Thông tư 35/2015/TT-NHNN (sửa đổi bởi các văn bản cập nhật) về chế độ báo cáo thống kê ngành Ngân hàng.',
+    penalty: 'Không báo cáo hoặc báo cáo không trung thực: phạt 30-50 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 88/2019/NĐ-CP. Có thể bị áp dụng biện pháp xử lý của NHNN. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp số liệu hoạt động theo Phụ lục chế độ báo cáo thống kê ngành Ngân hàng',
+      'Đối chiếu với hệ thống core banking và sổ kế toán',
+      'Gửi báo cáo qua hệ thống báo cáo thống kê của NHNN (BCTC + chỉ tiêu giám sát an toàn)',
+      'Lưu báo cáo, giải trình các chỉ tiêu bất thường',
+      'Bổ sung hồ sơ khi NHNN yêu cầu giám sát đặc biệt'
+    ]
+  },
+  {
+    title: 'Cập nhật và báo cáo dữ liệu cho Trung tâm Thông tin tín dụng (CIC)',
+    deadline: '2026-11-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'tai_chinh',
+    frequency: 'monthly',
+    priority: 'high',
+    description: 'Tổ chức tín dụng, chi nhánh ngân hàng nước ngoài, công ty tài chính, tổ chức được phép hoạt động tín dụng phải cung cấp thông tin tín dụng của khách hàng cho Trung tâm Thông tin tín dụng quốc gia (CIC) định kỳ và đột xuất.',
+    legal_basis: 'Luật Các tổ chức tín dụng 32/2024/QH15; Thông tư 03/2013/TT-NHNN về hoạt động thông tin tín dụng của NHNN (sửa đổi bởi các văn bản cập nhật); hướng dẫn vận hành của CIC.',
+    penalty: 'Không cung cấp/cung cấp sai thông tin cho CIC: phạt 20-40 triệu (tổ chức) theo Nghị định 88/2019/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp dư nợ, lịch sử thanh toán, phân loại nhóm nợ của khách hàng trong kỳ',
+      'Đối chiếu với hệ thống core banking và phân loại nợ theo TT 11/2021/TT-NHNN',
+      'Truyền dữ liệu qua hệ thống của CIC (https://cic.gov.vn) theo định dạng quy định',
+      'Xử lý phản hồi/khiếu nại thông tin tín dụng từ khách hàng',
+      'Lưu nhật ký truyền dữ liệu và biên nhận xác nhận của CIC'
+    ]
+  },
+  // ─── Dịch vụ pháp lý (industry='dich_vu_pl') ──────────────────────────
+  {
+    title: 'Báo cáo tổ chức và hoạt động hành nghề luật sư năm 2026',
+    deadline: '2026-12-30',
+    category: 'report',
+    scope: 'industry',
+    industry: 'dich_vu_pl',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Tổ chức hành nghề luật sư (văn phòng luật sư, công ty luật) báo cáo định kỳ năm về tổ chức và hoạt động cho Sở Tư pháp nơi đăng ký hoạt động và Đoàn Luật sư địa phương: nhân sự, vụ việc đã thực hiện, doanh thu, kiến nghị.',
+    legal_basis: 'Điều 41 Luật Luật sư 65/2006/QH11 (sửa đổi 20/2012/QH13); Thông tư 03/2024/TT-BTP về hướng dẫn Luật Luật sư.',
+    penalty: 'Không báo cáo: phạt 5-10 triệu (tổ chức) theo Nghị định 82/2020/NĐ-CP về XPHC trong lĩnh vực bổ trợ tư pháp. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp danh sách luật sư đang hành nghề tại tổ chức cuối năm',
+      'Tổng hợp số vụ việc đã thực hiện theo loại (tư vấn, tranh tụng, đại diện ngoài tố tụng)',
+      'Tổng hợp doanh thu, nghĩa vụ nộp ngân sách',
+      'Lập báo cáo theo Mẫu của Thông tư 03/2024/TT-BTP',
+      'Gửi Sở Tư pháp + Đoàn Luật sư và lưu bản sao tại tổ chức'
+    ]
+  },
+  {
+    title: 'Mua, duy trì bảo hiểm trách nhiệm nghề nghiệp luật sư',
+    deadline: '2026-11-30',
+    category: 'license',
+    scope: 'industry',
+    industry: 'dich_vu_pl',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Tổ chức hành nghề luật sư phải mua bảo hiểm trách nhiệm nghề nghiệp cho luật sư của tổ chức mình theo quy định. Duy trì hiệu lực liên tục để bảo đảm bồi thường khi luật sư gây thiệt hại trong hành nghề.',
+    legal_basis: 'Điều 40 Luật Luật sư 65/2006/QH11 (sửa đổi 20/2012/QH13); Thông tư 17/2011/TT-BTP về hướng dẫn bảo hiểm trách nhiệm nghề nghiệp luật sư.',
+    penalty: 'Không mua/duy trì BHTNNN: phạt 5-10 triệu (tổ chức) theo Nghị định 82/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Rà soát hợp đồng BHTNNN hiện hữu và hạn hiệu lực',
+      'Chọn DN bảo hiểm có sản phẩm BHTNNN luật sư phù hợp (mức TNDS, phạm vi loại trừ)',
+      'Ký hợp đồng và đóng phí bảo hiểm trước khi HĐ cũ hết hạn',
+      'Thông báo danh sách luật sư được bảo hiểm cho DN bảo hiểm khi có biến động',
+      'Lưu hợp đồng và chứng từ đóng phí trong hồ sơ pháp lý tổ chức'
+    ]
+  },
+  {
+    title: 'Cập nhật danh sách luật sư hành nghề tại Đoàn Luật sư',
+    deadline: '2026-09-30',
+    category: 'license',
+    scope: 'industry',
+    industry: 'dich_vu_pl',
+    frequency: 'once',
+    priority: 'medium',
+    description: 'Khi có biến động (luật sư mới gia nhập/rời tổ chức, chuyển Đoàn LS, thay đổi nội dung CCHN), tổ chức hành nghề luật sư phải cập nhật danh sách với Đoàn Luật sư và Sở Tư pháp trong thời hạn quy định.',
+    legal_basis: 'Điều 23, 24 Luật Luật sư 65/2006/QH11 (sửa đổi 20/2012/QH13); Điều lệ Đoàn Luật sư địa phương.',
+    penalty: 'Không thông báo biến động hoặc cập nhật chậm: phạt 1-3 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 82/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp danh sách luật sư có biến động trong kỳ',
+      'Cập nhật hồ sơ luật sư: quyết định bổ nhiệm, hợp đồng lao động, CCHN còn hiệu lực',
+      'Gửi văn bản thông báo cho Đoàn Luật sư trong vòng 07 ngày kể từ khi có biến động',
+      'Đồng thời gửi Sở Tư pháp đối với thay đổi nội dung đăng ký hoạt động',
+      'Cập nhật vào sổ theo dõi luật sư tại tổ chức'
+    ]
+  }
+];
+
 // ── Lô 2: Sự kiện pháp lý — Luật/NĐ có hiệu lực trong H2/2026 ─────────────
 // Mỗi mục có nguồn chính thống (thuvienphapluat.vn / chinhphu.vn / luatvietnam).
 // applies_to để mặc định 'business' khớp pattern các seed khác.
@@ -1522,7 +1700,8 @@ async function seedBackfillStepsHalf2026(client, log) {
     ...INDUSTRY_FNB_YTE.map(e => ({ ...e, _batch: 'lo3_fnb_yte' })),
     ...INDUSTRY_XAYDUNG_BDS.map(e => ({ ...e, _batch: 'lo4_xaydung_bds' })),
     ...INDUSTRY_XNK_LOGISTIC.map(e => ({ ...e, _batch: 'lo5_xnk_logistic' })),
-    ...INDUSTRY_SANXUAT_NANGLUONG.map(e => ({ ...e, _batch: 'lo6_sx_nl' }))
+    ...INDUSTRY_SANXUAT_NANGLUONG.map(e => ({ ...e, _batch: 'lo6_sx_nl' })),
+    ...INDUSTRY_IT_TC_DVPL.map(e => ({ ...e, _batch: 'lo7_it_tc_dvpl' }))
   ];
 
   let inserted = 0;
