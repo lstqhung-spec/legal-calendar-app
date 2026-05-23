@@ -735,6 +735,202 @@ const NEW_INSERTS = [
   }
 ];
 
+// ── Lô 3: F&B (5) + Y tế (5) — chuyên ngành Pro 06-12/2026 ───────────────
+const INDUSTRY_FNB_YTE = [
+  // ─── F&B (industry='fnb') ──────────────────────────────────────────────
+  {
+    title: 'Khám sức khỏe định kỳ kỳ 2/2026 cho nhân viên trực tiếp chế biến TP',
+    deadline: '2026-11-13',
+    category: 'safety',
+    scope: 'industry',
+    industry: 'fnb',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Người trực tiếp sản xuất, chế biến, kinh doanh thực phẩm phải được khám sức khỏe định kỳ ít nhất 01 lần/năm; giấy khám sức khỏe có hiệu lực 12 tháng. Đợt khám đầu năm thường vào tháng 5; đợt khám cuối năm phục vụ gia hạn giấy khám sức khỏe sang năm 2027.',
+    legal_basis: 'Điều 5 và Phụ lục 1 Thông tư 14/2013/TT-BYT về khám sức khỏe; Điều 36 Luật An toàn thực phẩm 55/2010/QH12; Điều 5 Nghị định 15/2018/NĐ-CP.',
+    penalty: 'Sử dụng người không có giấy khám sức khỏe hoặc giấy đã hết hạn: phạt tiền 1-3 triệu đồng (cá nhân) hoặc gấp 2 lần (tổ chức) theo Điều 9 Nghị định 115/2018/NĐ-CP (sửa đổi Nghị định 124/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Cập nhật danh sách nhân viên trực tiếp tiếp xúc thực phẩm cần khám sức khỏe',
+      'Liên hệ cơ sở y tế đủ điều kiện theo Thông tư 14/2013/TT-BYT (Trung tâm Y tế cấp huyện trở lên)',
+      'Tổ chức khám đầy đủ các nội dung: tổng quát, xét nghiệm phát hiện tả, lỵ, thương hàn, viêm gan A, E, lao, viêm da nhiễm khuẩn',
+      'Lưu giấy khám sức khỏe (hiệu lực 12 tháng) vào hồ sơ pháp lý của cơ sở',
+      'Bố trí nhân viên không đạt yêu cầu sang vị trí khác phù hợp'
+    ]
+  },
+  {
+    title: 'Tập huấn kiến thức ATTP đợt cuối năm 2026 cho nhân viên F&B',
+    deadline: '2026-12-15',
+    category: 'safety',
+    scope: 'industry',
+    industry: 'fnb',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Chủ cơ sở và người trực tiếp sản xuất, chế biến, kinh doanh thực phẩm phải được tập huấn và có giấy xác nhận kiến thức an toàn thực phẩm. Tổ chức tập huấn nội bộ hoặc thuê đơn vị đủ điều kiện trước khi kết thúc năm để chuẩn bị cho năm 2027.',
+    legal_basis: 'Điều 36 Luật An toàn thực phẩm 55/2010/QH12; Điều 5 Nghị định 15/2018/NĐ-CP; văn bản hướng dẫn của Bộ Y tế/Bộ Công Thương/Bộ NN&PTNT theo từng ngành hàng.',
+    penalty: 'Sử dụng người không có giấy xác nhận kiến thức ATTP: phạt tiền 1-3 triệu đồng (cá nhân) hoặc gấp 2 lần (tổ chức) theo Điều 9 Nghị định 115/2018/NĐ-CP (sửa đổi Nghị định 124/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập danh sách nhân viên cần tập huấn (chủ cơ sở, nhân viên chế biến, phục vụ trực tiếp)',
+      'Tổ chức lớp tập huấn nội bộ theo tài liệu chuẩn của Bộ Y tế (hoặc thuê đơn vị đủ điều kiện)',
+      'Tổ chức đánh giá, cấp giấy xác nhận kiến thức ATTP cho người đạt yêu cầu',
+      'Lưu hồ sơ tập huấn (danh sách, bài giảng, bài thi, giấy xác nhận) tại cơ sở',
+      'Cập nhật vào hồ sơ pháp lý của cơ sở phục vụ kiểm tra'
+    ]
+  },
+  {
+    title: 'Đăng ký bản công bố sản phẩm thực phẩm (TPCN, TP đặc biệt, TP cho trẻ <36 tháng)',
+    deadline: '2026-09-15',
+    category: 'license',
+    scope: 'industry',
+    industry: 'fnb',
+    frequency: 'once',
+    priority: 'high',
+    description: 'Tổ chức, cá nhân sản xuất, kinh doanh thực phẩm bảo vệ sức khỏe (TPCN), thực phẩm dinh dưỡng y học, thực phẩm dùng cho chế độ ăn đặc biệt và sản phẩm dinh dưỡng cho trẻ đến 36 tháng tuổi phải đăng ký bản công bố sản phẩm trước khi đưa ra thị trường. Mốc trong app là minh hoạ — thực hiện trước mỗi lần ra sản phẩm mới hoặc thay đổi công thức.',
+    legal_basis: 'Điều 6, 7, 8 Nghị định 15/2018/NĐ-CP về thi hành Luật ATTP; Thông tư 43/2014/TT-BYT về quản lý thực phẩm chức năng (và các văn bản thay thế).',
+    penalty: 'Kinh doanh sản phẩm thuộc diện phải đăng ký công bố mà không thực hiện: phạt từ 50-100 triệu (tổ chức) theo Điều 22 Nghị định 115/2018/NĐ-CP (sửa đổi Nghị định 124/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Chuẩn bị hồ sơ: bản công bố sản phẩm, phiếu kết quả kiểm nghiệm trong 12 tháng, mẫu nhãn, tài liệu khoa học chứng minh công dụng (đối với TPCN)',
+      'Nộp hồ sơ trực tuyến tại Cục An toàn thực phẩm (Bộ Y tế) qua hệ thống VFA (https://congbosanpham.vfa.gov.vn) — với TPCN, TP đặc biệt, TP cho trẻ <36 tháng',
+      'Nộp tại Sở Y tế/Sở Công Thương/Sở NN&PTNT với các loại thực phẩm khác (tùy phân cấp)',
+      'Theo dõi tình trạng thẩm định và nhận Giấy tiếp nhận đăng ký bản công bố sản phẩm',
+      'Sản phẩm chỉ được lưu hành sau khi có Giấy tiếp nhận; lưu hồ sơ trong tối thiểu 02 năm sau khi hết hạn sản phẩm'
+    ]
+  },
+  {
+    title: 'Tự công bố sản phẩm thực phẩm thường (đối với SP mới hoặc thay đổi)',
+    deadline: '2026-10-15',
+    category: 'license',
+    scope: 'industry',
+    industry: 'fnb',
+    frequency: 'once',
+    priority: 'medium',
+    description: 'Tổ chức, cá nhân sản xuất, kinh doanh thực phẩm đã qua chế biến bao gói sẵn, phụ gia thực phẩm, chất hỗ trợ chế biến TP, dụng cụ chứa đựng TP, bao bì TP… thực hiện tự công bố sản phẩm. Đây là thủ tục đơn giản hơn đăng ký bản công bố, áp dụng cho phần lớn sản phẩm thực phẩm thông thường.',
+    legal_basis: 'Điều 4, 5 Nghị định 15/2018/NĐ-CP; sửa đổi bởi Nghị định 124/2021/NĐ-CP.',
+    penalty: 'Không thực hiện tự công bố hoặc tự công bố không đúng: phạt từ 20-50 triệu đồng (tổ chức) theo Điều 20 Nghị định 115/2018/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Chuẩn bị hồ sơ: bản tự công bố sản phẩm (Mẫu 01 Phụ lục I NĐ 15/2018), kết quả kiểm nghiệm trong 12 tháng',
+      'Niêm yết hồ sơ tự công bố trên trang thông tin điện tử của doanh nghiệp (nếu có) hoặc công khai tại trụ sở',
+      'Nộp bản tự công bố cho cơ quan quản lý nhà nước có thẩm quyền (Sở Y tế/Sở Công Thương/Sở NN&PTNT) hoặc qua Cổng DVC',
+      'Sản phẩm được phép lưu thông ngay sau khi tự công bố và lưu hồ sơ',
+      'Lưu hồ sơ kiểm nghiệm định kỳ (tối thiểu 12 tháng/lần) cho mỗi sản phẩm'
+    ]
+  },
+  {
+    title: 'Báo cáo định kỳ kết quả kiểm nghiệm sản phẩm (cơ sở SX thực phẩm)',
+    deadline: '2026-12-25',
+    category: 'report',
+    scope: 'industry',
+    industry: 'fnb',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Cơ sở sản xuất thực phẩm thực hiện kiểm nghiệm định kỳ các chỉ tiêu an toàn (vi sinh, kim loại nặng, dư lượng…) theo công bố sản phẩm. Tổng hợp và lưu kết quả phục vụ truy xuất, hậu kiểm; báo cáo cơ quan quản lý khi được yêu cầu.',
+    legal_basis: 'Điều 45 Luật ATTP 55/2010/QH12; Điều 4 Nghị định 15/2018/NĐ-CP; Thông tư 19/2012/TT-BYT về thử nghiệm thực phẩm.',
+    penalty: 'Không thực hiện kiểm nghiệm định kỳ hoặc kết quả không đạt yêu cầu: phạt tiền và đình chỉ lưu hành theo Nghị định 115/2018/NĐ-CP (sửa đổi 124/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập kế hoạch kiểm nghiệm định kỳ theo công bố sản phẩm và quy chuẩn áp dụng',
+      'Gửi mẫu đến phòng thử nghiệm được Bộ Y tế chỉ định (danh sách trên http://vinacontrol.com.vn hoặc trang Cục ATTP)',
+      'Lưu phiếu kết quả kiểm nghiệm cùng hồ sơ công bố sản phẩm',
+      'Lập báo cáo nội bộ; gửi cho cơ quan quản lý khi được yêu cầu',
+      'Xử lý lô sản phẩm không đạt theo quy trình thu hồi/tiêu huỷ'
+    ]
+  },
+  // ─── Y tế (industry='y_te') ────────────────────────────────────────────
+  {
+    title: 'Hoàn thành nghĩa vụ đào tạo CME (cập nhật kiến thức y khoa) năm 2026',
+    deadline: '2026-12-31',
+    category: 'labor',
+    scope: 'industry',
+    industry: 'y_te',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Người hành nghề khám bệnh, chữa bệnh (bác sĩ, y sĩ, điều dưỡng, hộ sinh, kỹ thuật viên…) phải hoàn thành tối thiểu 48 giờ CME/chu kỳ 2 năm và 120 giờ/5 năm liên tục. Đây là điều kiện bắt buộc để gia hạn giấy phép hành nghề theo Luật KCB 15/2023/QH15. Cơ sở KCB rà soát và tổ chức đào tạo cho người hành nghề trước cuối năm.',
+    legal_basis: 'Điều 22 và Điều 32 Luật Khám bệnh, chữa bệnh 15/2023/QH15; Thông tư 32/2023/TT-BYT về cập nhật kiến thức y khoa liên tục; Nghị định 96/2023/NĐ-CP.',
+    penalty: 'Người hành nghề không hoàn thành CME bị thu hồi giấy phép hành nghề; cơ sở sử dụng người không đủ điều kiện hành nghề bị xử phạt theo Nghị định 117/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Rà soát tổng giờ CME đã tích lũy của từng người hành nghề tại cơ sở trong chu kỳ 2 năm hiện tại',
+      'Đăng ký các khóa CME của cơ sở đào tạo được Bộ Y tế công nhận (trường Y, BV hạng I, hội nghề nghiệp…)',
+      'Bảo đảm mỗi người đạt tối thiểu 48 giờ/2 năm; ưu tiên các chủ đề chuyên môn phù hợp phạm vi hành nghề',
+      'Lưu Giấy chứng nhận hoàn thành CME vào hồ sơ hành nghề cá nhân',
+      'Tổng hợp báo cáo của cơ sở về số giờ CME đã hoàn thành; gửi Sở Y tế khi được yêu cầu'
+    ]
+  },
+  {
+    title: 'Báo cáo tình hình sử dụng thuốc gây nghiện, hướng thần, tiền chất quý 3/2026',
+    deadline: '2026-10-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'y_te',
+    frequency: 'quarterly',
+    priority: 'high',
+    description: 'Cơ sở khám chữa bệnh, cơ sở bán lẻ/bán buôn thuốc có sử dụng/kinh doanh thuốc gây nghiện, thuốc hướng thần, thuốc tiền chất phải báo cáo định kỳ hàng quý tình hình xuất-nhập-tồn cho cơ quan quản lý dược.',
+    legal_basis: 'Điều 39 Luật Dược 105/2016/QH13 (sửa đổi Luật 44/2024/QH15); Điều 47 và Phụ lục Thông tư 20/2017/TT-BYT về quản lý thuốc gây nghiện, hướng thần và tiền chất dùng làm thuốc.',
+    penalty: 'Báo cáo không đúng/không đầy đủ: phạt 10-30 triệu (tổ chức); vi phạm nghiêm trọng có thể bị thu hồi GCN đủ ĐK kinh doanh dược theo Nghị định 117/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp số liệu nhập-xuất-tồn thuốc gây nghiện/hướng thần/tiền chất trong quý 3 (tháng 7-9)',
+      'Đối chiếu với chứng từ xuất nhập, đơn thuốc đã thực hiện',
+      'Lập báo cáo theo Mẫu của Thông tư 20/2017/TT-BYT',
+      'Gửi Sở Y tế (đối với cơ sở khám chữa bệnh, bán lẻ) hoặc Cục Quản lý Dược (đối với cơ sở bán buôn, SX, NK)',
+      'Lưu báo cáo và biên nhận tại cơ sở phục vụ kiểm tra'
+    ]
+  },
+  {
+    title: 'Kiểm định, hiệu chuẩn trang thiết bị y tế loại B, C, D định kỳ',
+    deadline: '2026-11-30',
+    category: 'safety',
+    scope: 'industry',
+    industry: 'y_te',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Cơ sở y tế sử dụng trang thiết bị y tế (đặc biệt loại B, C, D — máy X-quang, CT, MRI, máy thở, máy gây mê, máy chạy thận…) phải kiểm định/hiệu chuẩn định kỳ theo tài liệu kỹ thuật của nhà sản xuất và quy định của Bộ Y tế. Mốc minh hoạ — chu kỳ tùy thiết bị (thường 1-2 năm).',
+    legal_basis: 'Điều 56 Nghị định 98/2021/NĐ-CP về quản lý trang thiết bị y tế (sửa đổi NĐ 07/2023/NĐ-CP); Thông tư của Bộ Y tế về kiểm định/hiệu chuẩn TBYT.',
+    penalty: 'Sử dụng TBYT không được kiểm định/hiệu chuẩn theo quy định: phạt 5-15 triệu (cá nhân) hoặc gấp 2 lần (tổ chức); có thể đình chỉ sử dụng thiết bị theo Nghị định 117/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập danh mục TBYT loại B, C, D đang sử dụng kèm chu kỳ kiểm định/hiệu chuẩn',
+      'Ký hợp đồng với tổ chức kiểm định/hiệu chuẩn được Bộ Y tế công nhận hoặc Tổng cục TCĐLCL chỉ định',
+      'Tổ chức kiểm định trước khi hết hiệu lực Giấy chứng nhận trước đó',
+      'Dán tem kiểm định; lưu Giấy chứng nhận kết quả kiểm định/hiệu chuẩn vào lý lịch thiết bị',
+      'Ngừng sử dụng thiết bị không đạt yêu cầu cho đến khi khắc phục và kiểm định lại'
+    ]
+  },
+  {
+    title: 'Báo cáo phản ứng có hại của thuốc (ADR) định kỳ Q3/2026',
+    deadline: '2026-10-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'y_te',
+    frequency: 'quarterly',
+    priority: 'medium',
+    description: 'Cơ sở khám chữa bệnh, cơ sở kinh doanh dược thực hiện báo cáo phản ứng có hại của thuốc (ADR — Adverse Drug Reaction) định kỳ và đột xuất (với ADR nghiêm trọng) cho Trung tâm DI&ADR Quốc gia/Khu vực.',
+    legal_basis: 'Điều 78 Luật Dược 105/2016/QH13; Thông tư 23/2011/TT-BYT về hướng dẫn cảnh giác dược (và các văn bản thay thế); hướng dẫn của Trung tâm DI&ADR Quốc gia.',
+    penalty: 'Không báo cáo ADR theo quy định: phạt từ 5-15 triệu đồng theo Nghị định 117/2020/NĐ-CP về xử phạt vi phạm hành chính trong lĩnh vực y tế. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tập hợp tất cả phiếu báo cáo ADR đã ghi nhận tại cơ sở trong quý 3 (tháng 7-9)',
+      'Phân loại ADR theo mức độ nghiêm trọng (nghiêm trọng — báo cáo trong vòng 24h-15 ngày tùy mức độ)',
+      'Báo cáo trực tuyến qua hệ thống của Trung tâm DI&ADR Quốc gia (http://canhgiacduoc.org.vn)',
+      'Lưu bản sao báo cáo và hồ sơ bệnh án liên quan',
+      'Tổ chức bình ADR nội bộ và đào tạo nhân viên y tế về cảnh giác dược'
+    ]
+  },
+  {
+    title: 'Tự đánh giá chất lượng bệnh viện theo Bộ tiêu chí (cuối năm 2026)',
+    deadline: '2026-12-30',
+    category: 'report',
+    scope: 'industry',
+    industry: 'y_te',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Bệnh viện thực hiện tự đánh giá chất lượng theo Bộ tiêu chí chất lượng bệnh viện do Bộ Y tế ban hành. Kết quả là cơ sở để Sở Y tế phúc tra, xếp hạng bệnh viện và phục vụ thanh toán BHYT.',
+    legal_basis: 'Thông tư 19/2013/TT-BYT về quản lý chất lượng bệnh viện; Quyết định 6858/QĐ-BYT năm 2016 (Bộ tiêu chí chất lượng bệnh viện phiên bản 2.0) và các văn bản cập nhật của Cục Quản lý KCB.',
+    penalty: 'Không thực hiện đánh giá chất lượng có thể ảnh hưởng đến xếp hạng, phê duyệt thanh toán BHYT; vi phạm nghiêm trọng bị xử lý theo Nghị định 117/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Thành lập đoàn tự đánh giá nội bộ với sự tham gia của các phòng/khoa',
+      'Thu thập minh chứng theo từng tiêu chí trong Bộ tiêu chí chất lượng bệnh viện',
+      'Chấm điểm và xác định mức đạt theo từng tiêu chí',
+      'Lập báo cáo kết quả tự đánh giá; gửi Sở Y tế và Cục Quản lý KCB (Bộ Y tế)',
+      'Lập kế hoạch cải tiến chất lượng cho các tiêu chí chưa đạt'
+    ]
+  }
+];
+
 // ── Lô 2: Sự kiện pháp lý — Luật/NĐ có hiệu lực trong H2/2026 ─────────────
 // Mỗi mục có nguồn chính thống (thuvienphapluat.vn / chinhphu.vn / luatvietnam).
 // applies_to để mặc định 'business' khớp pattern các seed khác.
@@ -848,7 +1044,8 @@ async function seedBackfillStepsHalf2026(client, log) {
   // ── Phần 2: INSERT các nghĩa vụ chung CÒN THIẾU (Lô 1) + Sự kiện pháp lý (Lô 2) ──
   const allInserts = [
     ...NEW_INSERTS.map(e => ({ ...e, _batch: 'lo1_general' })),
-    ...LEGAL_MILESTONES.map(e => ({ ...e, _batch: 'lo2_legal_milestone', applies_to: 'all' }))
+    ...LEGAL_MILESTONES.map(e => ({ ...e, _batch: 'lo2_legal_milestone', applies_to: 'all' })),
+    ...INDUSTRY_FNB_YTE.map(e => ({ ...e, _batch: 'lo3_fnb_yte' }))
   ];
 
   let inserted = 0;
