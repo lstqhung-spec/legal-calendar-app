@@ -10,6 +10,7 @@ const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { seedBackfillStepsHalf2026, getLastBackfillH2_2026Result } = require('./seed_h2_2026');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FIREBASE ADMIN - Push Notifications via FCM
@@ -541,6 +542,9 @@ async function initDatabase() {
 
     // Seed lịch tháng 5/2026 — bổ sung steps cho các event hiện có + thêm event lấp ngày trống
     await seedMay2026Events(client);
+
+    // Lô 0 — backfill "Hướng dẫn thực hiện" cho lịch 06-12/2026 (idempotent, UPDATE-only)
+    await seedBackfillStepsHalf2026(client, log);
 
     log('INFO', 'Database initialized successfully');
   } finally {
@@ -1227,6 +1231,11 @@ app.get('/api/health', (req, res) => {
 // Diagnostic (read-only): kết quả seed lịch tháng 5/2026 ở lần boot gần nhất.
 app.get('/api/debug/may2026-seed-status', (req, res) => {
   res.json({ success: true, data: lastMay2026SeedResult });
+});
+
+// Diagnostic (read-only): kết quả backfill steps cho lịch 06-12/2026 ở lần boot gần nhất.
+app.get('/api/debug/backfill-h2-2026-status', (req, res) => {
+  res.json({ success: true, data: getLastBackfillH2_2026Result() });
 });
 
 app.get('/api/events', async (req, res) => {
