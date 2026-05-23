@@ -1247,6 +1247,164 @@ const INDUSTRY_XNK_LOGISTIC = [
   }
 ];
 
+// ── Lô 6: Sản xuất (4) + Năng lượng (4) ──────────────────────────────────
+const INDUSTRY_SANXUAT_NANGLUONG = [
+  // ─── Sản xuất (industry='san_xuat') ────────────────────────────────────
+  {
+    title: 'Báo cáo quản lý chất thải nguy hại Q3/2026 (chủ nguồn thải)',
+    deadline: '2026-10-15',
+    category: 'environment',
+    scope: 'industry',
+    industry: 'san_xuat',
+    frequency: 'quarterly',
+    priority: 'high',
+    description: 'Chủ nguồn thải chất thải nguy hại (CTNH) trong lĩnh vực sản xuất tổng hợp khối lượng phát sinh, chuyển giao và xử lý trong quý 3 để báo cáo cơ quan quản lý môi trường địa phương.',
+    legal_basis: 'Điều 71 Luật Bảo vệ môi trường 72/2020/QH14; Thông tư 02/2022/TT-BTNMT (sửa đổi Thông tư 07/2025/TT-BTNMT) quy định chi tiết thi hành Luật BVMT.',
+    penalty: 'Báo cáo không đầy đủ/không kịp thời: phạt 10-20 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 45/2022/NĐ-CP về xử phạt VPHC trong lĩnh vực BVMT. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp khối lượng CTNH phát sinh theo từng mã CTNH trong quý 3',
+      'Đối chiếu chứng từ chuyển giao với đơn vị xử lý CTNH có giấy phép',
+      'Lập báo cáo theo Mẫu Phụ lục III Thông tư 02/2022/TT-BTNMT',
+      'Gửi báo cáo cho Sở Tài nguyên & Môi trường địa phương qua Hệ thống thông tin EMC hoặc văn bản',
+      'Lưu hồ sơ và chứng từ chuyển giao CTNH trong tối thiểu 5 năm'
+    ]
+  },
+  {
+    title: 'Huấn luyện an toàn hóa chất định kỳ',
+    deadline: '2026-09-30',
+    category: 'safety',
+    scope: 'industry',
+    industry: 'san_xuat',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Cơ sở hoạt động hoá chất (sản xuất, kinh doanh, sử dụng) phải tổ chức huấn luyện an toàn hóa chất cho người trực tiếp tiếp xúc và quản lý hóa chất; huấn luyện lần đầu và huấn luyện định kỳ ít nhất 02 năm/lần.',
+    legal_basis: 'Điều 32 Luật Hóa chất 06/2007/QH12; Điều 31 Nghị định 113/2017/NĐ-CP (sửa đổi NĐ 82/2022); Thông tư 36/2014/TT-BCT về huấn luyện an toàn hóa chất.',
+    penalty: 'Không tổ chức huấn luyện ATHC: phạt 12-20 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 71/2019/NĐ-CP (sửa đổi NĐ 17/2022/NĐ-CP) về XPHC trong lĩnh vực hóa chất. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập danh sách người làm việc trực tiếp với hóa chất, người quản lý, người chỉ huy sản xuất',
+      'Ký hợp đồng với tổ chức huấn luyện ATHC được Bộ Công Thương cấp Giấy xác nhận',
+      'Tổ chức huấn luyện và kiểm tra theo nội dung tại TT 36/2014/TT-BCT',
+      'Cấp Giấy chứng nhận hoàn thành huấn luyện cho người đạt yêu cầu',
+      'Lưu hồ sơ huấn luyện và cập nhật hồ sơ ATHC của cơ sở'
+    ]
+  },
+  {
+    title: 'Công bố hợp chuẩn/hợp quy sản phẩm sản xuất',
+    deadline: '2026-09-15',
+    category: 'license',
+    scope: 'industry',
+    industry: 'san_xuat',
+    frequency: 'once',
+    priority: 'medium',
+    description: 'Sản phẩm thuộc danh mục hàng hóa nhóm 2 (có khả năng gây mất an toàn) phải được chứng nhận và công bố hợp quy trước khi đưa ra thị trường. Sản phẩm thuộc nhóm 1 có thể tự nguyện chứng nhận hợp chuẩn. Mốc minh hoạ — thực hiện theo từng sản phẩm.',
+    legal_basis: 'Điều 12 Luật Tiêu chuẩn và quy chuẩn kỹ thuật 68/2006/QH11; Luật Chất lượng sản phẩm hàng hóa 05/2007/QH12; Thông tư 28/2012/TT-BKHCN (sửa đổi TT 02/2017/TT-BKHCN) về công bố hợp chuẩn, hợp quy.',
+    penalty: 'Sản phẩm thuộc diện phải công bố hợp quy mà chưa công bố: phạt 30-50 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 119/2017/NĐ-CP (sửa đổi NĐ 126/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tra cứu QCVN áp dụng và danh mục hàng hóa nhóm 2 do các Bộ ban hành',
+      'Lựa chọn tổ chức chứng nhận hợp quy (được Bộ chỉ định) và lấy mẫu thử nghiệm',
+      'Nhận Giấy chứng nhận hợp quy và lập bản công bố hợp quy (Mẫu 2 TT 28/2012)',
+      'Đăng ký bản công bố tại Cơ quan chuyên ngành tiếp nhận (Sở/Cục theo lĩnh vực)',
+      'Gắn dấu hợp quy (CR) lên sản phẩm và lưu hồ sơ tối thiểu 3 năm'
+    ]
+  },
+  {
+    title: 'Báo cáo công tác BVMT năm 2026 (cơ sở sản xuất, kinh doanh, dịch vụ)',
+    deadline: '2026-12-30',
+    category: 'environment',
+    scope: 'industry',
+    industry: 'san_xuat',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Cơ sở sản xuất, kinh doanh, dịch vụ thuộc đối tượng có Giấy phép môi trường/đăng ký môi trường phải tổng hợp và báo cáo công tác BVMT năm 2026: xả thải, chất thải, sự cố, kết quả quan trắc và biện pháp khắc phục. Hạn nộp chính thức trước 15/01/2027 nhưng nên hoàn thành dự thảo cuối năm.',
+    legal_basis: 'Điều 119 Luật Bảo vệ môi trường 72/2020/QH14; Điều 66 Thông tư 02/2022/TT-BTNMT (sửa đổi bởi điểm a khoản 19 Điều 1 Thông tư 07/2025/TT-BTNMT).',
+    penalty: 'Không lập/báo cáo công tác BVMT: phạt 10-20 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 45/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp dữ liệu năm: lượng nguyên liệu sử dụng, lượng chất thải phát sinh (rắn, lỏng, khí, CTNH)',
+      'Tổng hợp kết quả quan trắc môi trường định kỳ trong năm',
+      'Lập báo cáo theo Mẫu Phụ lục VI Thông tư 02/2022/TT-BTNMT',
+      'Gửi qua Hệ thống thông tin EMC của Bộ TN&MT cho Sở TN&MT/Bộ TN&MT theo phân cấp trước 15/01/2027',
+      'Lưu báo cáo và minh chứng quan trắc, chuyển giao chất thải'
+    ]
+  },
+  // ─── Năng lượng (industry='nang_luong') ────────────────────────────────
+  {
+    title: 'Báo cáo tình hình sử dụng năng lượng năm 2026 (cơ sở sử dụng NL trọng điểm)',
+    deadline: '2026-12-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'nang_luong',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Cơ sở sử dụng năng lượng trọng điểm (theo Quyết định công bố hằng năm của Thủ tướng) báo cáo tổng hợp tình hình sử dụng năng lượng năm: nhiên liệu, điện, các giải pháp tiết kiệm năng lượng đã thực hiện.',
+    legal_basis: 'Điều 33 Luật Sử dụng năng lượng tiết kiệm và hiệu quả 50/2010/QH12; Điều 6-7 Nghị định 21/2011/NĐ-CP (sửa đổi NĐ 32/2018/NĐ-CP).',
+    penalty: 'Không báo cáo: phạt 10-20 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 17/2022/NĐ-CP (sửa đổi NĐ 71/2019). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp dữ liệu tiêu thụ NL theo từng loại (điện, than, dầu, gas, sinh khối) trong năm',
+      'Tính tổng quy đổi tiêu thụ NL ra tấn dầu tương đương (TOE)',
+      'Tổng hợp các giải pháp tiết kiệm NL đã thực hiện và kết quả',
+      'Lập báo cáo theo Mẫu Phụ lục Nghị định 21/2011/NĐ-CP',
+      'Gửi Sở Công Thương (DN có TOE ≥ 1000 thì gửi cả Bộ Công Thương) qua hệ thống dữ liệu năng lượng'
+    ]
+  },
+  {
+    title: 'Bổ nhiệm và đào tạo cán bộ quản lý năng lượng',
+    deadline: '2026-09-30',
+    category: 'labor',
+    scope: 'industry',
+    industry: 'nang_luong',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Cơ sở sử dụng năng lượng trọng điểm phải bổ nhiệm người quản lý năng lượng và đào tạo đạt yêu cầu theo quy định. Đào tạo và sát hạch cấp chứng chỉ quản lý năng lượng do Bộ Công Thương tổ chức.',
+    legal_basis: 'Điều 35 Luật Sử dụng năng lượng tiết kiệm và hiệu quả 50/2010/QH12; Điều 7 Nghị định 21/2011/NĐ-CP; Thông tư 09/2012/TT-BCT về đào tạo, cấp chứng chỉ quản lý năng lượng.',
+    penalty: 'Không bổ nhiệm/đào tạo người QL năng lượng: phạt 10-20 triệu (tổ chức) theo Nghị định 17/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Rà soát danh sách người quản lý năng lượng đang công tác và hiệu lực chứng chỉ',
+      'Đăng ký lớp đào tạo người quản lý năng lượng tại đơn vị được Bộ Công Thương công nhận',
+      'Cá nhân tham gia đầy đủ chương trình và đạt yêu cầu sát hạch của Bộ Công Thương',
+      'Nhận chứng chỉ quản lý năng lượng và bổ nhiệm chính thức',
+      'Cập nhật quyết định bổ nhiệm vào hồ sơ với Sở Công Thương'
+    ]
+  },
+  {
+    title: 'Kê khai dán nhãn năng lượng cho sản phẩm sản xuất/nhập khẩu',
+    deadline: '2026-11-30',
+    category: 'license',
+    scope: 'industry',
+    industry: 'nang_luong',
+    frequency: 'once',
+    priority: 'medium',
+    description: 'Phương tiện, thiết bị thuộc Danh mục dán nhãn năng lượng bắt buộc (đèn LED, điều hòa, tủ lạnh, máy giặt, nồi cơm điện, động cơ điện…) phải được dán nhãn năng lượng trước khi đưa ra thị trường. Mốc là minh hoạ — thực hiện theo lô.',
+    legal_basis: 'Điều 39 Luật Sử dụng năng lượng tiết kiệm và hiệu quả 50/2010/QH12; Quyết định 14/2017/QĐ-TTg (Danh mục); Thông tư 36/2016/TT-BCT về dán nhãn năng lượng (sửa đổi TT 24/2024/TT-BCT).',
+    penalty: 'Đưa ra thị trường sản phẩm thuộc danh mục mà không dán nhãn: phạt 50-70 triệu (tổ chức) theo Nghị định 17/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Đối chiếu sản phẩm với Danh mục dán nhãn năng lượng bắt buộc (QĐ 14/2017/QĐ-TTg và cập nhật)',
+      'Gửi mẫu đến phòng thử nghiệm hiệu suất NL được Bộ Công Thương chỉ định',
+      'Nộp hồ sơ kê khai dán nhãn năng lượng tại Bộ Công Thương (qua Cổng DVC)',
+      'In và dán nhãn năng lượng đúng mẫu lên sản phẩm/bao bì',
+      'Lưu hồ sơ kê khai và kết quả thử nghiệm hiệu suất'
+    ]
+  },
+  {
+    title: 'Báo cáo định kỳ tiêu thụ năng lượng Q3/2026 cho Sở Công Thương',
+    deadline: '2026-10-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'nang_luong',
+    frequency: 'quarterly',
+    priority: 'medium',
+    description: 'Doanh nghiệp thuộc diện báo cáo tiêu thụ NL theo Nghị định 21/2011/NĐ-CP thực hiện báo cáo định kỳ (tháng/quý/năm tùy phân loại) cho Sở Công Thương qua hệ thống quản lý dữ liệu năng lượng quốc gia.',
+    legal_basis: 'Điều 6 Nghị định 21/2011/NĐ-CP về Luật Sử dụng năng lượng tiết kiệm và hiệu quả (sửa đổi NĐ 32/2018/NĐ-CP); hướng dẫn của Cục Tiết kiệm năng lượng và Phát triển bền vững (Bộ Công Thương).',
+    penalty: 'Không báo cáo định kỳ: phạt 5-10 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 17/2022/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp dữ liệu tiêu thụ năng lượng theo từng nguồn trong quý 3',
+      'Cập nhật vào Hệ thống quản lý dữ liệu năng lượng (https://dataenergy.vn) hoặc gửi văn bản',
+      'Đối chiếu với hóa đơn điện, xăng dầu, khí đốt trong kỳ',
+      'Gửi báo cáo cho Sở Công Thương trước hạn',
+      'Lưu báo cáo và biên nhận điện tử'
+    ]
+  }
+];
+
 // ── Lô 2: Sự kiện pháp lý — Luật/NĐ có hiệu lực trong H2/2026 ─────────────
 // Mỗi mục có nguồn chính thống (thuvienphapluat.vn / chinhphu.vn / luatvietnam).
 // applies_to để mặc định 'business' khớp pattern các seed khác.
@@ -1363,7 +1521,8 @@ async function seedBackfillStepsHalf2026(client, log) {
     ...LEGAL_MILESTONES.map(e => ({ ...e, _batch: 'lo2_legal_milestone', applies_to: 'all' })),
     ...INDUSTRY_FNB_YTE.map(e => ({ ...e, _batch: 'lo3_fnb_yte' })),
     ...INDUSTRY_XAYDUNG_BDS.map(e => ({ ...e, _batch: 'lo4_xaydung_bds' })),
-    ...INDUSTRY_XNK_LOGISTIC.map(e => ({ ...e, _batch: 'lo5_xnk_logistic' }))
+    ...INDUSTRY_XNK_LOGISTIC.map(e => ({ ...e, _batch: 'lo5_xnk_logistic' })),
+    ...INDUSTRY_SANXUAT_NANGLUONG.map(e => ({ ...e, _batch: 'lo6_sx_nl' }))
   ];
 
   let inserted = 0;
