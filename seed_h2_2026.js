@@ -656,13 +656,93 @@ const ENTRIES = [
       'Lưu hồ sơ vệ sinh lao động tại cơ sở; gửi Sở Y tế và Sở Lao động khi được yêu cầu',
       'Thực hiện các biện pháp khắc phục đối với chỉ tiêu vượt ngưỡng'
     ]
+  },
+  // ─── Sửa thiếu Lô 0 (bug filter ISO date — 4 event ngày 31/12 bị bỏ sót) ──
+  { title: 'Đóng kinh phí công đoàn (KPCĐ) 2% kỳ tháng 11/2026', deadline: '2026-12-31', steps: STEPS_KPCD_MONTHLY },
+  { title: 'Trích nộp BHXH, BHYT, BHTN kỳ tháng 12/2026', deadline: '2026-12-31', steps: STEPS_BHXH_MONTHLY },
+  {
+    title: 'Tham gia bồi dưỡng bắt buộc chuyên môn, nghiệp vụ luật sư',
+    deadline: '2026-12-31',
+    steps: [
+      'Luật sư phải tham gia bồi dưỡng bắt buộc tối thiểu 08 giờ/năm theo Thông tư 02/2019/TT-BTP (sửa đổi)',
+      'Đăng ký lớp tại Liên đoàn Luật sư Việt Nam (https://liendoanluatsu.org.vn) hoặc Đoàn Luật sư địa phương',
+      'Hoàn thành các nội dung bồi dưỡng và đạt yêu cầu sát hạch (nếu có)',
+      'Nhận Giấy chứng nhận hoàn thành; lưu vào hồ sơ hành nghề cá nhân',
+      'Tổ chức hành nghề luật sư báo cáo tổng hợp với Đoàn Luật sư khi kết thúc năm'
+    ]
   }
 ];
+
+// ── Lô 1: INSERT các nghĩa vụ chung CÒN THIẾU trong 06-12/2026 ────────────
+// Idempotent: NOT EXISTS guard theo (title, deadline). Mục nào đã có sẽ bỏ qua.
+const NEW_INSERTS = [
+  {
+    title: 'Kê khai phí bảo vệ môi trường đối với nước thải Q2/2026',
+    deadline: '2026-07-30',
+    category: 'environment',
+    scope: 'general',
+    industry: null,
+    frequency: 'quarterly',
+    priority: 'medium',
+    description: 'Tổ chức, cá nhân xả nước thải công nghiệp thuộc đối tượng kê khai, nộp phí bảo vệ môi trường thực hiện kê khai số liệu xả thải quý 2 và nộp phí theo quy định.',
+    legal_basis: 'Nghị định 53/2020/NĐ-CP về phí BVMT đối với nước thải (sửa đổi Nghị định 90/2023/NĐ-CP nếu có); hạn kê khai và nộp phí: chậm nhất ngày 30 của tháng đầu quý sau.',
+    penalty: 'Chậm nộp phí: tính tiền chậm nộp; kê khai không đúng có thể bị truy thu và xử phạt hành chính theo Nghị định 45/2022/NĐ-CP về xử phạt vi phạm BVMT. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp khối lượng nước thải, kết quả quan trắc chất gây ô nhiễm (COD, TSS, Hg, Pb, As, Cd, Cr…) trong quý 2',
+      'Tính phí cố định (4tr/năm chia 4 quý cho cơ sở có lưu lượng dưới ngưỡng) và phí biến đổi (theo từng chất ô nhiễm)',
+      'Lập Tờ khai phí BVMT theo Mẫu của Nghị định 53/2020/NĐ-CP và nộp tại cơ quan thuế quản lý trực tiếp',
+      'Nộp phí qua Cổng thanh toán điện tử của Tổng cục Thuế (chậm nhất 30/7)',
+      'Lưu hồ sơ kê khai, chứng từ nộp phí và kết quả quan trắc'
+    ]
+  },
+  {
+    title: 'Kê khai phí bảo vệ môi trường đối với nước thải Q3/2026',
+    deadline: '2026-10-30',
+    category: 'environment',
+    scope: 'general',
+    industry: null,
+    frequency: 'quarterly',
+    priority: 'medium',
+    description: 'Tổ chức, cá nhân xả nước thải công nghiệp thuộc đối tượng kê khai, nộp phí bảo vệ môi trường thực hiện kê khai số liệu xả thải quý 3 và nộp phí theo quy định.',
+    legal_basis: 'Nghị định 53/2020/NĐ-CP về phí BVMT đối với nước thải (sửa đổi nếu có); hạn kê khai và nộp phí: chậm nhất ngày 30 của tháng đầu quý sau.',
+    penalty: 'Chậm nộp phí: tính tiền chậm nộp; kê khai không đúng có thể bị truy thu và xử phạt hành chính theo Nghị định 45/2022/NĐ-CP về xử phạt vi phạm BVMT. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp khối lượng nước thải, kết quả quan trắc chất gây ô nhiễm trong quý 3',
+      'Tính phí cố định và phí biến đổi theo từng chất ô nhiễm',
+      'Lập Tờ khai phí BVMT và nộp tại cơ quan thuế quản lý trực tiếp',
+      'Nộp phí qua Cổng thanh toán điện tử của Tổng cục Thuế (chậm nhất 30/10)',
+      'Lưu hồ sơ kê khai, chứng từ nộp phí và kết quả quan trắc'
+    ]
+  },
+  {
+    title: 'Công bố báo cáo tài chính giữa niên độ Q2/2026 (DN niêm yết, công ty đại chúng)',
+    deadline: '2026-08-14',
+    category: 'report',
+    scope: 'general',
+    industry: null,
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Công ty đại chúng, doanh nghiệp niêm yết phải công bố báo cáo tài chính giữa niên độ (06 tháng) đã được soát xét trong vòng 45 ngày kể từ ngày kết thúc bán niên độ (30/6).',
+    legal_basis: 'Thông tư 96/2020/TT-BTC về công bố thông tin trên TTCK; Điều 14 Thông tư 96/2020/TT-BTC (báo cáo tài chính bán niên đã soát xét trong 45 ngày). Áp dụng cho công ty đại chúng theo Điều 32 Luật Chứng khoán 54/2019/QH14.',
+    penalty: 'Vi phạm nghĩa vụ công bố thông tin: phạt từ 50-150 triệu (cá nhân) hoặc cao hơn (tổ chức) theo Nghị định 156/2020/NĐ-CP (sửa đổi 128/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Khóa sổ kế toán đến 30/6/2026; rà soát các nghiệp vụ trọng yếu',
+      'Bàn giao dự thảo báo cáo tài chính cho công ty kiểm toán độc lập để soát xét',
+      'Hoàn thiện BCTC giữa niên độ kèm Báo cáo soát xét của kiểm toán',
+      'Công bố thông tin trên website công ty và hệ thống công bố của UBCKNN/HOSE/HNX trong vòng 45 ngày sau kết thúc bán niên độ',
+      'Lưu hồ sơ công bố và biên nhận điện tử'
+    ]
+  }
+];
+
+// ── Hash kỳ vọng để theo dõi thay đổi ──────────────────────────────────────
+const EXPECTED_BACKFILL_COUNT = ENTRIES.length; // 92 sau khi thêm 3 mục 31/12
 
 // ── Seed runner ────────────────────────────────────────────────────────────
 let lastBackfillH2_2026Result = { status: 'not_run' };
 
 async function seedBackfillStepsHalf2026(client, log) {
+  // ── Phần 1: UPDATE-only backfill steps ────────────────────────────────────
   let updated = 0;
   let skippedNoMatch = 0;
   let skippedAlreadyHas = 0;
@@ -699,16 +779,67 @@ async function seedBackfillStepsHalf2026(client, log) {
     }
   }
 
+  // ── Phần 2: INSERT các nghĩa vụ chung CÒN THIẾU (Lô 1) ────────────────────
+  let inserted = 0;
+  let skippedExisting = 0;
+  const insertErrors = [];
+
+  for (const ev of NEW_INSERTS) {
+    try {
+      const exists = await client.query(
+        `SELECT 1 FROM events WHERE title = $1 AND deadline = $2::date LIMIT 1`,
+        [ev.title, ev.deadline]
+      );
+      if (exists.rowCount > 0) {
+        skippedExisting += 1;
+        continue;
+      }
+      await client.query(
+        `INSERT INTO events
+           (title, description, category, deadline, frequency, legal_basis, penalty,
+            applies_to, priority, reminder_days, scope, industry, steps, is_active)
+         VALUES
+           ($1, $2, $3, $4::date, $5, $6, $7,
+            'business', $8, 7, $9, $10, $11::jsonb, true)`,
+        [
+          ev.title,
+          ev.description || null,
+          ev.category || 'other',
+          ev.deadline,
+          ev.frequency || null,
+          ev.legal_basis || null,
+          ev.penalty || null,
+          ev.priority || 'medium',
+          ev.scope || 'general',
+          ev.industry || null,
+          JSON.stringify(ev.steps || [])
+        ]
+      );
+      inserted += 1;
+    } catch (err) {
+      insertErrors.push({ title: ev.title, deadline: ev.deadline, error: err.message });
+      if (log) log('ERROR', 'New insert H2 2026 failed', { title: ev.title, deadline: ev.deadline, error: err.message });
+    }
+  }
+
   lastBackfillH2_2026Result = {
     status: 'ok',
     ran_at: new Date().toISOString(),
-    total_entries: ENTRIES.length,
-    updated,
-    skipped_no_match: skippedNoMatch,
-    skipped_already_has_steps: skippedAlreadyHas,
-    errors
+    backfill: {
+      total_entries: ENTRIES.length,
+      updated,
+      skipped_no_match: skippedNoMatch,
+      skipped_already_has_steps: skippedAlreadyHas,
+      errors
+    },
+    inserts: {
+      total_entries: NEW_INSERTS.length,
+      inserted,
+      skipped_existing: skippedExisting,
+      errors: insertErrors
+    }
   };
-  if (log) log('INFO', 'Backfill H2 2026 steps completed', lastBackfillH2_2026Result);
+  if (log) log('INFO', 'Seed H2 2026 (backfill+inserts) completed', lastBackfillH2_2026Result);
   return lastBackfillH2_2026Result;
 }
 
