@@ -735,8 +735,74 @@ const NEW_INSERTS = [
   }
 ];
 
-// ── Hash kỳ vọng để theo dõi thay đổi ──────────────────────────────────────
-const EXPECTED_BACKFILL_COUNT = ENTRIES.length; // 92 sau khi thêm 3 mục 31/12
+// ── Lô 2: Sự kiện pháp lý — Luật/NĐ có hiệu lực trong H2/2026 ─────────────
+// Mỗi mục có nguồn chính thống (thuvienphapluat.vn / chinhphu.vn / luatvietnam).
+// applies_to để mặc định 'business' khớp pattern các seed khác.
+const LEGAL_MILESTONES = [
+  {
+    title: '⚖️ Luật Quản lý thuế 108/2025/QH15 có hiệu lực từ 01/7/2026',
+    deadline: '2026-07-01',
+    category: 'tax',
+    scope: 'general',
+    industry: null,
+    frequency: 'once',
+    priority: 'high',
+    description: 'Luật Quản lý thuế số 108/2025/QH15 chính thức có hiệu lực từ 01/7/2026 (riêng Điều 13 và Điều 26 về khai/khấu trừ/HĐĐT cho hộ kinh doanh, cá nhân kinh doanh áp dụng từ 01/1/2026). Trọng tâm: chuyển sang quản lý thuế dựa trên dữ liệu và rủi ro, siết quản lý TMĐT/nền tảng số, mở rộng đối tượng người nộp thuế ở nước ngoài, tăng tự động hoá.',
+    legal_basis: 'Luật Quản lý thuế số 108/2025/QH15 do Quốc hội khóa XV thông qua; thay thế Luật QLT 38/2019/QH14.',
+    penalty: 'Vi phạm sau ngày hiệu lực sẽ bị xử lý theo Luật mới và các văn bản hướng dẫn (Nghị định 125/2020/NĐ-CP sửa đổi và Nghị định/Thông tư thay thế). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Đối chiếu sự khác biệt giữa Luật QLT 108/2025 và Luật QLT 38/2019 — cập nhật quy trình kế toán, khai thuế nội bộ',
+      'Rà soát phần mềm khai thuế (HTKK, eTax) và đảm bảo cập nhật phiên bản hỗ trợ Luật mới',
+      'Đào tạo nhân sự kế toán/thuế về các thay đổi: phân nhóm rủi ro, thanh tra điện tử, nghĩa vụ với TMĐT/nền tảng số',
+      'Đối với DN có hoạt động TMĐT, nền tảng số: rà soát nghĩa vụ kê khai/khấu trừ thuế cho nhà cung cấp nước ngoài',
+      'Theo dõi Nghị định, Thông tư hướng dẫn thi hành Luật QLT 108/2025 do Bộ Tài chính ban hành'
+    ],
+    source: 'thuvienphapluat.vn',
+    source_url: 'https://thuvienphapluat.vn/phap-luat/toan-van-luat-quan-ly-thue-2025-luat-so-1082025qh15-co-hieu-luc-tu-172026-chi-tiet-ra-sao-246790.html'
+  },
+  {
+    title: '⚖️ Luật Thuế thu nhập cá nhân 109/2025/QH15 có hiệu lực từ 01/7/2026',
+    deadline: '2026-07-01',
+    category: 'tax',
+    scope: 'general',
+    industry: null,
+    frequency: 'once',
+    priority: 'high',
+    description: 'Luật Thuế TNCN số 109/2025/QH15 có hiệu lực 01/7/2026, thay thế Luật TNCN 04/2007/QH12. Thay đổi lớn: mức giảm trừ gia cảnh cho người nộp thuế nâng lên 15,5 triệu đồng/tháng, mỗi người phụ thuộc 6,2 triệu đồng/tháng; biểu thuế lũy tiến từng phần giảm từ 7 bậc còn 5 bậc (5%, 10%, 20%, 30%, 35%); doanh thu không chịu thuế của hộ KD, cá nhân KD nâng lên 500 triệu đồng/năm. Một số quy định áp dụng từ kỳ tính thuế 2026.',
+    legal_basis: 'Luật Thuế thu nhập cá nhân số 109/2025/QH15 do Quốc hội khóa XV thông qua; thay thế Luật TNCN 04/2007/QH12 và các luật sửa đổi 26/2012/QH13, 71/2014/QH13.',
+    penalty: 'Vi phạm khai/nộp thuế TNCN sau ngày hiệu lực bị xử lý theo Luật QLT 108/2025 và Nghị định xử phạt thay thế NĐ 125/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Cập nhật phần mềm tính lương/khấu trừ TNCN với biểu thuế 5 bậc và mức giảm trừ mới',
+      'Thông báo cho người lao động đăng ký lại giảm trừ gia cảnh cho người phụ thuộc (nếu cần)',
+      'Đối với hộ KD, cá nhân KD: rà soát ngưỡng doanh thu 500 triệu/năm để xác định nghĩa vụ thuế',
+      'Đào tạo bộ phận C&B / kế toán tiền lương về cách tính mới và các khoản miễn thuế bổ sung',
+      'Theo dõi Nghị định, Thông tư hướng dẫn của Bộ Tài chính và cập nhật quy trình quyết toán TNCN cho kỳ 2026'
+    ],
+    source: 'thuvienphapluat.vn',
+    source_url: 'https://thuvienphapluat.vn/phap-luat/bieu-thue-tncn-2026-ap-dung-tu-11-hay-17-bieu-thue-luy-tien-tung-phan-giam-tu-7-bac-xuong-con-5-bac-245954.html'
+  },
+  {
+    title: '⚖️ Hợp đồng lao động điện tử chính thức vận hành từ 01/7/2026',
+    deadline: '2026-07-01',
+    category: 'labor',
+    scope: 'general',
+    industry: null,
+    frequency: 'once',
+    priority: 'high',
+    description: 'Theo Nghị định 337/2025/NĐ-CP (có hiệu lực 01/1/2026), việc ký kết và thực hiện hợp đồng lao động điện tử chính thức áp dụng từ 01/7/2026. Đến mốc này, nền tảng HĐLĐ điện tử phải đi vào hoạt động; HĐLĐ điện tử có giá trị tương đương HĐLĐ giấy, có dấu thời gian số và xác thực bởi nhà cung cấp dịch vụ.',
+    legal_basis: 'Nghị định 337/2025/NĐ-CP về hợp đồng lao động điện tử (hiệu lực 01/1/2026; áp dụng đầy đủ từ 01/7/2026); Bộ luật Lao động 45/2019/QH14; Luật Giao dịch điện tử 20/2023/QH15.',
+    penalty: 'Vi phạm về ký kết HĐLĐ (kể cả điện tử) bị xử lý theo Nghị định 12/2022/NĐ-CP về xử phạt vi phạm hành chính trong lĩnh vực lao động. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lựa chọn nhà cung cấp nền tảng HĐLĐ điện tử (eContract) đáp ứng yêu cầu kỹ thuật và pháp lý',
+      'Bảo đảm chữ ký số có dấu thời gian (timestamp) cho cả người sử dụng lao động và người lao động',
+      'Xây dựng quy trình nội bộ về ký kết, lưu trữ, sửa đổi, chấm dứt HĐLĐ điện tử',
+      'Đào tạo bộ phận nhân sự và cập nhật mẫu HĐLĐ phù hợp với định dạng điện tử',
+      'Bảo đảm tuân thủ Luật Bảo vệ DLCN 91/2025/QH15 khi xử lý dữ liệu lao động trong nền tảng HĐLĐ điện tử'
+    ],
+    source: 'baochinhphu.vn',
+    source_url: 'https://baochinhphu.vn/quy-dinh-ve-hop-dong-lao-dong-dien-tu-102251224163230005.htm'
+  }
+];
 
 // ── Seed runner ────────────────────────────────────────────────────────────
 let lastBackfillH2_2026Result = { status: 'not_run' };
@@ -779,12 +845,18 @@ async function seedBackfillStepsHalf2026(client, log) {
     }
   }
 
-  // ── Phần 2: INSERT các nghĩa vụ chung CÒN THIẾU (Lô 1) ────────────────────
+  // ── Phần 2: INSERT các nghĩa vụ chung CÒN THIẾU (Lô 1) + Sự kiện pháp lý (Lô 2) ──
+  const allInserts = [
+    ...NEW_INSERTS.map(e => ({ ...e, _batch: 'lo1_general' })),
+    ...LEGAL_MILESTONES.map(e => ({ ...e, _batch: 'lo2_legal_milestone', applies_to: 'all' }))
+  ];
+
   let inserted = 0;
   let skippedExisting = 0;
   const insertErrors = [];
+  const insertedDetail = { lo1_general: 0, lo2_legal_milestone: 0 };
 
-  for (const ev of NEW_INSERTS) {
+  for (const ev of allInserts) {
     try {
       const exists = await client.query(
         `SELECT 1 FROM events WHERE title = $1 AND deadline = $2::date LIMIT 1`,
@@ -797,10 +869,12 @@ async function seedBackfillStepsHalf2026(client, log) {
       await client.query(
         `INSERT INTO events
            (title, description, category, deadline, frequency, legal_basis, penalty,
-            applies_to, priority, reminder_days, scope, industry, steps, is_active)
+            applies_to, priority, reminder_days, scope, industry, steps,
+            source, source_url, is_active)
          VALUES
            ($1, $2, $3, $4::date, $5, $6, $7,
-            'business', $8, 7, $9, $10, $11::jsonb, true)`,
+            $8, $9, 7, $10, $11, $12::jsonb,
+            $13, $14, true)`,
         [
           ev.title,
           ev.description || null,
@@ -809,16 +883,20 @@ async function seedBackfillStepsHalf2026(client, log) {
           ev.frequency || null,
           ev.legal_basis || null,
           ev.penalty || null,
+          ev.applies_to || 'business',
           ev.priority || 'medium',
           ev.scope || 'general',
           ev.industry || null,
-          JSON.stringify(ev.steps || [])
+          JSON.stringify(ev.steps || []),
+          ev.source || null,
+          ev.source_url || null
         ]
       );
       inserted += 1;
+      insertedDetail[ev._batch] = (insertedDetail[ev._batch] || 0) + 1;
     } catch (err) {
-      insertErrors.push({ title: ev.title, deadline: ev.deadline, error: err.message });
-      if (log) log('ERROR', 'New insert H2 2026 failed', { title: ev.title, deadline: ev.deadline, error: err.message });
+      insertErrors.push({ batch: ev._batch, title: ev.title, deadline: ev.deadline, error: err.message });
+      if (log) log('ERROR', 'New insert H2 2026 failed', { batch: ev._batch, title: ev.title, deadline: ev.deadline, error: err.message });
     }
   }
 
@@ -833,9 +911,10 @@ async function seedBackfillStepsHalf2026(client, log) {
       errors
     },
     inserts: {
-      total_entries: NEW_INSERTS.length,
+      total_entries: allInserts.length,
       inserted,
       skipped_existing: skippedExisting,
+      by_batch: insertedDetail,
       errors: insertErrors
     }
   };
