@@ -1089,6 +1089,164 @@ const INDUSTRY_XAYDUNG_BDS = [
   }
 ];
 
+// ── Lô 5: XNK (4) + Logistic (4) ──────────────────────────────────────────
+const INDUSTRY_XNK_LOGISTIC = [
+  // ─── XNK (industry='xnk') ──────────────────────────────────────────────
+  {
+    title: 'Thanh khoản hợp đồng gia công xuất khẩu đến hạn',
+    deadline: '2026-08-30',
+    category: 'license',
+    scope: 'industry',
+    industry: 'xnk',
+    frequency: 'once',
+    priority: 'high',
+    description: 'Tổ chức nhận gia công xuất khẩu phải làm thủ tục thanh khoản hợp đồng gia công với cơ quan hải quan khi hợp đồng kết thúc/hết hạn, bao gồm đối chiếu nguyên liệu vật tư đã nhập, sản phẩm đã xuất, phế liệu phế phẩm. Mốc là minh hoạ — thực hiện theo từng hợp đồng.',
+    legal_basis: 'Điều 36 Nghị định 08/2015/NĐ-CP (sửa đổi Nghị định 59/2018/NĐ-CP) về thủ tục hải quan; Thông tư 39/2018/TT-BTC sửa đổi Thông tư 38/2015/TT-BTC.',
+    penalty: 'Không thanh khoản đúng hạn: phạt theo Nghị định 128/2020/NĐ-CP về xử phạt vi phạm hành chính trong lĩnh vực hải quan; có thể bị truy thu thuế đối với nguyên liệu không sử dụng đúng mục đích. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp dữ liệu nhập-xuất-tồn nguyên liệu, vật tư theo từng hợp đồng gia công',
+      'Đối chiếu với tờ khai nhập khẩu nguyên liệu và xuất khẩu sản phẩm',
+      'Lập báo cáo quyết toán/thanh khoản theo Mẫu Phụ lục VII NĐ 08/2015',
+      'Nộp hồ sơ qua Hệ thống VNACCS/VCIS hoặc Cổng dịch vụ công của Tổng cục Hải quan',
+      'Xử lý phần chênh lệch, phế liệu phế phẩm theo quy định (tái xuất/tiêu hủy/chuyển tiêu thụ nội địa)'
+    ]
+  },
+  {
+    title: 'Bồi dưỡng nghiệp vụ khai báo hải quan định kỳ',
+    deadline: '2026-10-30',
+    category: 'labor',
+    scope: 'industry',
+    industry: 'xnk',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Đại lý làm thủ tục hải quan và nhân viên khai báo hải quan phải tham gia bồi dưỡng cập nhật nghiệp vụ định kỳ để duy trì hiệu lực chứng chỉ nghiệp vụ khai hải quan và mã số nhân viên đại lý.',
+    legal_basis: 'Điều 20 Luật Hải quan 54/2014/QH13; Nghị định 14/2018/NĐ-CP về đại lý làm thủ tục hải quan; Thông tư 22/2019/TT-BTC sửa đổi Thông tư 12/2015/TT-BTC.',
+    penalty: 'Sử dụng nhân viên đại lý HQ không đủ điều kiện: bị Tổng cục HQ thu hồi mã số nhân viên và xử phạt theo Nghị định 128/2020/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Rà soát danh sách nhân viên đại lý hải quan và hiệu lực chứng chỉ',
+      'Đăng ký lớp bồi dưỡng tại cơ sở đào tạo được Tổng cục Hải quan công nhận (Trường Hải quan VN…)',
+      'Hoàn thành chương trình và đạt yêu cầu sát hạch',
+      'Cập nhật mã số nhân viên đại lý hải quan tại Tổng cục Hải quan (qua hệ thống điện tử)',
+      'Lưu chứng chỉ vào hồ sơ nhân sự của đại lý'
+    ]
+  },
+  {
+    title: 'Báo cáo tình hình hàng hóa tại kho ngoại quan/CFS Q3/2026',
+    deadline: '2026-10-15',
+    category: 'report',
+    scope: 'industry',
+    industry: 'xnk',
+    frequency: 'quarterly',
+    priority: 'high',
+    description: 'Chủ kho ngoại quan, kho CFS (Container Freight Station), kho bảo thuế báo cáo định kỳ tình hình hàng hóa nhập-xuất-tồn kho cho Chi cục Hải quan quản lý kho.',
+    legal_basis: 'Điều 84-87 Nghị định 08/2015/NĐ-CP (sửa đổi NĐ 59/2018, NĐ 18/2021); Điều 88 Thông tư 39/2018/TT-BTC sửa đổi Thông tư 38/2015/TT-BTC.',
+    penalty: 'Không báo cáo hoặc báo cáo sai: phạt 5-15 triệu (cá nhân) hoặc gấp 2 lần (tổ chức) theo Nghị định 128/2020/NĐ-CP; có thể bị đình chỉ hoạt động kho. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp dữ liệu nhập-xuất-tồn hàng hóa trong kỳ theo từng chủ hàng',
+      'Đối chiếu chứng từ nhập (tờ khai NK, vận đơn) và xuất (tờ khai XK, lệnh xuất kho)',
+      'Lập báo cáo theo Mẫu Phụ lục VIII Thông tư 39/2018/TT-BTC',
+      'Gửi Chi cục Hải quan quản lý kho qua Hệ thống VNACCS hoặc văn bản',
+      'Lưu báo cáo và xử lý hàng tồn quá thời hạn theo quy định'
+    ]
+  },
+  {
+    title: 'Rà soát, gia hạn Giấy chứng nhận DN ưu tiên (AEO)',
+    deadline: '2026-09-30',
+    category: 'license',
+    scope: 'industry',
+    industry: 'xnk',
+    frequency: 'once',
+    priority: 'high',
+    description: 'Doanh nghiệp đã được công nhận là DN ưu tiên trong lĩnh vực hải quan (AEO) phải duy trì điều kiện và làm thủ tục gia hạn trước khi GCN hết hạn (chu kỳ 3 năm). DN AEO được hưởng nhiều ưu đãi: miễn kiểm tra hồ sơ/thực tế, ưu tiên thông quan, ân hạn thuế.',
+    legal_basis: 'Điều 42-44 Luật Hải quan 54/2014/QH13; Thông tư 72/2015/TT-BTC sửa đổi Thông tư 07/2019/TT-BTC về DN ưu tiên trong lĩnh vực hải quan.',
+    penalty: 'Mất hiệu lực GCN DN ưu tiên dẫn đến mất các ưu đãi về thủ tục, kiểm tra và thanh toán thuế; vi phạm điều kiện duy trì có thể bị thu hồi GCN. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Rà soát hiệu lực GCN DN ưu tiên và điều kiện duy trì (tuân thủ pháp luật, kim ngạch XNK, hệ thống kiểm soát nội bộ)',
+      'Chuẩn bị hồ sơ gia hạn: đơn đề nghị, báo cáo tự đánh giá, hồ sơ kim ngạch XNK',
+      'Nộp hồ sơ tại Tổng cục Hải quan trước khi GCN hết hạn ≥ 60 ngày',
+      'Tiếp đoàn thẩm định tại trụ sở DN (nếu có)',
+      'Nhận Quyết định gia hạn (hiệu lực 03 năm) và cập nhật vào hồ sơ pháp lý'
+    ]
+  },
+  // ─── Logistic (industry='logistic') ────────────────────────────────────
+  {
+    title: 'Cập nhật, gia hạn phù hiệu/biển hiệu phương tiện vận tải đợt cuối năm',
+    deadline: '2026-11-30',
+    category: 'license',
+    scope: 'industry',
+    industry: 'logistic',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Doanh nghiệp kinh doanh vận tải bằng xe ô tô (theo hợp đồng, du lịch, tuyến cố định, taxi, container) phải duy trì phù hiệu/biển hiệu hợp lệ cho từng phương tiện. Tổ chức rà soát đợt cuối năm để gia hạn cho các phương tiện hết hạn trong Q1 năm sau.',
+    legal_basis: 'Điều 22 Nghị định 10/2020/NĐ-CP về kinh doanh và điều kiện kinh doanh vận tải bằng xe ô tô (sửa đổi NĐ 41/2024/NĐ-CP); Thông tư 12/2020/TT-BGTVT.',
+    penalty: 'Phương tiện không có phù hiệu/biển hiệu hoặc hết hạn: phạt 5-7 triệu đồng (lái xe) và 6-8 triệu (DN) theo Nghị định 100/2019/NĐ-CP (sửa đổi NĐ 123/2021/NĐ-CP). Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập danh sách phương tiện và hiệu lực phù hiệu/biển hiệu hiện tại',
+      'Chuẩn bị hồ sơ gia hạn: giấy đăng ký xe, đăng kiểm còn hiệu lực, hợp đồng vận tải',
+      'Nộp hồ sơ qua Cổng dịch vụ công của Sở Giao thông Vận tải',
+      'Nhận phù hiệu/biển hiệu mới và dán đúng vị trí trên phương tiện',
+      'Lưu sổ theo dõi cấp/gia hạn phù hiệu tại doanh nghiệp'
+    ]
+  },
+  {
+    title: 'Đào tạo nghiệp vụ vận tải, ATGT cho lái xe kinh doanh vận tải',
+    deadline: '2026-09-30',
+    category: 'labor',
+    scope: 'industry',
+    industry: 'logistic',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Lái xe và nhân viên phục vụ trên xe của doanh nghiệp kinh doanh vận tải phải tham gia tập huấn nghiệp vụ vận tải và an toàn giao thông định kỳ ít nhất 01 lần/năm.',
+    legal_basis: 'Điều 11 Nghị định 10/2020/NĐ-CP (sửa đổi NĐ 41/2024); Thông tư 12/2020/TT-BGTVT về tổ chức, quản lý hoạt động vận tải bằng xe ô tô.',
+    penalty: 'Không tổ chức tập huấn cho lái xe: phạt 1-3 triệu (cá nhân) hoặc 2-4 triệu (tổ chức) theo Nghị định 100/2019/NĐ-CP. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Lập danh sách lái xe và nhân viên phục vụ trên xe',
+      'Tổ chức tập huấn nội bộ (DN tự tổ chức được phép) hoặc thuê đơn vị đủ điều kiện',
+      'Nội dung bắt buộc: kiến thức pháp luật về vận tải, kỹ năng giao tiếp, sơ cấp cứu',
+      'Cấp giấy chứng nhận hoàn thành tập huấn',
+      'Lưu hồ sơ tập huấn tại doanh nghiệp; gửi báo cáo cho Sở GTVT khi được yêu cầu'
+    ]
+  },
+  {
+    title: 'Báo cáo hoạt động vận tải năm 2026 cho Sở GTVT',
+    deadline: '2026-12-30',
+    category: 'report',
+    scope: 'industry',
+    industry: 'logistic',
+    frequency: 'yearly',
+    priority: 'medium',
+    description: 'Doanh nghiệp, HTX kinh doanh vận tải bằng xe ô tô báo cáo định kỳ hoạt động vận tải (số lượng phương tiện, lái xe, chuyến vận chuyển, doanh thu, sự cố ATGT) cho Sở GTVT.',
+    legal_basis: 'Điều 24 Nghị định 10/2020/NĐ-CP về kinh doanh và điều kiện kinh doanh vận tải bằng xe ô tô (sửa đổi NĐ 41/2024/NĐ-CP).',
+    penalty: 'Không báo cáo: phạt 2-4 triệu (tổ chức) theo Nghị định 100/2019/NĐ-CP về xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Tổng hợp số lượng phương tiện, lái xe đang hoạt động cuối kỳ',
+      'Tổng hợp số chuyến vận chuyển, doanh thu, các vụ ATGT (nếu có)',
+      'Lập báo cáo theo Mẫu của Sở GTVT/Bộ GTVT',
+      'Nộp qua Cổng dịch vụ công của Sở GTVT',
+      'Lưu báo cáo và xử lý kiến nghị (nếu có)'
+    ]
+  },
+  {
+    title: 'Đăng kiểm phương tiện vận tải định kỳ',
+    deadline: '2026-09-30',
+    category: 'safety',
+    scope: 'industry',
+    industry: 'logistic',
+    frequency: 'yearly',
+    priority: 'high',
+    description: 'Xe ô tô tham gia giao thông phải được kiểm định an toàn kỹ thuật và bảo vệ môi trường theo chu kỳ (tùy loại xe và năm sản xuất). Doanh nghiệp vận tải tổ chức đăng kiểm trước khi hết hạn để duy trì khả năng kinh doanh.',
+    legal_basis: 'Luật Giao thông đường bộ 23/2008/QH12; Nghị định 139/2018/NĐ-CP về kinh doanh dịch vụ kiểm định xe cơ giới (sửa đổi NĐ 30/2023, NĐ 139/2024); Thông tư 16/2021/TT-BGTVT về kiểm định an toàn kỹ thuật xe cơ giới.',
+    penalty: 'Xe quá hạn đăng kiểm: phạt 4-6 triệu (cá nhân) và 8-12 triệu (tổ chức) theo Nghị định 100/2019/NĐ-CP; bị tước quyền sử dụng GPLX. Xem chi tiết tại văn bản được trích dẫn.',
+    steps: [
+      'Theo dõi hạn đăng kiểm của từng phương tiện qua sổ theo dõi/phần mềm quản lý',
+      'Lên kế hoạch đưa xe đến Trung tâm đăng kiểm trước khi hết hạn 15-30 ngày',
+      'Chuẩn bị xe đạt yêu cầu kỹ thuật: phanh, lốp, đèn, khí thải, GSHT, camera',
+      'Khắc phục ngay các lỗi nếu chưa đạt; quay lại đăng kiểm lại',
+      'Lưu Giấy chứng nhận kiểm định và tem kiểm định lên xe'
+    ]
+  }
+];
+
 // ── Lô 2: Sự kiện pháp lý — Luật/NĐ có hiệu lực trong H2/2026 ─────────────
 // Mỗi mục có nguồn chính thống (thuvienphapluat.vn / chinhphu.vn / luatvietnam).
 // applies_to để mặc định 'business' khớp pattern các seed khác.
@@ -1204,7 +1362,8 @@ async function seedBackfillStepsHalf2026(client, log) {
     ...NEW_INSERTS.map(e => ({ ...e, _batch: 'lo1_general' })),
     ...LEGAL_MILESTONES.map(e => ({ ...e, _batch: 'lo2_legal_milestone', applies_to: 'all' })),
     ...INDUSTRY_FNB_YTE.map(e => ({ ...e, _batch: 'lo3_fnb_yte' })),
-    ...INDUSTRY_XAYDUNG_BDS.map(e => ({ ...e, _batch: 'lo4_xaydung_bds' }))
+    ...INDUSTRY_XAYDUNG_BDS.map(e => ({ ...e, _batch: 'lo4_xaydung_bds' })),
+    ...INDUSTRY_XNK_LOGISTIC.map(e => ({ ...e, _batch: 'lo5_xnk_logistic' }))
   ];
 
   let inserted = 0;
