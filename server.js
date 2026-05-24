@@ -11,6 +11,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { seedBackfillStepsHalf2026, getLastBackfillH2_2026Result } = require('./seed_h2_2026');
+const { seed2027, getLast2027SeedResult } = require('./seed_2027');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // FIREBASE ADMIN - Push Notifications via FCM
@@ -545,6 +546,9 @@ async function initDatabase() {
 
     // Lô 0 — backfill "Hướng dẫn thực hiện" cho lịch 06-12/2026 (idempotent, UPDATE-only)
     await seedBackfillStepsHalf2026(client, log);
+
+    // Seed lịch năm 2027 (idempotent INSERT theo title+deadline)
+    await seed2027(client, log);
 
     log('INFO', 'Database initialized successfully');
   } finally {
@@ -1158,10 +1162,10 @@ async function seedMay2026Events(client) {
       await client.query(
         `INSERT INTO events
            (title, description, category, deadline, frequency, legal_basis, penalty,
-            applies_to, priority, reminder_days, scope, industry, steps, is_active)
+            applies_to, priority, reminder_days, scope, industry, steps, source, source_url, is_active)
          VALUES
            ($1, $2, $3, $4::date, $5, $6, $7,
-            'business', $8, 7, $9, $10, $11::jsonb, true)`,
+            $8, $9, 7, $10, $11, $12::jsonb, $13, $14, true)`,
         [
           ev.title,
           ev.description || null,
@@ -1170,10 +1174,13 @@ async function seedMay2026Events(client) {
           ev.frequency || null,
           ev.legal_basis || null,
           ev.penalty || null,
+          ev.applies_to || 'business',
           ev.priority || 'medium',
           ev.scope || 'general',
           ev.industry || null,
-          JSON.stringify(ev.steps || [])
+          JSON.stringify(ev.steps || []),
+          ev.source || null,
+          ev.source_url || null
         ]
       );
       inserted += 1;
@@ -1236,6 +1243,11 @@ app.get('/api/debug/may2026-seed-status', (req, res) => {
 // Diagnostic (read-only): kết quả backfill steps cho lịch 06-12/2026 ở lần boot gần nhất.
 app.get('/api/debug/backfill-h2-2026-status', (req, res) => {
   res.json({ success: true, data: getLastBackfillH2_2026Result() });
+});
+
+// Diagnostic (read-only): kết quả seed lịch 2027 ở lần boot gần nhất.
+app.get('/api/debug/seed-2027-status', (req, res) => {
+  res.json({ success: true, data: getLast2027SeedResult() });
 });
 
 app.get('/api/events', async (req, res) => {
