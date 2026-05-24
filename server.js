@@ -1143,6 +1143,397 @@ async function seedMay2026Events(client) {
         'Theo dõi kết quả và cấp chứng nhận hoàn thành',
         'Cập nhật hồ sơ năng lực cá nhân và hồ sơ năng lực công ty'
       ]
+    },
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LÔ 9 — LỊCH NĂM 2027 (idempotent theo title+deadline)
+    // Nguồn: thuvienphapluat.vn, Bộ luật Lao động 2019, Luật Quản lý thuế
+    // 38/2019, Nghị định 145/2020, Thông tư 07/2016, Nghị định 39/2016,
+    // Luật Thuế tiêu thụ đặc biệt 66/2025/QH15. Quét ngày 24/5/2026.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // ── (1) NGHỈ LỄ, TẾT NĂM 2027 (general) ─────────────────────────────────
+    {
+      title: '🎉 Nghỉ Tết Dương lịch 2027 (01/01/2027)',
+      deadline: '2027-01-01',
+      category: 'holiday',
+      scope: 'general',
+      applies_to: 'all',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Tết Dương lịch 2027 rơi vào Thứ Sáu, ngày 01/01/2027. Người lao động được nghỉ 01 ngày hưởng nguyên lương theo điểm a khoản 1 Điều 112 Bộ luật Lao động 2019.',
+      legal_basis: 'Điểm a khoản 1 Điều 112 Bộ luật Lao động 2019',
+      penalty: 'Bố trí làm thêm ngày lễ phải trả ít nhất 300% lương (chưa kể lương ngày lễ với người hưởng lương ngày) theo Điều 98 Bộ luật Lao động 2019.',
+      steps: [
+        'Thông báo lịch nghỉ lễ cho người lao động trước kỳ nghỉ',
+        'Bố trí trực bảo vệ, bảo đảm an toàn tài sản và PCCC trong kỳ nghỉ',
+        'Nếu huy động làm thêm: có sự đồng ý của người lao động và trả lương làm thêm giờ ngày lễ theo Điều 98',
+        'Lên kế hoạch khôi phục hoạt động ngay sau kỳ nghỉ'
+      ],
+      source: 'Thư Viện Pháp Luật',
+      source_url: 'https://thuvienphapluat.vn/hoi-dap-phap-luat/lich-nghi-le-2027--tong-hop-cac-ngay-le-2027-o-viet-nam-chi-tiet-ra-sao-138062956.html'
+    },
+    {
+      title: '🧧 Nghỉ Tết Nguyên đán Đinh Mùi 2027 (mùng 1 — 06/02/2027)',
+      deadline: '2027-02-06',
+      category: 'holiday',
+      scope: 'general',
+      applies_to: 'all',
+      frequency: 'yearly',
+      priority: 'high',
+      description: 'Mùng 1 Tết Nguyên đán Đinh Mùi 2027 là Thứ Bảy, ngày 06/02/2027. Người lao động được nghỉ 05 ngày hưởng nguyên lương (dự kiến từ 05/02 đến hết 09/02/2027). Số ngày và phương án nghỉ/hoán đổi chính thức do Thủ tướng Chính phủ quyết định bằng thông báo riêng hằng năm — CẦN CẬP NHẬT KHI CÓ THÔNG BÁO CHÍNH THỨC.',
+      legal_basis: 'Điểm b khoản 1 Điều 112 Bộ luật Lao động 2019',
+      penalty: 'Bố trí làm thêm ngày Tết phải trả ít nhất 300% lương theo Điều 98 Bộ luật Lao động 2019.',
+      steps: [
+        'Theo dõi thông báo chính thức của Bộ Nội vụ/Thủ tướng về lịch nghỉ Tết 2027 để chốt ngày nghỉ và hoán đổi',
+        'Thông báo lịch nghỉ cho người lao động sớm để sắp xếp sản xuất, đơn hàng',
+        'Bố trí trực, bảo đảm an ninh, PCCC; chốt tồn kho, công nợ trước kỳ nghỉ',
+        'Nếu huy động làm thêm dịp Tết: lấy ý kiến đồng ý và trả lương làm thêm theo quy định'
+      ],
+      source: 'Thư Viện Pháp Luật',
+      source_url: 'https://thuvienphapluat.vn/hoi-dap-phap-luat/tet-nguyen-dan-2027-vao-ngay-nao-duong-lich-138080787.html'
+    },
+    {
+      title: '🇻🇳 Nghỉ Giỗ Tổ Hùng Vương 2027 (10/3 ÂL — 16/04/2027)',
+      deadline: '2027-04-16',
+      category: 'holiday',
+      scope: 'general',
+      applies_to: 'all',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Giỗ Tổ Hùng Vương (10/3 âm lịch) năm 2027 rơi vào Thứ Sáu, ngày 16/04/2027. Người lao động được nghỉ 01 ngày hưởng nguyên lương theo điểm e khoản 1 Điều 112 Bộ luật Lao động 2019.',
+      legal_basis: 'Điểm e khoản 1 Điều 112 Bộ luật Lao động 2019',
+      penalty: 'Bố trí làm thêm ngày lễ phải trả ít nhất 300% lương theo Điều 98 Bộ luật Lao động 2019.',
+      steps: [
+        'Thông báo lịch nghỉ cho người lao động',
+        'Bố trí trực, bảo đảm an toàn tài sản trong ngày nghỉ',
+        'Nếu làm thêm: trả lương làm thêm giờ ngày lễ theo Điều 98'
+      ],
+      source: 'Thư Viện Pháp Luật',
+      source_url: 'https://thuvienphapluat.vn/hoi-dap-phap-luat/lich-nghi-le-2027--tong-hop-cac-ngay-le-2027-o-viet-nam-chi-tiet-ra-sao-138062956.html'
+    },
+    {
+      title: '🎏 Nghỉ lễ Ngày Chiến thắng 30/4/2027',
+      deadline: '2027-04-30',
+      category: 'holiday',
+      scope: 'general',
+      applies_to: 'all',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Ngày Giải phóng miền Nam, thống nhất đất nước 30/4 năm 2027 rơi vào Thứ Sáu, ngày 30/04/2027. Nghỉ 01 ngày hưởng nguyên lương; thường được nghỉ liền với ngày 01/5. Phương án hoán đổi cụ thể theo thông báo của Thủ tướng Chính phủ.',
+      legal_basis: 'Điểm c khoản 1 Điều 112 Bộ luật Lao động 2019',
+      penalty: 'Bố trí làm thêm ngày lễ phải trả ít nhất 300% lương theo Điều 98 Bộ luật Lao động 2019.',
+      steps: [
+        'Theo dõi thông báo hoán đổi/nghỉ bù dịp 30/4 - 1/5/2027',
+        'Thông báo lịch nghỉ cho người lao động, bố trí trực',
+        'Nếu làm thêm: trả lương làm thêm giờ ngày lễ theo Điều 98'
+      ],
+      source: 'Thư Viện Pháp Luật',
+      source_url: 'https://thuvienphapluat.vn/hoi-dap-phap-luat/lich-nghi-le-2027--tong-hop-cac-ngay-le-2027-o-viet-nam-chi-tiet-ra-sao-138062956.html'
+    },
+    {
+      title: '👷 Nghỉ lễ Quốc tế Lao động 1/5/2027',
+      deadline: '2027-05-01',
+      category: 'holiday',
+      scope: 'general',
+      applies_to: 'all',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Ngày Quốc tế Lao động 1/5 năm 2027 rơi vào Thứ Bảy, ngày 01/05/2027. Nghỉ 01 ngày hưởng nguyên lương; nếu trùng ngày nghỉ hằng tuần thì được nghỉ bù theo Điều 111 Bộ luật Lao động 2019.',
+      legal_basis: 'Điểm d khoản 1 Điều 112 Bộ luật Lao động 2019',
+      penalty: 'Bố trí làm thêm ngày lễ phải trả ít nhất 300% lương theo Điều 98 Bộ luật Lao động 2019.',
+      steps: [
+        'Xác định ngày nghỉ bù nếu 1/5 trùng ngày nghỉ hằng tuần',
+        'Thông báo lịch nghỉ cho người lao động, bố trí trực',
+        'Nếu làm thêm: trả lương làm thêm giờ ngày lễ theo Điều 98'
+      ],
+      source: 'Thư Viện Pháp Luật',
+      source_url: 'https://thuvienphapluat.vn/hoi-dap-phap-luat/lich-nghi-le-2027--tong-hop-cac-ngay-le-2027-o-viet-nam-chi-tiet-ra-sao-138062956.html'
+    },
+    {
+      title: '🇻🇳 Nghỉ lễ Quốc khánh 2/9/2027',
+      deadline: '2027-09-02',
+      category: 'holiday',
+      scope: 'general',
+      applies_to: 'all',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Quốc khánh năm 2027: nghỉ 02 ngày gồm ngày 02/9 (Thứ Năm) và 01 ngày liền kề trước hoặc sau, hưởng nguyên lương. Ngày liền kề cụ thể do Thủ tướng Chính phủ quyết định hằng năm — CẦN CẬP NHẬT KHI CÓ THÔNG BÁO.',
+      legal_basis: 'Điểm đ khoản 1 Điều 112 Bộ luật Lao động 2019',
+      penalty: 'Bố trí làm thêm ngày lễ phải trả ít nhất 300% lương theo Điều 98 Bộ luật Lao động 2019.',
+      steps: [
+        'Theo dõi thông báo của Thủ tướng để chốt ngày nghỉ liền kề (01/9 hoặc 03/9)',
+        'Thông báo lịch nghỉ cho người lao động, bố trí trực',
+        'Nếu làm thêm: trả lương làm thêm giờ ngày lễ theo Điều 98'
+      ],
+      source: 'Thư Viện Pháp Luật',
+      source_url: 'https://thuvienphapluat.vn/hoi-dap-phap-luat/lich-nghi-le-2027--tong-hop-cac-ngay-le-2027-o-viet-nam-chi-tiet-ra-sao-138062956.html'
+    },
+
+    // ── (2) NGHĨA VỤ THUẾ ĐỊNH KỲ NĂM 2027 (general/business) ────────────────
+    {
+      title: 'Khai, nộp thuế GTGT & TNCN khấu trừ quý 4/2026',
+      deadline: '2027-01-31',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'quarterly',
+      priority: 'high',
+      description: 'Hạn nộp hồ sơ khai thuế và nộp thuế GTGT, TNCN khấu trừ của quý 4/2026 là ngày cuối cùng của tháng đầu quý sau (31/01/2027). Lưu ý 31/01/2027 là Chủ nhật nên hạn được lùi sang ngày làm việc liền kề (01/02/2027) theo quy định về thời hạn.',
+      legal_basis: 'Điểm b khoản 1 Điều 44 Luật Quản lý thuế số 38/2019/QH14',
+      penalty: 'Chậm nộp hồ sơ khai thuế bị xử phạt theo Điều 13 Nghị định 125/2020/NĐ-CP; chậm nộp tiền thuế tính tiền chậm nộp 0,03%/ngày theo Điều 59 Luật Quản lý thuế.',
+      steps: [
+        'Đối chiếu hóa đơn đầu vào - đầu ra và bảng kê chi trả thu nhập quý 4/2026',
+        'Lập tờ khai 01/GTGT và 05/KK-TNCN trên phần mềm HTKK',
+        'Ký số và nộp tờ khai qua thuedientu.gdt.gov.vn',
+        'Nộp tiền thuế phát sinh (nếu có) đúng hạn, lưu giấy nộp tiền và tờ khai đã nộp'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật Quản lý thuế 38/2019)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Quan-ly-thue-2019-387595.aspx'
+    },
+    {
+      title: 'Quyết toán thuế TNDN năm 2026 & nộp Báo cáo tài chính 2026',
+      deadline: '2027-03-31',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'yearly',
+      priority: 'high',
+      description: 'Doanh nghiệp nộp hồ sơ quyết toán thuế TNDN năm 2026 và Báo cáo tài chính năm 2026 chậm nhất là ngày cuối cùng của tháng thứ 3 kể từ ngày kết thúc năm dương lịch/năm tài chính, tức 31/03/2027 (Thứ Tư) với doanh nghiệp có năm tài chính trùng năm dương lịch.',
+      legal_basis: 'Điểm a khoản 2 Điều 44 Luật Quản lý thuế số 38/2019/QH14; pháp luật kế toán về nộp BCTC',
+      penalty: 'Chậm nộp hồ sơ khai/quyết toán thuế bị phạt theo Điều 13 Nghị định 125/2020/NĐ-CP; chậm nộp tiền thuế tính tiền chậm nộp 0,03%/ngày.',
+      steps: [
+        'Hoàn tất sổ sách, khóa sổ kế toán năm 2026 và lập Báo cáo tài chính',
+        'Lập tờ khai quyết toán 03/TNDN cùng các phụ lục trên HTKK',
+        'Ký số, nộp tờ khai và BCTC qua thuedientu.gdt.gov.vn',
+        'Nộp số thuế TNDN còn phải nộp (nếu có); lưu hồ sơ quyết toán'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật Quản lý thuế 38/2019)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Quan-ly-thue-2019-387595.aspx'
+    },
+    {
+      title: 'Quyết toán thuế TNCN năm 2026 (tổ chức chi trả thu nhập)',
+      deadline: '2027-03-31',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'yearly',
+      priority: 'high',
+      description: 'Tổ chức, cá nhân trả thu nhập thực hiện quyết toán thuế TNCN năm 2026 thay cho người lao động ủy quyền, chậm nhất ngày cuối cùng của tháng thứ 3 kể từ khi kết thúc năm dương lịch, tức 31/03/2027.',
+      legal_basis: 'Điểm a khoản 2 Điều 44 Luật Quản lý thuế số 38/2019/QH14',
+      penalty: 'Chậm nộp hồ sơ quyết toán bị xử phạt theo Điều 13 Nghị định 125/2020/NĐ-CP.',
+      steps: [
+        'Tổng hợp thu nhập chi trả và thuế đã khấu trừ cho từng cá nhân năm 2026',
+        'Thu giấy ủy quyền quyết toán của người lao động đủ điều kiện ủy quyền',
+        'Lập tờ khai 05/QTT-TNCN và phụ lục trên HTKK',
+        'Ký số, nộp tờ khai qua thuedientu; nộp bổ sung hoặc bù trừ thuế nếu có chênh lệch'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật Quản lý thuế 38/2019)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Quan-ly-thue-2019-387595.aspx'
+    },
+    {
+      title: 'Cá nhân tự quyết toán thuế TNCN năm 2026',
+      deadline: '2027-04-30',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'individual',
+      frequency: 'yearly',
+      priority: 'high',
+      description: 'Cá nhân trực tiếp quyết toán thuế TNCN năm 2026 nộp hồ sơ chậm nhất ngày cuối cùng của tháng thứ 4 kể từ khi kết thúc năm dương lịch, tức 30/04/2027. Do 30/4 và 1/5 là ngày nghỉ lễ nên hạn thực tế được lùi sang ngày làm việc liền kề sau kỳ nghỉ.',
+      legal_basis: 'Điểm b khoản 2 Điều 44 Luật Quản lý thuế số 38/2019/QH14',
+      penalty: 'Trường hợp có số thuế phải nộp thêm mà chậm nộp hồ sơ sẽ bị xử phạt; cá nhân chỉ đề nghị hoàn thì không bị phạt chậm nộp hồ sơ.',
+      steps: [
+        'Tập hợp chứng từ thu nhập, chứng từ khấu trừ thuế cả năm 2026 từ các nguồn',
+        'Đăng ký, cập nhật người phụ thuộc để được giảm trừ gia cảnh',
+        'Lập tờ khai 02/QTT-TNCN trên thuedientu hoặc ứng dụng eTax Mobile/Cổng DVC',
+        'Nộp số thuế còn thiếu hoặc lập đề nghị hoàn thuế nếu nộp thừa'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật Quản lý thuế 38/2019)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Quan-ly-thue-2019-387595.aspx'
+    },
+    {
+      title: 'Khai, nộp thuế GTGT & TNCN khấu trừ quý 1/2027',
+      deadline: '2027-04-30',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'quarterly',
+      priority: 'high',
+      description: 'Hạn khai và nộp thuế GTGT, TNCN khấu trừ quý 1/2027 là ngày cuối cùng của tháng đầu quý sau (30/04/2027). Do 30/4 - 1/5 là ngày nghỉ lễ nên hạn thực tế được lùi sang ngày làm việc liền kề sau kỳ nghỉ.',
+      legal_basis: 'Điểm b khoản 1 Điều 44 Luật Quản lý thuế số 38/2019/QH14',
+      penalty: 'Chậm nộp hồ sơ khai thuế bị phạt theo Điều 13 Nghị định 125/2020/NĐ-CP; chậm nộp tiền thuế tính tiền chậm nộp 0,03%/ngày.',
+      steps: [
+        'Đối chiếu hóa đơn và bảng kê chi trả thu nhập quý 1/2027',
+        'Lập tờ khai 01/GTGT, 05/KK-TNCN trên HTKK',
+        'Ký số, nộp tờ khai qua thuedientu trước hạn (lưu ý lùi do nghỉ lễ)',
+        'Nộp tiền thuế phát sinh và lưu chứng từ'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật Quản lý thuế 38/2019)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Quan-ly-thue-2019-387595.aspx'
+    },
+    {
+      title: 'Khai, nộp thuế GTGT & TNCN khấu trừ quý 2/2027',
+      deadline: '2027-07-31',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'quarterly',
+      priority: 'high',
+      description: 'Hạn khai và nộp thuế GTGT, TNCN khấu trừ quý 2/2027 là ngày cuối cùng của tháng đầu quý sau (31/07/2027). 31/7/2027 là Thứ Bảy nên hạn được lùi sang ngày làm việc liền kề (02/08/2027).',
+      legal_basis: 'Điểm b khoản 1 Điều 44 Luật Quản lý thuế số 38/2019/QH14',
+      penalty: 'Chậm nộp hồ sơ khai thuế bị phạt theo Điều 13 Nghị định 125/2020/NĐ-CP; chậm nộp tiền thuế tính tiền chậm nộp 0,03%/ngày.',
+      steps: [
+        'Đối chiếu hóa đơn và bảng kê chi trả thu nhập quý 2/2027',
+        'Lập tờ khai 01/GTGT, 05/KK-TNCN trên HTKK',
+        'Ký số, nộp tờ khai qua thuedientu',
+        'Nộp tiền thuế phát sinh và lưu chứng từ'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật Quản lý thuế 38/2019)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Quan-ly-thue-2019-387595.aspx'
+    },
+    {
+      title: 'Khai, nộp thuế GTGT & TNCN khấu trừ quý 3/2027',
+      deadline: '2027-10-31',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'quarterly',
+      priority: 'high',
+      description: 'Hạn khai và nộp thuế GTGT, TNCN khấu trừ quý 3/2027 là ngày cuối cùng của tháng đầu quý sau (31/10/2027). 31/10/2027 là Chủ nhật nên hạn được lùi sang ngày làm việc liền kề (01/11/2027).',
+      legal_basis: 'Điểm b khoản 1 Điều 44 Luật Quản lý thuế số 38/2019/QH14',
+      penalty: 'Chậm nộp hồ sơ khai thuế bị phạt theo Điều 13 Nghị định 125/2020/NĐ-CP; chậm nộp tiền thuế tính tiền chậm nộp 0,03%/ngày.',
+      steps: [
+        'Đối chiếu hóa đơn và bảng kê chi trả thu nhập quý 3/2027',
+        'Lập tờ khai 01/GTGT, 05/KK-TNCN trên HTKK',
+        'Ký số, nộp tờ khai qua thuedientu',
+        'Nộp tiền thuế phát sinh và lưu chứng từ'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật Quản lý thuế 38/2019)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Quan-ly-thue-2019-387595.aspx'
+    },
+
+    // ── (3) BÁO CÁO LAO ĐỘNG, AN TOÀN VSLĐ NĂM 2027 (general/business) ───────
+    {
+      title: 'Báo cáo công tác an toàn, vệ sinh lao động năm 2026',
+      deadline: '2027-01-10',
+      category: 'safety',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Người sử dụng lao động tổng hợp và gửi báo cáo công tác an toàn, vệ sinh lao động năm 2026 đến Sở Lao động - Thương binh và Xã hội (cơ quan quản lý lao động cấp tỉnh) và Sở Y tế, chậm nhất ngày 10/01/2027.',
+      legal_basis: 'Điều 10 Thông tư 07/2016/TT-BLĐTBXH hướng dẫn Điều 81 Luật An toàn, vệ sinh lao động 2015',
+      penalty: 'Không báo cáo hoặc báo cáo không đúng thời hạn về ATVSLĐ có thể bị xử phạt hành chính theo Nghị định 12/2022/NĐ-CP.',
+      steps: [
+        'Tổng hợp số liệu ATVSLĐ năm 2026: tai nạn, bệnh nghề nghiệp, huấn luyện, kiểm định',
+        'Lập báo cáo theo mẫu Phụ lục Thông tư 07/2016/TT-BLĐTBXH',
+        'Gửi báo cáo tới Sở quản lý lao động cấp tỉnh và Sở Y tế trước 10/01/2027',
+        'Lưu bản báo cáo và biên nhận tại doanh nghiệp'
+      ],
+      source: 'Thư Viện Pháp Luật (Thông tư 07/2016/TT-BLĐTBXH)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Thong-tu-07-2016-TT-BLDTBXH-huong-dan-thuc-hien-an-toan-ve-sinh-lao-dong-311466.aspx'
+    },
+    {
+      title: 'Báo cáo tổng hợp tình hình tai nạn lao động năm 2026',
+      deadline: '2027-01-10',
+      category: 'safety',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Người sử dụng lao động gửi báo cáo tổng hợp tình hình tai nạn lao động năm 2026 về Sở Lao động - Thương binh và Xã hội (cơ quan quản lý lao động cấp tỉnh) chậm nhất ngày 10/01/2027.',
+      legal_basis: 'Khoản 1 Điều 24 Nghị định 39/2016/NĐ-CP',
+      penalty: 'Không báo cáo hoặc báo cáo không đầy đủ, không đúng thời hạn có thể bị xử phạt theo Nghị định 12/2022/NĐ-CP.',
+      steps: [
+        'Tổng hợp số vụ, số người bị tai nạn lao động và thiệt hại năm 2026',
+        'Lập báo cáo theo mẫu Phụ lục Nghị định 39/2016/NĐ-CP',
+        'Gửi báo cáo tới cơ quan quản lý lao động cấp tỉnh trước 10/01/2027',
+        'Lưu hồ sơ, biên nhận tại doanh nghiệp'
+      ],
+      source: 'Thư Viện Pháp Luật (Nghị định 39/2016/NĐ-CP)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Nghi-dinh-39-2016-ND-CP-huong-dan-Luat-an-toan-ve-sinh-lao-dong-309579.aspx'
+    },
+    {
+      title: 'Báo cáo tình hình sử dụng lao động 6 tháng đầu năm 2027',
+      deadline: '2027-06-05',
+      category: 'labor',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'biannual',
+      priority: 'medium',
+      description: 'Người sử dụng lao động báo cáo tình hình thay đổi lao động 6 tháng đầu năm 2027 đến Sở Lao động - Thương binh và Xã hội (qua Cổng Dịch vụ công) và thông báo đến cơ quan BHXH, chậm nhất ngày 05/06/2027.',
+      legal_basis: 'Khoản 2 Điều 4 Nghị định 145/2020/NĐ-CP',
+      penalty: 'Không báo cáo đúng thời hạn về tình hình thay đổi lao động có thể bị xử phạt theo Nghị định 12/2022/NĐ-CP.',
+      steps: [
+        'Tổng hợp số lao động tăng/giảm 6 tháng đầu năm 2027',
+        'Lập báo cáo theo Mẫu số 01/PLI Nghị định 145/2020/NĐ-CP',
+        'Khai báo qua Cổng Dịch vụ công về tình hình sử dụng lao động trước 05/06/2027',
+        'Thông báo, đối chiếu với cơ quan BHXH'
+      ],
+      source: 'Thư Viện Pháp Luật (Nghị định 145/2020/NĐ-CP)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Nghi-dinh-145-2020-ND-CP-huong-dan-Bo-luat-Lao-dong-dieu-kien-lao-dong-quan-he-lao-dong-460026.aspx'
+    },
+    {
+      title: 'Báo cáo tình hình sử dụng lao động năm 2027',
+      deadline: '2027-12-05',
+      category: 'labor',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'yearly',
+      priority: 'medium',
+      description: 'Người sử dụng lao động báo cáo tình hình thay đổi lao động cả năm 2027 đến Sở Lao động - Thương binh và Xã hội (qua Cổng Dịch vụ công) và thông báo đến cơ quan BHXH, chậm nhất ngày 05/12/2027.',
+      legal_basis: 'Khoản 2 Điều 4 Nghị định 145/2020/NĐ-CP',
+      penalty: 'Không báo cáo đúng thời hạn về tình hình thay đổi lao động có thể bị xử phạt theo Nghị định 12/2022/NĐ-CP.',
+      steps: [
+        'Tổng hợp số lao động tăng/giảm cả năm 2027',
+        'Lập báo cáo theo Mẫu số 01/PLI Nghị định 145/2020/NĐ-CP',
+        'Khai báo qua Cổng Dịch vụ công về tình hình sử dụng lao động trước 05/12/2027',
+        'Thông báo, đối chiếu với cơ quan BHXH'
+      ],
+      source: 'Thư Viện Pháp Luật (Nghị định 145/2020/NĐ-CP)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Nghi-dinh-145-2020-ND-CP-huong-dan-Bo-luat-Lao-dong-dieu-kien-lao-dong-quan-he-lao-dong-460026.aspx'
+    },
+
+    // ── (4) VĂN BẢN PHÁP LUẬT MỚI CÓ HIỆU LỰC/ÁP DỤNG NĂM 2027 (general) ─────
+    {
+      title: 'Áp dụng thuế tuyệt đối với thuốc lá theo lộ trình (từ 01/01/2027)',
+      deadline: '2027-01-01',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'once',
+      priority: 'medium',
+      description: 'Từ 01/01/2027, mặt hàng thuốc lá bắt đầu chịu thêm mức thuế tiêu thụ đặc biệt tuyệt đối (bổ sung bên cạnh thuế suất theo tỷ lệ %) theo lộ trình tăng dần giai đoạn 2027–2031. Doanh nghiệp sản xuất, nhập khẩu, kinh doanh thuốc lá cần rà soát lại giá bán và nghĩa vụ thuế.',
+      legal_basis: 'Luật Thuế tiêu thụ đặc biệt số 66/2025/QH15 (hiệu lực 01/01/2026; lộ trình thuế tuyệt đối thuốc lá từ 01/01/2027)',
+      penalty: 'Kê khai sai, thiếu thuế TTĐB bị xử phạt và truy thu theo Luật Quản lý thuế và Nghị định 125/2020/NĐ-CP.',
+      steps: [
+        'Rà soát danh mục sản phẩm thuốc lá chịu thuế TTĐB',
+        'Cập nhật cách tính thuế: thuế theo tỷ lệ % cộng mức tuyệt đối mới từ 01/01/2027',
+        'Điều chỉnh giá bán, hợp đồng, phần mềm kế toán - hóa đơn',
+        'Theo dõi nghị định/thông tư hướng dẫn để áp dụng đúng mức và thời điểm'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật TTĐB 66/2025/QH15)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Thue-tieu-thu-dac-biet-2025-66-2025-QH15-661737.aspx'
+    },
+    {
+      title: 'Nước giải khát có đường chịu thuế tiêu thụ đặc biệt 8% (từ 01/01/2027)',
+      deadline: '2027-01-01',
+      category: 'tax',
+      scope: 'general',
+      applies_to: 'business',
+      frequency: 'once',
+      priority: 'medium',
+      description: 'Từ 01/01/2027, nước giải khát có đường theo TCVN với hàm lượng đường trên 5g/100ml thuộc đối tượng chịu thuế tiêu thụ đặc biệt với thuế suất 8% (tăng lên 10% từ 01/01/2028). Doanh nghiệp sản xuất, nhập khẩu, phân phối nước giải khát cần chuẩn bị.',
+      legal_basis: 'Luật Thuế tiêu thụ đặc biệt số 66/2025/QH15',
+      penalty: 'Kê khai sai, thiếu thuế TTĐB bị xử phạt và truy thu theo Luật Quản lý thuế và Nghị định 125/2020/NĐ-CP.',
+      steps: [
+        'Rà soát sản phẩm nước giải khát có đường và hàm lượng đường theo TCVN',
+        'Xác định nghĩa vụ thuế TTĐB 8% áp dụng từ 01/01/2027',
+        'Cập nhật giá bán, hệ thống hóa đơn - kế toán và kế hoạch giá',
+        'Theo dõi nghị định/thông tư hướng dẫn ngưỡng đường và thủ tục kê khai'
+      ],
+      source: 'Thư Viện Pháp Luật (Luật TTĐB 66/2025/QH15)',
+      source_url: 'https://thuvienphapluat.vn/van-ban/Thue-Phi-Le-Phi/Luat-Thue-tieu-thu-dac-biet-2025-66-2025-QH15-661737.aspx'
     }
   ];
 
